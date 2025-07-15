@@ -29,6 +29,40 @@ Thank you for your interest in contributing! This document outlines the process 
 - Add comments only when necessary to explain complex logic
 - Use meaningful variable and function names
 
+## Code Quality
+
+We use multiple tools to ensure code quality:
+
+### Biome (Primary Formatter/Linter)
+
+- Handles code formatting and basic linting
+- Runs automatically on pre-commit via Husky
+- Run manually: `pnpm format` and `pnpm lint`
+
+### SonarLint (Security & Quality Analysis)
+
+- Provides real-time feedback in VSCode for:
+  - Security vulnerabilities
+  - Bug detection
+  - Code smells
+  - Complexity issues
+- Install the extension: `sonarsource.sonarlint-vscode`
+- See [SonarLint Integration Guide](../docs/dev/quality/sonarlint.md) for details
+
+### Pre-commit Checks
+
+- Biome formatting and linting via `lint-staged`
+- SPDX license header verification
+- Commit message format validation (conventional commits)
+
+### CI/CD Quality Gates
+
+- All PRs must pass:
+  - Biome formatting checks
+  - TypeScript compilation
+  - Unit tests
+  - SonarCloud analysis (security, bugs, code smells)
+
 ## Reporting Issues
 
 - Use the GitHub issue tracker

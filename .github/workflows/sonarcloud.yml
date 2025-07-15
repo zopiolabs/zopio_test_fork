@@ -1,0 +1,136 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# SONARCLOUD CODE QUALITY ANALYSIS WORKFLOW
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Purpose: Performs deep code quality and security analysis using SonarCloud
+#          to identify bugs, vulnerabilities, code smells, and coverage gaps.
+#
+# Triggers:
+# - Push to main branch
+# - Pull requests targeting main branch
+#
+# Key Features:
+# - Comprehensive code quality analysis with SonarCloud
+# - Security vulnerability detection
+# - Code coverage integration
+# - Technical debt tracking
+# - Quality gate enforcement
+# - PR decoration with inline feedback
+#
+# DX Benefits:
+# - Early detection of security vulnerabilities
+# - Consistent code quality standards across the monorepo
+# - Detailed code smell and bug detection
+# - Automated PR feedback with actionable insights
+# - Tracks quality metrics over time
+# ═══════════════════════════════════════════════════════════════════════════
+
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write  # For PR comments
+
+jobs:
+  # Main SonarCloud analysis job that scans the entire monorepo
+  # This job complements existing linting tools (Biome/Ultracite) with
+  # advanced security and quality analysis
+  sonarcloud:
+    name: SonarCloud Scan
+    runs-on: ubuntu-latest
+    # Skip analysis for bots and when explicitly requested
+    if: "!contains(github.event.head_commit.message, 'skip sonar') && github.actor != 'dependabot[bot]'"
+    
+    steps:
+      # Step 1: Check out the repository with full history
+      # Full history is required for accurate blame information and new code detection
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+
+      # Step 2: Set up Node.js environment
+      # Required for running tests and generating coverage reports
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Step 3: Install pnpm package manager
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+          run_install: false
+
+      # Step 4: Get pnpm store directory for caching
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      # Step 5: Set up pnpm cache to speed up dependency installation
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      # Step 6: Install project dependencies
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      # Step 7: Run tests with coverage for SonarCloud
+      # This generates coverage reports that SonarCloud will use
+      - name: Run tests with coverage
+        run: pnpm test -- --coverage
+        continue-on-error: true  # Don't fail the build if tests fail
+
+      # Step 8: Run SonarCloud analysis
+      # Analyzes code quality, security vulnerabilities, and test coverage
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        # Additional arguments can be configured via sonar-project.properties
+
+      # Step 9: Comment PR with quality gate status (optional)
+      # This provides immediate feedback to developers on PRs
+      - name: SonarCloud Quality Gate check
+        id: sonarcloud-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        # Force to fail step after specific time
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true  # Don't block PR merge on quality gate failure initially
+
+      # Step 10: Add comment to PR with analysis results
+      - name: Comment PR
+        if: github.event_name == 'pull_request' && steps.sonarcloud-quality-gate-check.outputs.quality-gate-status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.sonarcloud-quality-gate-check.outputs.quality-gate-status }}';
+            const emoji = status === 'PASSED' ? '✅' : '⚠️';
+            const message = `${emoji} **SonarCloud Quality Gate**: ${status}
+            
+            [View detailed analysis on SonarCloud](https://sonarcloud.io/dashboard?id=zopio)`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });

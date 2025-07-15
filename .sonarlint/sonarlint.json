@@ -1,0 +1,30 @@
+{
+  "rules": {
+    "typescript:S1848": {
+      "level": "off",
+      "parameters": {}
+    },
+    "javascript:S3776": {
+      "parameters": {
+        "threshold": 20
+      }
+    }
+  },
+  "typeScript": {
+    "globals": ["describe", "it", "expect", "test", "beforeEach", "afterEach"]
+  },
+  "inclusions": "**/*.{js,jsx,ts,tsx}",
+  "exclusions": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.next/**",
+    "**/coverage/**",
+    "**/*.test.{js,jsx,ts,tsx}",
+    "**/*.spec.{js,jsx,ts,tsx}",
+    "**/storybook-static/**"
+  ],
+  "test": {
+    "inclusions": "**/*.test.{js,jsx,ts,tsx},**/*.spec.{js,jsx,ts,tsx}"
+  }
+}

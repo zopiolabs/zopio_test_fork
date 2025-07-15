@@ -17,6 +17,7 @@
     "github.vscode-github-actions",
     "42crunch.vscode-openapi",
     "vitest.explorer",
-    "VisualStudioExptTeam.vscodeintellicode"
+    "VisualStudioExptTeam.vscodeintellicode",
+    "sonarsource.sonarlint-vscode"
   ]
 }

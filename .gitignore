@@ -47,3 +47,9 @@ yarn-error.log*
 
 # AI Prompts
 .aiprompts.txt
+
+# SonarLint
+.sonarlint/connectedMode.json
+.sonarlint/.sonartmp_*
+.sonarlint/work/**
+.scannerwork/

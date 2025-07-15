@@ -31,5 +31,12 @@
   "markdown.validate.enabled": true,
   "cursor.experimental.suggestedActions": true,
   "windsurf.experimental.autoFixOnSave": true,
-  "files.eol": "\n"
+  "files.eol": "\n",
+  "sonarlint.output.showAnalyzerLogs": true,
+  "sonarlint.output.showVerboseLogs": false,
+  "sonarlint.rules": {
+    "typescript:S1848": {
+      "level": "off"
+    }
+  }
 }

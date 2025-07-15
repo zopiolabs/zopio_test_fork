@@ -9,6 +9,7 @@
 [![Security](https://github.com/zopiolabs/zopio/actions/workflows/security.yml/badge.svg)](https://github.com/zopiolabs/zopio/actions/workflows/security.yml)
 [![Build](https://github.com/zopiolabs/zopio/actions/workflows/build.yml/badge.svg)](https://github.com/zopiolabs/zopio/actions/workflows/build.yml)
 [![Release](https://github.com/zopiolabs/zopio/actions/workflows/release.yml/badge.svg)](https://github.com/zopiolabs/zopio/actions/workflows/release.yml)
+[![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=zopio_zopio&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=zopio_zopio)
 
 ## Overview
 
@@ -115,14 +116,23 @@ _Each module must include a `zopio.module.json` manifest file describing its typ
 
 ---
 
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](.github/CONTRIBUTING.md) for:
+
+- Code style and quality standards
+- Pre-commit hooks and CI checks
+- Security analysis with SonarLint
+- PR submission guidelines
+
 ## ❤️ Join Zopio Community
 
-We’re building Zopio together with developers like you.
+We're building Zopio together with developers like you.
 
 - ⭐️ Star us on GitHub to show your support
 - 💬 [Join the discussion](https://github.com/zopiolabs/zopio/discussions)
 
-Let’s shape the future of business frameworks, together!
+Let's shape the future of business frameworks, together!
 
 ## DX & Automation Toolkit
 
@@ -135,6 +145,20 @@ _This repo includes automated quality checks and contribution tooling:_
 | `.github/`   | GitHub templates, policies, and workflow automation                     |
 | `.husky/`    | Local Git hooks (e.g. linting, tests before commits)                    |
 | `.vscode/`   | VS Code workspace config for consistent developer environment (DX/onboarding)      |
+| `.sonarlint/`| SonarLint project-specific rules and configuration                      |
 | `e2e/`       | End-to-end tests for critical user journeys (e.g. Playwright, Cypress)      |
 
 _These ensure a consistent developer experience and enforce contribution standards across all packages and apps._
+
+### 🛡️ Code Quality & Security
+
+Zopio uses a comprehensive quality stack to ensure secure, maintainable code:
+
+| Tool | Purpose | Integration |
+|------|---------|-------------|
+| **Biome** | Code formatting & linting | Pre-commit, CI |
+| **SonarLint** | Real-time security analysis | VSCode |
+| **SonarCloud** | PR quality gates | GitHub Actions |
+| **TypeScript** | Type safety | Build time |
+
+See [Code Quality Guide](docs/dev/quality/sonarlint.md) for setup instructions.

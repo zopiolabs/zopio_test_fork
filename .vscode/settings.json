@@ -38,5 +38,9 @@
     "typescript:S1848": {
       "level": "off"
     }
+  },
+  "sonarlint.connectedMode.project": {
+    "connectionId": "SonarCloud",
+    "projectKey": "zopiolabs_zopio_test_fork"
   }
 }

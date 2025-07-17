@@ -29,8 +29,6 @@
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
   },
   "markdown.validate.enabled": true,
-  "cursor.experimental.suggestedActions": true,
-  "windsurf.experimental.autoFixOnSave": true,
   "files.eol": "\n",
   "sonarlint.output.showAnalyzerLogs": true,
   "sonarlint.output.showVerboseLogs": false,

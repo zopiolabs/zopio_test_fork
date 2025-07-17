@@ -8,10 +8,57 @@
       "parameters": {
         "threshold": 20
       }
+    },
+    "typescript:S3776": {
+      "parameters": {
+        "threshold": 20
+      }
+    },
+    "typescript:S1479": {
+      "parameters": {
+        "maximum": 35
+      }
+    },
+    "typescript:S6478": {
+      "level": "off"
+    },
+    "typescript:S6582": {
+      "level": "off"
     }
   },
   "typeScript": {
-    "globals": ["describe", "it", "expect", "test", "beforeEach", "afterEach"]
+    "globals": [
+      "describe",
+      "it",
+      "expect",
+      "test",
+      "beforeEach",
+      "afterEach",
+      "beforeAll",
+      "afterAll",
+      "vi",
+      "vitest",
+      "jest",
+      "jasmine",
+      "mocha",
+      "chai",
+      "global",
+      "globalThis",
+      "window",
+      "document",
+      "navigator",
+      "console",
+      "process",
+      "Buffer",
+      "__dirname",
+      "__filename",
+      "require",
+      "module",
+      "exports",
+      "React",
+      "JSX",
+      "NodeJS"
+    ]
   },
   "inclusions": "**/*.{js,jsx,ts,tsx}",
   "exclusions": [
@@ -22,7 +69,14 @@
     "**/coverage/**",
     "**/*.test.{js,jsx,ts,tsx}",
     "**/*.spec.{js,jsx,ts,tsx}",
-    "**/storybook-static/**"
+    "**/storybook-static/**",
+    "**/generated/**",
+    "packages/database/generated/**",
+    "packages/design-system/ui/**",
+    "devapps/emailstudio/.react-email/**",
+    "**/*.d.ts",
+    "**/turbo/**",
+    "**/.turbo/**"
   ],
   "test": {
     "inclusions": "**/*.test.{js,jsx,ts,tsx},**/*.spec.{js,jsx,ts,tsx}"

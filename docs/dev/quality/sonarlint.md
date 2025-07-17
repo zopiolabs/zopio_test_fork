@@ -56,8 +56,18 @@ That's it! SonarLint is now analyzing your code in real-time.
 ### Before Committing
 
 1. Check the Problems panel (`Cmd+Shift+M`) for SonarLint issues
-2. Fix critical security issues and bugs
+2. Fix critical security issues and bugs immediately
 3. Consider fixing code smells if time permits
+4. Run pre-commit hooks to ensure code quality:
+
+   ```bash
+   # Pre-commit hooks will run automatically with:
+   git commit -m "your message"
+   
+   # Or manually run quality checks:
+   pnpm lint
+   pnpm typecheck
+   ```
 
 ### Pull Requests
 
@@ -98,15 +108,27 @@ For specific rules project-wide, edit `.sonarlint/sonarlint.json`:
 }
 ```
 
-### Connect to SonarCloud (Optional)
+### Connect to SonarCloud (Recommended for Team)
 
-For team-synchronized rules:
+For team-synchronized rules and quality gates:
 
-1. `Cmd+Shift+P` → "SonarLint: Configure Connection"
-2. Choose "SonarCloud"
-3. Enter your token from [SonarCloud Security](https://sonarcloud.io/account/security)
-4. Select organization: `zopio`
-5. Select project: `zopio_zopio`
+1. **Get your SonarCloud token:**
+   - Go to [SonarCloud Security](https://sonarcloud.io/account/security)
+   - Generate a new token with a descriptive name (e.g., "VSCode SonarLint")
+   - Copy the token (keep it secure!)
+
+2. **Configure SonarLint connection:**
+   - `Cmd+Shift+P` → "SonarLint: Configure Connection"
+   - Choose "SonarCloud"
+   - Enter your token when prompted
+   - Select organization: `zopiolabs`
+   - Select project: `zopiolabs_zopio_test_fork`
+
+3. **Verify connection:**
+   - Check that "SonarLint: Connected Mode" shows in the status bar
+   - Open any TypeScript file and confirm rules are synchronized
+
+**Note:** Each team member needs their own SonarCloud token. Never share or commit tokens to the repository.
 
 ---
 
@@ -148,6 +170,25 @@ SonarLint settings in `.vscode/settings.json`:
 1. Disable verbose logs in settings
 2. Exclude large generated files
 3. Check Output panel for errors
+4. For monorepo issues, ensure proper workspace configuration
+
+### Monorepo-Specific Issues
+
+**SonarLint not analyzing files in packages/:**
+
+- Ensure you're opening the root directory, not individual packages
+- Check that files match the inclusion patterns in `.sonarlint/sonarlint.json`
+
+**False positives on generated files:**
+
+- Verify exclusions in `.sonarlint/sonarlint.json` cover all generated directories
+- Common exclusions: `packages/database/generated/**`, `**/*.d.ts`
+
+**Rules not synchronized:**
+
+- Confirm SonarCloud connection shows correct project: `zopiolabs_zopio_test_fork`
+- Check organization access: `zopiolabs`
+- Refresh connection: `Cmd+Shift+P` → "SonarLint: Update All Project Bindings"
 
 ---
 
@@ -208,7 +249,7 @@ SonarCloud enforces:
 
 - [SonarLint Rules Reference](https://rules.sonarsource.com/typescript)
 - [Security Hotspots Guide](https://docs.sonarcloud.io/digging-deeper/security-hotspots/)
-- [Zopio SonarCloud Dashboard](https://sonarcloud.io/project/overview?id=zopio_zopio)
+- [Zopio SonarCloud Dashboard](https://sonarcloud.io/project/overview?id=zopiolabs_zopio_test_fork)
 
 ---
 

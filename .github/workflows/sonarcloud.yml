@@ -94,7 +94,6 @@ jobs:
       # This generates coverage reports that SonarCloud will use
       - name: Run tests with coverage
         run: pnpm test -- --coverage
-        continue-on-error: true  # Don't fail the build if tests fail
 
       # Step 8: Run SonarCloud analysis
       # Analyzes code quality, security vulnerabilities, and test coverage
@@ -114,7 +113,6 @@ jobs:
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        continue-on-error: true  # Don't block PR merge on quality gate failure initially
 
       # Step 10: Add comment to PR with analysis results
       - name: Comment PR

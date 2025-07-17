@@ -33,7 +33,8 @@ That's it! SonarLint is now analyzing your code in real-time.
 | **Biome** | Code formatting & basic linting | Save, pre-commit, CI |
 | **SonarLint** | Security & advanced quality | Real-time in editor |
 | **TypeScript** | Type checking | Build time, CI |
-| **SonarCloud** | Team-wide analysis | Pull requests |
+| **Vitest** | Test runner with coverage | Local dev, CI |
+| **SonarCloud** | Team-wide analysis with coverage | Pull requests |
 
 ### What SonarLint Catches
 
@@ -165,6 +166,41 @@ SonarLint settings in `.vscode/settings.json`:
 - Suppress warnings without understanding them
 - Disable SonarLint entirely
 - Commit code with unresolved vulnerabilities
+
+---
+
+## Test Coverage
+
+### Running Tests with Coverage
+
+To generate coverage reports for SonarCloud:
+
+```bash
+# Run all tests with coverage
+pnpm test -- --coverage --run
+
+# Coverage reports are generated at:
+# - coverage/lcov.info (for SonarCloud)
+# - coverage/index.html (for local viewing)
+```
+
+### Coverage Configuration
+
+Test coverage is configured in each app's `vitest.config.mjs`:
+
+- Coverage provider: V8
+- Output formats: text, lcov, html
+- Reports location: `./coverage` (repository root)
+- Excludes: node_modules, dist, config files, test files
+
+### Quality Gates
+
+SonarCloud enforces:
+
+- 80% coverage on new code (when 20+ lines added)
+- No new bugs or vulnerabilities
+- Maintainability rating A
+- Security rating A
 
 ---
 

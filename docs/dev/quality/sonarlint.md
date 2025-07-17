@@ -245,6 +245,34 @@ SonarCloud enforces:
 
 ---
 
+## Setting Up GitHub Secrets (Repository Admin Only)
+
+For the SonarCloud CI/CD integration to work, repository administrators must set up the following GitHub secret:
+
+### Required Secret: `SONAR_TOKEN`
+
+1. **Generate SonarCloud Token:**
+   - Go to [SonarCloud Security](https://sonarcloud.io/account/security)
+   - Generate a new token with a descriptive name (e.g., "GitHub Actions CI")
+   - **Important:** This should be a different token from personal SonarLint tokens
+   - Copy the token (it will only be shown once)
+
+2. **Add Secret to GitHub Repository:**
+   - Navigate to: `Settings` → `Secrets and variables` → `Actions`
+   - Click `New repository secret`
+   - Name: `SONAR_TOKEN`
+   - Value: Paste the SonarCloud token
+   - Click `Add secret`
+
+3. **Verify Setup:**
+   - The workflow uses `${{ secrets.SONAR_TOKEN }}` automatically
+   - No code changes needed once the secret is configured
+   - Test by creating a pull request
+
+**Security Note:** Never commit SonarCloud tokens to the repository. The provided API key in the task description should be used to set up this GitHub secret, not placed in any code files.
+
+---
+
 ## Resources
 
 - [SonarLint Rules Reference](https://rules.sonarsource.com/typescript)

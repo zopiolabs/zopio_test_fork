@@ -6,8 +6,8 @@
 #          to identify bugs, vulnerabilities, code smells, and coverage gaps.
 #
 # Triggers:
-# - Push to main branch
-# - Pull requests targeting main branch
+# - Push to develop branch
+# - Pull requests targeting develop branch
 #
 # Key Features:
 # - Comprehensive code quality analysis with SonarCloud
@@ -29,10 +29,10 @@ name: SonarCloud Analysis
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
   pull_request:
     types: [opened, synchronize, reopened]
-    branches: [main]
+    branches: [develop]
 
 permissions:
   contents: read
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     # Skip analysis for bots and when explicitly requested
     if: "!contains(github.event.head_commit.message, 'skip sonar') && github.actor != 'dependabot[bot]'"
-    
+
     steps:
       # Step 1: Check out the repository with full history
       # Full history is required for accurate blame information and new code detection
@@ -93,7 +93,7 @@ jobs:
       # Step 7: Run tests with coverage for SonarCloud
       # This generates coverage reports that SonarCloud will use
       - name: Run tests with coverage
-        run: pnpm test -- --coverage
+        run: pnpm test -- --coverage --run
 
       # Step 8: Run SonarCloud analysis
       # Analyzes code quality, security vulnerabilities, and test coverage
@@ -123,9 +123,9 @@ jobs:
             const status = '${{ steps.sonarcloud-quality-gate-check.outputs.quality-gate-status }}';
             const emoji = status === 'PASSED' ? '✅' : '⚠️';
             const message = `${emoji} **SonarCloud Quality Gate**: ${status}
-            
-            [View detailed analysis on SonarCloud](https://sonarcloud.io/dashboard?id=zopio)`;
-            
+
+            [View detailed analysis on SonarCloud](https://sonarcloud.io/dashboard?id=zopiolabs_zopio_test_fork)`;
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

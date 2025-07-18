@@ -67,7 +67,6 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8
           run_install: false
 
       # Step 4: Get pnpm store directory for caching

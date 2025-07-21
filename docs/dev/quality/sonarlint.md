@@ -1,288 +1,791 @@
-# SonarLint Integration Guide
+# SonarLint for VS Code Integration Guide
 
-SonarLint provides real-time code quality and security analysis in VSCode, complementing our existing Biome setup. This guide helps contributors use SonarLint effectively in the Zopio project.
+## Overview
 
----
+SonarLint is a powerful IDE extension that provides real-time code quality and security analysis directly in Visual Studio Code. This guide will walk you through setting up and using SonarLint effectively in the Zopio project.
 
-## Quick Start
+## Why SonarLint?
 
-### 1. Install SonarLint Extension
+- **Real-time Feedback**: Catch code quality issues as you type
+- **Security Analysis**: Identify potential security vulnerabilities immediately
+- **Code Smell Detection**: Find maintainability issues before they become technical debt
+- **Bug Prevention**: Detect common coding mistakes and potential runtime errors
+- **Consistent Standards**: Enforce team-wide code quality standards automatically
 
-VSCode will automatically recommend the extension when you open the project. If not:
+## Installation
 
-- Open Extensions (`Cmd+Shift+X`)
-- Search for "SonarLint"
-- Install `sonarsource.sonarlint-vscode`
+### For VS Code
 
-### 2. Verify It's Working
+#### Step 1: Install SonarLint Extension
 
-- Open any TypeScript file
-- Look for underlined code with security or quality issues
-- Hover over underlined code to see details
+1. Open VS Code
+2. Go to Extensions (⌘⇧X on Mac, Ctrl+Shift+X on Windows/Linux)
+3. Search for "SonarLint"
+4. Install the official "SonarLint" extension by SonarSource (`sonarsource.sonarlint-vscode`)
+5. Reload VS Code when prompted
 
-That's it! SonarLint is now analyzing your code in real-time.
+#### Step 2: Verify Installation
 
----
+After installation, you should see:
+- A SonarLint icon in the Activity Bar (left sidebar)
+- "SonarLint" in the status bar at the bottom
+- New code analysis results appearing in the Problems panel
 
-## How It Works
+### For Cursor
 
-### Our Quality Stack
+Cursor is built on VS Code and supports the same extensions:
 
-| Tool | Purpose | When It Runs |
-|------|---------|--------------|
-| **Biome** | Code formatting & basic linting | Save, pre-commit, CI |
-| **SonarLint** | Security & advanced quality | Real-time in editor |
-| **TypeScript** | Type checking | Build time, CI |
-| **Vitest** | Test runner with coverage | Local dev, CI |
-| **SonarCloud** | Team-wide analysis with coverage | Pull requests |
+#### Step 1: Install SonarLint Extension
 
-### What SonarLint Catches
+1. Open Cursor
+2. Go to Extensions (⌘⇧X on Mac, Ctrl+Shift+X on Windows/Linux)
+3. Search for "SonarLint"
+4. Install the official "SonarLint" extension by SonarSource
+5. Restart Cursor when prompted
 
-- **Security Vulnerabilities**: SQL injection, XSS, insecure cryptography
-- **Bugs**: Null pointer exceptions, resource leaks, logic errors
-- **Code Smells**: Complex functions, duplicate code, unclear naming
-- **Security Hotspots**: Code that needs security review
+#### Step 2: Cursor-Specific Configuration
 
----
-
-## Developer Workflow
-
-### Writing Code
-
-1. **Real-time Feedback**: Issues appear as you type
-2. **Quick Fixes**: Click the lightbulb icon for automatic fixes
-3. **Learn More**: Each issue links to detailed explanations
-
-### Before Committing
-
-1. Check the Problems panel (`Cmd+Shift+M`) for SonarLint issues
-2. Fix critical security issues and bugs immediately
-3. Consider fixing code smells if time permits
-4. Run pre-commit hooks to ensure code quality:
-
-   ```bash
-   # Pre-commit hooks will run automatically with:
-   git commit -m "your message"
+1. **Enable Extension**: Cursor may disable some extensions by default
+   - Go to Settings → Extensions
+   - Ensure SonarLint is enabled
    
-   # Or manually run quality checks:
-   pnpm lint
-   pnpm typecheck
-   ```
+2. **AI Integration**: Cursor's AI can help fix SonarLint issues
+   - When SonarLint highlights an issue, use Cursor's AI to suggest fixes
+   - Type: "Fix this SonarLint issue: [issue description]"
 
-### Pull Requests
+#### Step 3: Verify Installation
 
-Your PR will be automatically analyzed by SonarCloud, which:
+- Check the Problems panel for SonarLint analysis
+- Look for the SonarLint status in the bottom status bar
+- Test by creating an intentional issue (e.g., unused variable)
 
-- Posts a quality gate status comment
-- Adds inline annotations on problematic code
-- Tracks new issues vs existing ones
+### For Windsurf
 
----
+Windsurf (by Codeium) also supports VS Code extensions:
 
-## Common Tasks
+#### Step 1: Install SonarLint Extension
 
-### View All Issues
+1. Open Windsurf
+2. Access the Extensions marketplace:
+   - Click the Extensions icon in the Activity Bar, or
+   - Use Command Palette (⌘⇧P) → "Extensions: Install Extensions"
+3. Search for "SonarLint"
+4. Install the official SonarLint extension
+5. Restart Windsurf if prompted
 
-```bash
-Cmd+Shift+P → "SonarLint: Show All Issues"
-```
+#### Step 2: Windsurf-Specific Setup
 
-### Suppress False Positives
+1. **Extension Compatibility**: 
+   - Windsurf uses VS Code's extension API
+   - Most VS Code extensions work without modification
+   
+2. **Codeium AI Integration**:
+   - Windsurf's AI can automatically fix SonarLint issues
+   - Right-click on underlined code → "Codeium: Fix Issue"
+   - Or use inline suggestions when SonarLint detects problems
 
-For a single line:
+3. **Performance Settings**:
+   - If SonarLint affects Windsurf's performance:
+     ```json
+     "sonarlint.ls.javaHome": null,
+     "sonarlint.output.showAnalyzerLogs": false
+     ```
 
-```typescript
-// NOSONAR - Explanation why this is safe
-const dynamicQuery = `SELECT * FROM ${table}`;
-```
+#### Step 3: Verify Installation
 
-For specific rules project-wide, edit `.sonarlint/sonarlint.json`:
+- Open any TypeScript file in the Zopio project
+- Check for SonarLint annotations in the editor
+- Verify the Problems panel shows SonarLint issues
 
+## Configuration for Zopio
+
+### Project-Specific Settings
+
+The Zopio project includes pre-configured SonarLint settings:
+
+#### `.vscode/settings.json`
 ```json
 {
-  "rules": {
-    "typescript:S1234": {
+  "sonarlint.pathToNodeExecutable": "node",
+  "sonarlint.output.showAnalyzerLogs": true,
+  "sonarlint.output.showVerboseLogs": false,
+  "sonarlint.connectedMode.project": {
+    "connectionId": "SonarCloud",
+    "projectKey": "zopiolabs_zopio_test_fork"
+  },
+  "sonarlint.rules": {
+    "typescript:S1848": {
+      "level": "off"
+    },
+    "typescript:S6479": {
       "level": "off"
     }
   }
 }
 ```
 
-### Connect to SonarCloud (Recommended for Team)
+#### `.sonarlint/sonarlint.json`
+```json
+{
+  "rules": {
+    "typescript:S1848": {
+      "level": "off"
+    },
+    "javascript:S3776": {
+      "parameters": {
+        "threshold": 20
+      }
+    },
+    "typescript:S3776": {
+      "parameters": {
+        "threshold": 20
+      }
+    },
+    "typescript:S1479": {
+      "parameters": {
+        "maximum": 35
+      }
+    },
+    "typescript:S6478": {
+      "level": "off"
+    },
+    "typescript:S6582": {
+      "level": "off"
+    }
+  },
+  "typeScript": {
+    "globals": [
+      // React, Next.js, and Node.js globals
+      "React", "JSX", "__dirname", "__filename", 
+      "exports", "global", "module", "process", "require"
+    ]
+  },
+  "excludedRules": [
+    "common/DebuggingStatement",
+    "common/DuplicatedBlocks"
+  ],
+  "exclude": [
+    "packages/database/generated/**",
+    "devapps/emailstudio/.react-email/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/coverage/**",
+    "**/node_modules/**",
+    "**/.turbo/**"
+  ]
+}
+```
 
-For team-synchronized rules and quality gates:
+### Understanding the Configuration
 
-1. **Get your SonarCloud token:**
-   - Go to [SonarCloud Security](https://sonarcloud.io/account/security)
-   - Generate a new token with a descriptive name (e.g., "VSCode SonarLint")
-   - Copy the token (keep it secure!)
+1. **Node Executable Path**: Uses the system Node.js installation
+2. **Connected Mode**: Configured to sync with SonarCloud project `zopiolabs_zopio_test_fork`
+3. **Logging**: Analyzer logs enabled for debugging, verbose logs disabled
+4. **Rule Overrides**: 
+   - TypeScript rules S1848, S6478, S6582 disabled for project compatibility
+   - Cognitive complexity threshold increased to 20 for monorepo patterns
+   - Maximum switch cases increased to 35
+5. **Exclusions**: 
+   - Generated code (Prisma, Next.js builds)
+   - Dependencies and build artifacts
+   - Test coverage reports
+6. **Global Variables**: Configured for React, Next.js, and Node.js environments
 
-2. **Configure SonarLint connection:**
-   - `Cmd+Shift+P` → "SonarLint: Configure Connection"
-   - Choose "SonarCloud"
-   - Enter your token when prompted
-   - Select organization: `zopiolabs`
-   - Select project: `zopiolabs_zopio_test_fork`
+## Using SonarLint
 
-3. **Verify connection:**
-   - Check that "SonarLint: Connected Mode" shows in the status bar
-   - Open any TypeScript file and confirm rules are synchronized
+### Real-Time Analysis
 
-**Note:** Each team member needs their own SonarCloud token. Never share or commit tokens to the repository.
+SonarLint automatically analyzes your code as you type. Issues appear:
+- As squiggly underlines in the editor
+- In the Problems panel (⌘⇧M / Ctrl+Shift+M)
+- In the SonarLint view in the Activity Bar
 
----
+### Issue Severity Levels
 
-## Configuration
+1. **🔴 Bugs**: Code that's likely broken or will fail
+2. **🟠 Vulnerabilities**: Security issues that need immediate attention
+3. **🟡 Code Smells**: Maintainability issues that should be addressed
+4. **ℹ️ Info**: Best practice suggestions and minor improvements
 
-### Project Rules
+### Viewing Issue Details
 
-Custom rules are in `.sonarlint/sonarlint.json`:
+1. Hover over underlined code to see the issue description
+2. Click the lightbulb icon for quick fixes (when available)
+3. Click "Why is this an issue?" for detailed explanations
 
-- Adjusted complexity thresholds
-- Test file exclusions
-- Framework-specific globals
+### Quick Actions
 
-### VSCode Settings
+For many issues, SonarLint provides automatic fixes:
+1. Place cursor on the issue
+2. Press ⌘. (Mac) or Ctrl+. (Windows/Linux)
+3. Select the suggested fix from the menu
 
-SonarLint settings in `.vscode/settings.json`:
+## Common Issues and Solutions
 
-- Analyzer logs enabled for debugging
-- Specific rules disabled to avoid conflicts with Biome
+### TypeScript Specific
 
----
+#### Unused Imports
+```typescript
+// ❌ Issue: Unused import
+import { unusedFunction } from './utils';
 
-## Troubleshooting
+// ✅ Fix: Remove unused imports
+// SonarLint will highlight and offer to remove automatically
+```
 
-### SonarLint Not Working?
+#### Complex Functions
+```typescript
+// ❌ Issue: Cognitive complexity too high
+function complexFunction(data: any) {
+  if (data) {
+    if (data.type === 'A') {
+      if (data.value > 10) {
+        // Multiple nested conditions
+      }
+    }
+  }
+}
 
-1. Check Output panel → SonarLint
-2. Ensure file is in a supported language (JS/TS)
-3. Restart VSCode
+// ✅ Fix: Extract into smaller functions
+function processData(data: any) {
+  if (!data) return;
+  
+  if (data.type === 'A') {
+    handleTypeA(data);
+  }
+}
 
-### Too Many False Positives?
+function handleTypeA(data: any) {
+  if (data.value > 10) {
+    // Handle specific case
+  }
+}
+```
 
-1. Update to latest SonarLint version
-2. Report persistent issues to the team
-3. Consider rule suppression (see above)
+#### Security Issues
+```typescript
+// ❌ Issue: Potential SQL injection
+const query = `SELECT * FROM users WHERE id = ${userId}`;
 
-### Performance Issues?
+// ✅ Fix: Use parameterized queries with Prisma
+import { database } from '@repo/database';
 
-1. Disable verbose logs in settings
-2. Exclude large generated files
-3. Check Output panel for errors
-4. For monorepo issues, ensure proper workspace configuration
+const user = await database.user.findUnique({
+  where: { id: userId }
+});
+```
 
-### Monorepo-Specific Issues
+### React/Next.js Specific
 
-**SonarLint not analyzing files in packages/:**
+#### Missing Keys in Lists
+```tsx
+// ❌ Issue: Missing key prop
+items.map(item => <div>{item.name}</div>)
 
-- Ensure you're opening the root directory, not individual packages
-- Check that files match the inclusion patterns in `.sonarlint/sonarlint.json`
+// ✅ Fix: Add unique key
+items.map(item => <div key={item.id}>{item.name}</div>)
+```
 
-**False positives on generated files:**
+#### Accessibility Issues
+```tsx
+// ❌ Issue: Missing alt text
+<img src="/logo.png" />
 
-- Verify exclusions in `.sonarlint/sonarlint.json` cover all generated directories
-- Common exclusions: `packages/database/generated/**`, `**/*.d.ts`
+// ✅ Fix: Add descriptive alt text
+<img src="/logo.png" alt="Zopio logo" />
 
-**Rules not synchronized:**
+// ❌ Issue: Click handler on non-interactive element
+<div onClick={handleClick}>Click me</div>
 
-- Confirm SonarCloud connection shows correct project: `zopiolabs_zopio_test_fork`
-- Check organization access: `zopiolabs`
-- Refresh connection: `Cmd+Shift+P` → "SonarLint: Update All Project Bindings"
+// ✅ Fix: Use semantic HTML
+<button onClick={handleClick}>Click me</button>
+```
 
----
+#### Hook Dependencies
+```typescript
+// ❌ Issue: Missing dependencies in useEffect
+useEffect(() => {
+  fetchData(userId);
+}, []); // userId missing from dependency array
+
+// ✅ Fix: Include all dependencies
+useEffect(() => {
+  fetchData(userId);
+}, [userId]);
+```
 
 ## Best Practices
 
-### Do
+### 1. Address Issues Immediately
+- Fix issues as they appear rather than accumulating technical debt
+- Use quick fixes when available
+- Understand why something is an issue before fixing
 
-- Fix security vulnerabilities immediately
-- Address bugs before merging
-- Use SonarLint to learn secure coding patterns
-- Report false positives to improve configuration
+### 2. Configure Team Standards
+- Agree on which rules to enforce project-wide
+- Document exceptions in `.sonarlint/sonarlint.json`
+- Review and update rules periodically
 
-### Don't
+### 3. Use the SonarLint Panel
+- Open the SonarLint view to see all issues in current file
+- Filter by severity to prioritize critical issues
+- Use the "Clean as You Code" approach
 
-- Ignore security issues without review
-- Suppress warnings without understanding them
-- Disable SonarLint entirely
-- Commit code with unresolved vulnerabilities
+### 4. Integration with CI/CD
+- SonarLint rules should match your SonarCloud configuration
+- Fix issues locally before pushing to avoid CI failures
+- Use connected mode for synchronized rules
 
----
+### 5. AI-Assisted Development Best Practices
 
-## Test Coverage
+#### When Using Cursor
+- **Security First**: Always let SonarLint validate AI-generated code
+- **Learn from Issues**: Ask Cursor to explain why SonarLint flagged something
+- **Batch Fixes**: Use Cursor's multi-cursor to fix similar issues across files
+- **Context Sharing**: Include SonarLint error messages in your Cursor prompts
+
+#### When Using Windsurf
+- **Codeium + SonarLint**: Let Codeium generate code, then validate with SonarLint
+- **Auto-fix Workflow**: Codeium suggests → SonarLint validates → You approve
+- **Performance Balance**: Disable real-time analysis for very large files
+- **Learning Mode**: Use Windsurf's explain feature for SonarLint rules
+
+#### General AI Tips
+- Never blindly accept AI fixes for security issues
+- Always understand the security implications of suggested changes
+- Use AI to learn about best practices, not bypass them
+- Combine AI efficiency with SonarLint's security expertise
+
+## Monorepo-Specific Guidance
+
+### Working with Packages
+
+When working in the Zopio monorepo:
+
+1. **Open from Root**: Always open VS Code from the repository root, not individual packages
+2. **File Analysis**: SonarLint analyzes all TypeScript/JavaScript files across packages
+3. **Shared Configuration**: Settings apply to all packages uniformly
+
+### Common Monorepo Issues
+
+#### Import Resolution
+```typescript
+// ✅ Correct: Use workspace aliases
+import { Button } from '@repo/design-system/ui';
+
+// ❌ Incorrect: Relative imports across packages
+import { Button } from '../../../packages/design-system/ui';
+```
+
+#### Generated Files
+Files in these directories are automatically excluded:
+- `packages/database/generated/**` - Prisma generated client
+- `devapps/emailstudio/.react-email/**` - React Email generated files
+- `**/dist/**` - Build outputs
+- `**/.next/**` - Next.js build artifacts
+- `**/coverage/**` - Test coverage reports
+- `**/node_modules/**` - Dependencies
+- `**/.turbo/**` - Turborepo cache
+
+## Troubleshooting
+
+### General Issues
+
+#### SonarLint Not Working
+
+1. **Check Output Panel**
+   - View → Output → Select "SonarLint" from dropdown
+   - Look for error messages
+
+2. **Verify Node.js**
+   ```bash
+   node --version  # Should be v18 or higher (Zopio requires >=18)
+   ```
+
+3. **Restart Language Service**
+   - Command Palette → "TypeScript: Restart TS Server"
+
+### IDE-Specific Issues
+
+#### Cursor Issues
+
+1. **Extension Not Loading**
+   - Cursor sometimes disables extensions for performance
+   - Go to Settings → Extensions → Enable SonarLint
+   - Restart Cursor after enabling
+
+2. **Conflicts with AI Features**
+   - If Cursor's AI suggestions conflict with SonarLint:
+   - Prioritize SonarLint for security issues
+   - Use Cursor AI to implement SonarLint's suggestions
+
+3. **Performance**
+   - Cursor + SonarLint may use more resources
+   - Consider disabling real-time analysis for large files:
+   ```json
+   "sonarlint.disableTelemetry": true,
+   "sonarlint.output.showAnalyzerLogs": false
+   ```
+
+#### Windsurf Issues
+
+1. **Extension Compatibility**
+   - Some VS Code extensions may need updates for Windsurf
+   - Check Windsurf's extension compatibility list
+   - Update to latest Windsurf version if issues persist
+
+2. **Codeium Integration Conflicts**
+   - Codeium's autocomplete may override SonarLint warnings
+   - Configure Codeium to respect SonarLint annotations:
+   ```json
+   "codeium.enableCodeLens": false,
+   "codeium.enableInlineCompletions": true
+   ```
+
+3. **Memory Usage**
+   - Windsurf + extensions can be memory intensive
+   - Increase memory allocation if needed:
+   ```json
+   "sonarlint.ls.vmargs": "-Xmx2G"
+   ```
+
+### False Positives
+
+If SonarLint reports incorrect issues:
+
+1. **Suppress Specific Issues**
+   ```typescript
+   // NOSONAR - Explanation why this is okay
+   const necessaryComplexCode = ...;
+   ```
+
+2. **Configure Rule Exceptions**
+   - Edit `.sonarlint/sonarlint.json`:
+   ```json
+   {
+     "rules": {
+       "typescript:RuleID": {
+         "level": "off"
+       }
+     }
+   }
+   ```
+
+### Performance Issues
+
+If SonarLint slows down your IDE:
+
+1. **Disable Verbose Logging**
+   ```json
+   "sonarlint.output.showVerboseLogs": false
+   ```
+
+2. **Check for Large Files**
+   - SonarLint may struggle with very large files
+   - Consider splitting large files
+
+3. **IDE-Specific Optimizations**
+   - **VS Code**: Use workspace trust features
+   - **Cursor**: Disable unused Cursor features when using SonarLint
+   - **Windsurf**: Limit concurrent analysis threads
+
+## Advanced Features
+
+### Connected Mode with SonarCloud
+
+To sync with the team's SonarCloud configuration:
+
+1. **Generate Personal Token**
+   - Go to [SonarCloud Security](https://sonarcloud.io/account/security)
+   - Generate new token with "Execute Analysis" permission
+   - Name it descriptively (e.g., "VSCode SonarLint")
+
+2. **Configure Connection**
+   - Command Palette (⌘⇧P) → "SonarLint: Configure Connection"
+   - Choose "SonarCloud"
+   - Enter your token when prompted
+   - Organization: `zopiolabs`
+   - Project Key: `zopiolabs_zopio_test_fork`
+
+3. **Verify Connection**
+   - Status bar should show "SonarLint: Connected Mode"
+   - Rules will sync with SonarCloud configuration
+
+### GitHub Actions Integration
+
+The Zopio project includes comprehensive SonarCloud integration through GitHub Actions:
+
+#### Workflow Configuration (`.github/workflows/sonarcloud.yml`)
+
+The workflow automatically runs on:
+- Pushes to the `develop` branch
+- Pull requests targeting `develop`
+
+Key features:
+1. **Automatic Analysis**: Runs SonarCloud scanner on every PR and push
+2. **Coverage Integration**: Generates and uploads test coverage reports
+3. **Quality Gate Comments**: Posts analysis results directly on PRs
+4. **Module-Based Analysis**: Separate analysis for different parts of the monorepo
+
+#### Module Configuration (`sonar-project.properties`)
+
+The project uses modular analysis for better organization:
+```properties
+# Main project configuration
+sonar.projectKey=zopiolabs_zopio_test_fork
+sonar.organization=zopiolabs
+sonar.projectName=zopio_test_fork
+
+# Module definitions
+sonar.modules=apps-api,apps-app,packages-database,packages-design-system
+
+# Module-specific source and test directories
+apps-api.sonar.sources=apps/api
+apps-api.sonar.tests=apps/api/__tests__
+apps-app.sonar.sources=apps/app
+apps-app.sonar.tests=apps/app/__tests__
+```
+
+#### Quality Gates
+
+The project enforces strict quality requirements:
+- **Coverage**: Minimum 80% on new code (when 20+ lines added)
+- **Duplications**: Maximum 3% duplicated lines
+- **Maintainability**: A rating required
+- **Reliability**: A rating required (no bugs)
+- **Security**: A rating required (no vulnerabilities)
+
+### Custom Rules
+
+Create project-specific rules:
+
+1. **Define Rule Configuration**
+   ```json
+   "sonarlint.rules": {
+     "typescript:S125": {
+       "level": "error",
+       "parameters": {
+         "format": "^[A-Z][a-zA-Z0-9]*$"
+       }
+     }
+   }
+   ```
+
+2. **Share with Team**
+   - Commit `.sonarlint/sonarlint.json`
+   - Document custom rules in team wiki
+
+## Integration with Zopio Workflow
+
+### Pre-Commit Checks
+
+Before committing:
+1. Ensure Problems panel shows no critical SonarLint issues
+2. Run quality checks:
+   ```bash
+   pnpm lint
+   pnpm typecheck
+   pnpm test
+   ```
+
+### Pull Request Workflow
+
+1. **Local Development**
+   - Fix all SonarLint issues in changed files
+   - Run: Command Palette → "SonarLint: Show All Issues"
+
+2. **Before Push**
+   - Verify no new security vulnerabilities or bugs
+   - Check that code smells are minimized
+
+3. **CI Integration**
+   - SonarCloud runs automatically on all PRs
+   - Must pass quality gates for merge:
+     - No new bugs
+     - No new vulnerabilities
+     - 80% coverage on new code (when 20+ lines added)
+     - Maintainability rating A
+
+## Coverage and Testing
 
 ### Running Tests with Coverage
 
-To generate coverage reports for SonarCloud:
-
 ```bash
-# Run all tests with coverage
+# Run all tests with coverage (from root)
 pnpm test -- --coverage --run
 
-# Coverage reports are generated at:
-# - coverage/lcov.info (for SonarCloud)
-# - coverage/index.html (for local viewing)
+# Run specific app tests with coverage
+cd apps/app && pnpm test -- --coverage --run
+cd apps/api && pnpm test -- --coverage --run
+
+# View coverage reports (generated locally in each app)
+open apps/app/coverage/index.html
+open apps/api/coverage/index.html
 ```
 
-### Coverage Configuration
+### Coverage Integration
 
-Test coverage is configured in each app's `vitest.config.mjs`:
+Coverage reports are generated locally in each app's directory:
+- `apps/app/coverage/lcov.info` - Frontend app coverage
+- `apps/api/coverage/lcov.info` - API coverage
+- Each package can have its own `./coverage` directory
 
-- Coverage provider: V8
-- Output formats: text, lcov, html
-- Reports location: `./coverage` (repository root)
-- Excludes: node_modules, dist, config files, test files
+SonarCloud workflow:
+1. GitHub Actions runs tests with coverage
+2. Coverage files are collected from each app/package
+3. Results are uploaded to SonarCloud
+4. Quality gate results posted as PR comments
 
-### Quality Gates
+## Quick Reference
 
-SonarCloud enforces:
+### Keyboard Shortcuts
 
-- 80% coverage on new code (when 20+ lines added)
-- No new bugs or vulnerabilities
-- Maintainability rating A
-- Security rating A
+#### VS Code / Cursor / Windsurf (Common)
 
----
+| Action | Mac | Windows/Linux |
+|--------|-----|---------------|
+| View Problems | ⌘⇧M | Ctrl+Shift+M |
+| Quick Fix | ⌘. | Ctrl+. |
+| Next Problem | F8 | F8 |
+| Previous Problem | ⇧F8 | Shift+F8 |
+| Show All Issues | ⌘⇧P → "SonarLint: Show All Issues" | Ctrl+Shift+P → "SonarLint: Show All Issues" |
 
-## Setting Up GitHub Secrets (Repository Admin Only)
+#### Cursor-Specific
 
-For the SonarCloud CI/CD integration to work, repository administrators must set up the following GitHub secret:
+| Action | Mac | Windows/Linux |
+|--------|-----|---------------|
+| AI Fix Suggestion | ⌘K | Ctrl+K |
+| Apply AI Fix | ⌘⏎ | Ctrl+Enter |
+| Chat about Issue | ⌘L | Ctrl+L |
 
-### Required Secret: `SONAR_TOKEN`
+#### Windsurf-Specific
 
-1. **Generate SonarCloud Token:**
-   - Go to [SonarCloud Security](https://sonarcloud.io/account/security)
-   - Generate a new token with a descriptive name (e.g., "GitHub Actions CI")
-   - **Important:** This should be a different token from personal SonarLint tokens
-   - Copy the token (it will only be shown once)
+| Action | Mac | Windows/Linux |
+|--------|-----|---------------|
+| Codeium Fix | ⌥⏎ | Alt+Enter |
+| Show Codeium Suggestions | ⌘I | Ctrl+I |
+| Navigate Codeium Fixes | Tab | Tab |
 
-2. **Add Secret to GitHub Repository:**
-   - Navigate to: `Settings` → `Secrets and variables` → `Actions`
-   - Click `New repository secret`
-   - Name: `SONAR_TOKEN`
-   - Value: Paste the SonarCloud token
-   - Click `Add secret`
+### Common Rule IDs
 
-3. **Verify Setup:**
-   - The workflow uses `${{ secrets.SONAR_TOKEN }}` automatically
-   - No code changes needed once the secret is configured
-   - Test by creating a pull request
+| Rule | Description | Severity | Action |
+|------|-------------|----------|---------|
+| S125 | Remove commented code | Minor | Clean up |
+| S1481 | Remove unused variables | Major | Remove |
+| S3776 | Reduce cognitive complexity | Critical | Refactor |
+| S6479 | No redundant type annotations | Minor | Simplify |
+| S1848 | Check object existence | Major | Add checks |
+| S2589 | Boolean expressions should not be gratuitous | Major | Simplify |
+| S1854 | Dead stores should be removed | Major | Remove |
 
-**Security Note:** Never commit SonarCloud tokens to the repository. The provided API key in the task description should be used to set up this GitHub secret, not placed in any code files.
+### Useful Commands
 
----
+Access via Command Palette (⌘⇧P / Ctrl+Shift+P):
+- `SonarLint: Show All Issues` - View all issues in workspace
+- `SonarLint: Configure Connection` - Set up SonarCloud sync
+- `SonarLint: Update All Project Bindings` - Refresh connected mode
+- `SonarLint: Deactivate Rule` - Disable specific rule
 
-## Resources
+## Security Best Practices
 
-- [SonarLint Rules Reference](https://rules.sonarsource.com/typescript)
-- [Security Hotspots Guide](https://docs.sonarcloud.io/digging-deeper/security-hotspots/)
+### Never Commit Secrets
+```typescript
+// ❌ Never do this
+const apiKey = "sk-abc123...";
+
+// ✅ Use environment variables
+const apiKey = process.env.API_KEY;
+```
+
+### Validate User Input
+```typescript
+// ❌ Vulnerable to injection
+const query = `SELECT * FROM users WHERE name = '${userName}'`;
+
+// ✅ Use parameterized queries
+const user = await database.user.findFirst({
+  where: { name: userName }
+});
+```
+
+### Handle Errors Securely
+```typescript
+// ❌ Exposes internal details
+catch (error) {
+  res.status(500).json({ error: error.stack });
+}
+
+// ✅ Safe error handling
+catch (error) {
+  logger.error(error);
+  res.status(500).json({ error: 'Internal server error' });
+}
+```
+
+## Team Collaboration
+
+### Sharing Configuration
+
+1. **Rule Customizations**: Commit `.sonarlint/sonarlint.json`
+2. **VS Code Settings**: Commit `.vscode/settings.json`
+3. **Documentation**: Update this guide for team-specific patterns
+
+### Reporting Issues
+
+When you find a false positive or need rule adjustment:
+
+1. Document the issue with code example
+2. Discuss in team chat or PR
+3. Update configuration if team agrees
+4. Commit changes for everyone
+
+## Next Steps
+
+1. **Install SonarLint** if you haven't already
+2. **Open a TypeScript file** in the Zopio project
+3. **Make an intentional mistake** (e.g., unused variable)
+4. **See SonarLint in action** with real-time feedback
+5. **Fix the issue** using the quick fix suggestion
+6. **Connect to SonarCloud** for team-synchronized rules
+7. **Explore the SonarLint panel** for project-wide insights
+
+## Additional Resources
+
+- [SonarLint VS Code Documentation](https://docs.sonarsource.com/sonarlint/vs-code/)
+- [TypeScript Rules Reference](https://rules.sonarsource.com/typescript/)
+- [React/JSX Rules](https://rules.sonarsource.com/javascript/)
+- [Security Hotspot Guide](https://docs.sonarcloud.io/digging-deeper/security-hotspots/)
 - [Zopio SonarCloud Dashboard](https://sonarcloud.io/project/overview?id=zopiolabs_zopio_test_fork)
-
----
 
 ## Getting Help
 
-- **Configuration Issues**: Check `.sonarlint/sonarlint.json`
-- **False Positives**: Discuss in PR or team chat
-- **Bug Reports**: Label with `quality` in GitHub Issues
+### General Support
+- **Configuration Issues**: Check `.sonarlint/sonarlint.json` and `.vscode/settings.json`
+- **False Positives**: Create a GitHub issue with the `quality` label
+- **Questions**: Ask in the team chat or during code reviews
+- **Bug Reports**: Include the SonarLint output logs
+
+### IDE-Specific Support
+
+#### VS Code
+- [VS Code SonarLint Issues](https://github.com/SonarSource/sonarlint-vscode/issues)
+- [VS Code Extension Docs](https://marketplace.visualstudio.com/items?itemName=SonarSource.sonarlint-vscode)
+
+#### Cursor
+- Check Cursor's extension compatibility in Settings
+- [Cursor Discord](https://discord.gg/cursor) for community support
+- Report extension issues to both Cursor and SonarLint teams
+
+#### Windsurf
+- [Windsurf Documentation](https://docs.windsurf.com/)
+- Extension compatibility list in Windsurf settings
+- Codeium + SonarLint integration issues: Check Windsurf forums
+
+### Useful Resources
+- [SonarLint Community Forum](https://community.sonarsource.com/c/sonarlint)
+- [Stack Overflow - SonarLint Tag](https://stackoverflow.com/questions/tagged/sonarlint)
+
+---
+
+*Last updated: January 2025*  
+*Maintainer: Zopio Development Team*

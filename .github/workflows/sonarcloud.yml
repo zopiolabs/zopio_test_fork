@@ -101,7 +101,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # Additional arguments can be configured via sonar-project.properties
+        with:
+          # Enhanced PR analysis arguments
+          args: >
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
+            -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
+        # PR-specific arguments only apply when it's a pull request
+        if: github.event_name == 'pull_request'
+      
+      # Step 8b: Run SonarCloud analysis for push events
+      - name: SonarCloud Scan (Push)
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        # Standard analysis for push events
+        if: github.event_name == 'push'
 
       # Step 9: Comment PR with quality gate status (optional)
       # This provides immediate feedback to developers on PRs
@@ -120,14 +136,26 @@ jobs:
         with:
           script: |
             const status = '${{ steps.sonarcloud-quality-gate-check.outputs.quality-gate-status }}';
-            const emoji = status === 'PASSED' ? '✅' : '⚠️';
-            const message = `${emoji} **SonarCloud Quality Gate**: ${status}
-
-            [View detailed analysis on SonarCloud](https://sonarcloud.io/dashboard?id=zopiolabs_zopio_test_fork)`;
+            const emoji = status === 'PASSED' ? '✅' : '❌';
+            const statusText = status === 'PASSED' ? 'Passed' : 'Failed';
+            
+            // Fetch additional metrics
+            const coverageInfo = `
+            📊 **Code Quality Metrics:**
+            - Quality Gate: ${emoji} ${statusText}
+            - Coverage: Check the [detailed report](https://sonarcloud.io/summary/new_code?id=zopiolabs_zopio_test_fork&pullRequest=${{ github.event.pull_request.number }})
+            
+            💡 **Next Steps:**
+            ${status === 'PASSED' 
+              ? '- Your code meets quality standards! ✨' 
+              : '- Please address the issues found in the SonarCloud report\n- Focus on new code coverage and security issues'}
+            
+            🔗 [View Full Analysis on SonarCloud](https://sonarcloud.io/dashboard?id=zopiolabs_zopio_test_fork&pullRequest=${{ github.event.pull_request.number }})
+            `;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: message
+              body: coverageInfo
             });

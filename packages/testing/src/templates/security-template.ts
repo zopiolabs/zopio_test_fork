@@ -2,25 +2,26 @@
  * SPDX-License-Identifier: MIT
  */
 
-import type { TestTemplate, SecurityTestOptions } from './types.js';
+import type { SecurityTestOptions, TestTemplate } from './types.js';
 
 /**
  * Template for security-focused tests
  */
 export const securityTestTemplate: TestTemplate = {
   name: 'Security Test',
-  description: 'Template for testing security vulnerabilities, authentication, and authorization',
-  
+  description:
+    'Template for testing security vulnerabilities, authentication, and authorization',
+
   generate: (options: SecurityTestOptions) => {
-    const { 
-      moduleName, 
-      modulePath, 
+    const {
+      moduleName,
+      modulePath,
       testAuthentication = true,
       testAuthorization = true,
       testInputValidation = true,
       testSqlInjection = true,
       testXss = true,
-      testCsrf = true
+      testCsrf = true,
     } = options;
 
     return `/**
@@ -70,7 +71,9 @@ describe('${moduleName} Security Tests', () => {
     mockRoleChecker.mockReturnValue(true);
   });
 
-  ${testAuthentication ? `describe('Authentication Security', () => {
+  ${
+    testAuthentication
+      ? `describe('Authentication Security', () => {
     it('should reject requests without authentication', async () => {
       mockTokenValidator.mockResolvedValue(null);
       
@@ -144,9 +147,13 @@ describe('${moduleName} Security Tests', () => {
         data: 'test'
       })).rejects.toThrow('Session expired');
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${testAuthorization ? `describe('Authorization Security', () => {
+  ${
+    testAuthorization
+      ? `describe('Authorization Security', () => {
     it('should enforce role-based access control', async () => {
       mockRoleChecker.mockReturnValue(false);
       
@@ -208,9 +215,13 @@ describe('${moduleName} Security Tests', () => {
         permission: 'write'
       })).rejects.toThrow('No write access to parent resource');
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${testInputValidation ? `describe('Input Validation Security', () => {
+  ${
+    testInputValidation
+      ? `describe('Input Validation Security', () => {
     it('should validate input types', async () => {
       const invalidInputs = [
         { input: null, expected: 'Input cannot be null' },
@@ -295,9 +306,13 @@ describe('${moduleName} Security Tests', () => {
         })).rejects.toThrow('Invalid or unsafe URL');
       }
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${testSqlInjection ? `describe('SQL Injection Prevention', () => {
+  ${
+    testSqlInjection
+      ? `describe('SQL Injection Prevention', () => {
     it('should prevent SQL injection in user input', async () => {
       const sqlInjectionPayloads = [
         "'; DROP TABLE users; --",
@@ -354,9 +369,13 @@ describe('${moduleName} Security Tests', () => {
         expect(duration).toBeLessThan(1000);
       }
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${testXss ? `describe('XSS Prevention', () => {
+  ${
+    testXss
+      ? `describe('XSS Prevention', () => {
     it('should prevent stored XSS attacks', async () => {
       const xssPayloads = [
         '<script>alert("xss")</script>',
@@ -430,9 +449,13 @@ describe('${moduleName} Security Tests', () => {
         expect(result.executed).toBe(false);
       }
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${testCsrf ? `describe('CSRF Prevention', () => {
+  ${
+    testCsrf
+      ? `describe('CSRF Prevention', () => {
     it('should require CSRF tokens for state-changing operations', async () => {
       await expect(${moduleName}.deleteUser({
         userId: testUser.id,
@@ -497,7 +520,9 @@ describe('${moduleName} Security Tests', () => {
         })).rejects.toThrow('Invalid origin');
       }
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
   describe('Session Security', () => {
     it('should prevent session fixation', async () => {
@@ -646,5 +671,5 @@ describe('${moduleName} Security Tests', () => {
     });
   });
 });`;
-  }
+  },
 };

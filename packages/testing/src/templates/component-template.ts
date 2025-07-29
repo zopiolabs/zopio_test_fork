@@ -2,25 +2,26 @@
  * SPDX-License-Identifier: MIT
  */
 
-import type { TestTemplate, ComponentTestOptions } from './types.js';
+import type { ComponentTestOptions, TestTemplate } from './types.js';
 
 /**
  * Template for React component tests
  */
 export const componentTestTemplate: TestTemplate = {
   name: 'Component Test',
-  description: 'Template for testing React components with accessibility and interaction patterns',
-  
+  description:
+    'Template for testing React components with accessibility and interaction patterns',
+
   generate: (options: ComponentTestOptions) => {
-    const { 
-      componentName, 
-      componentPath, 
+    const {
+      componentName,
+      componentPath,
       hasProps = true,
       hasEvents = false,
       hasAsyncBehavior = false,
       hasAccessibility = true,
       testAsyncLoading = false,
-      testErrorStates = false
+      testErrorStates = false,
     } = options;
 
     return `/**
@@ -35,16 +36,24 @@ import { ${componentName} } from '${componentPath}';
 import type { ${componentName}Props } from '${componentPath}';
 
 // Mock external dependencies if needed
-${hasAsyncBehavior ? `const mockAsyncFunction = vi.fn();
+${
+  hasAsyncBehavior
+    ? `const mockAsyncFunction = vi.fn();
 vi.mock('../lib/async-operations.js', () => ({
   performAsyncOperation: mockAsyncFunction,
-}));` : ''}
+}));`
+    : ''
+}
 
 describe('${componentName}', () => {
   const defaultProps: ${componentName}Props = {
-    ${hasProps ? `// Add default props here
+    ${
+      hasProps
+        ? `// Add default props here
     title: 'Test Title',
-    onClick: vi.fn(),` : '// Component has no props'}
+    onClick: vi.fn(),`
+        : '// Component has no props'
+    }
   };
 
   const renderComponent = (props: Partial<${componentName}Props> = {}) => {
@@ -67,11 +76,15 @@ describe('${componentName}', () => {
       ${hasProps ? `expect(screen.getByText('Test Title')).toBeInTheDocument();` : `expect(screen.getByRole('${componentName.toLowerCase()}')).toBeInTheDocument();`}
     });
 
-    ${hasProps ? `it('should render with custom props', () => {
+    ${
+      hasProps
+        ? `it('should render with custom props', () => {
       renderComponent({ title: 'Custom Title' });
       
       expect(screen.getByText('Custom Title')).toBeInTheDocument();
-    });` : ''}
+    });`
+        : ''
+    }
 
     it('should apply correct CSS classes', () => {
       renderComponent();
@@ -81,7 +94,9 @@ describe('${componentName}', () => {
     });
   });
 
-  ${hasEvents ? `describe('User Interactions', () => {
+  ${
+    hasEvents
+      ? `describe('User Interactions', () => {
     it('should handle click events', async () => {
       const user = userEvent.setup();
       const handleClick = vi.fn();
@@ -106,9 +121,13 @@ describe('${componentName}', () => {
       
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${hasAccessibility ? `describe('Accessibility', () => {
+  ${
+    hasAccessibility
+      ? `describe('Accessibility', () => {
     it('should have proper ARIA attributes', () => {
       renderComponent();
       
@@ -130,10 +149,16 @@ describe('${componentName}', () => {
       const element = screen.getByRole('${componentName.toLowerCase()}');
       expect(element).toBeVisible();
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${hasAsyncBehavior ? `describe('Async Behavior', () => {
-    ${testAsyncLoading ? `it('should show loading state during async operations', async () => {
+  ${
+    hasAsyncBehavior
+      ? `describe('Async Behavior', () => {
+    ${
+      testAsyncLoading
+        ? `it('should show loading state during async operations', async () => {
       mockAsyncFunction.mockImplementation(() => 
         new Promise(resolve => setTimeout(() => resolve({ success: true }), 100))
       );
@@ -148,9 +173,13 @@ describe('${componentName}', () => {
       await waitFor(() => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
-    });` : ''}
+    });`
+        : ''
+    }
 
-    ${testErrorStates ? `it('should handle async errors gracefully', async () => {
+    ${
+      testErrorStates
+        ? `it('should handle async errors gracefully', async () => {
       const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockAsyncFunction.mockRejectedValue(new Error('Async operation failed'));
       
@@ -164,8 +193,12 @@ describe('${componentName}', () => {
       });
       
       consoleError.mockRestore();
-    });` : ''}
-  });` : ''}
+    });`
+        : ''
+    }
+  });`
+      : ''
+  }
 
   describe('Edge Cases', () => {
     it('should handle empty props gracefully', () => {
@@ -174,11 +207,15 @@ describe('${componentName}', () => {
       expect(screen.getByRole('${componentName.toLowerCase()}')).toBeInTheDocument();
     });
 
-    ${hasProps ? `it('should handle null/undefined props', () => {
+    ${
+      hasProps
+        ? `it('should handle null/undefined props', () => {
       renderComponent({ title: undefined });
       
       expect(screen.getByRole('${componentName.toLowerCase()}')).toBeInTheDocument();
-    });` : ''}
+    });`
+        : ''
+    }
   });
 
   describe('Integration', () => {
@@ -190,5 +227,5 @@ describe('${componentName}', () => {
     });
   });
 });`;
-  }
+  },
 };

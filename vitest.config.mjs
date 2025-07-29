@@ -10,7 +10,14 @@ export default defineConfig({
     // Enable coverage by default
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov', 'html', 'json', 'json-summary', 'text-summary'],
+      reporter: [
+        'text',
+        'lcov',
+        'html',
+        'json',
+        'json-summary',
+        'text-summary',
+      ],
       reportsDirectory: './coverage',
 
       // Coverage thresholds - differentiated by package type
@@ -72,7 +79,7 @@ export default defineConfig({
 
     // Reporter configuration
     reporters: ['default', 'json', 'html'],
-    
+
     // Output JSON report for CI/CD
     outputFile: {
       json: './test-results.json',

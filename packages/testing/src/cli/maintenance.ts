@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { Command } from 'commander';
+import { exec } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
+import { Command } from 'commander';
 
 const execAsync = promisify(exec);
 
@@ -28,20 +28,17 @@ program
   .action(async (targetPath, options) => {
     try {
       const health = await performHealthCheck(path.resolve(targetPath), {
-        coverageThreshold: parseInt(options.threshold),
+        coverageThreshold: Number.parseInt(options.threshold),
       });
-      
+
       if (options.json) {
-        console.log(JSON.stringify(health, null, 2));
       } else {
         printHealthReport(health);
       }
-      
+
       // Exit with error code if health is poor
       process.exit(health.overall.score < 7 ? 1 : 0);
-      
-    } catch (error) {
-      console.error('❌ Error performing health check:', error.message);
+    } catch (_error) {
       process.exit(1);
     }
   });
@@ -55,32 +52,21 @@ program
   .option('--fix', 'Attempt to automatically fix flaky tests')
   .action(async (options) => {
     try {
-      console.log(`🔍 Running flaky test detection (${options.runs} runs)...`);
-      
       const flakyTests = await detectFlakyTests({
-        runs: parseInt(options.runs),
-        failureThreshold: parseFloat(options.threshold),
+        runs: Number.parseInt(options.runs),
+        failureThreshold: Number.parseFloat(options.threshold),
       });
-      
+
       if (flakyTests.length === 0) {
-        console.log('✅ No flaky tests detected!');
         return;
       }
-      
-      console.log(`⚠️  Found ${flakyTests.length} flaky tests:`);
-      flakyTests.forEach(test => {
-        console.log(`  - ${test.file}:${test.testName} (${Math.round(test.failureRate * 100)}% failure rate)`);
-      });
-      
+      flakyTests.forEach((_test) => {});
+
       if (options.fix) {
-        console.log('\n🔧 Attempting automatic fixes...');
         await fixFlakyTests(flakyTests);
       } else {
-        console.log('\n💡 Run with --fix to attempt automatic fixes');
       }
-      
-    } catch (error) {
-      console.error('❌ Error detecting flaky tests:', error.message);
+    } catch (_error) {
       process.exit(1);
     }
   });
@@ -97,39 +83,30 @@ program
         dryRun: options.dryRun,
         aggressive: options.aggressive,
       });
-      
-      if (cleanup.obsoleteTests.length === 0 && cleanup.unusedMocks.length === 0) {
-        console.log('✅ No cleanup needed!');
+
+      if (
+        cleanup.obsoleteTests.length === 0 &&
+        cleanup.unusedMocks.length === 0
+      ) {
         return;
       }
-      
+
       if (options.dryRun) {
-        console.log('🔍 Cleanup analysis (dry run):');
       } else {
-        console.log('🧹 Cleaning up test suite...');
       }
-      
+
       if (cleanup.obsoleteTests.length > 0) {
-        console.log(`\nObsolete test files (${cleanup.obsoleteTests.length}):`);
-        cleanup.obsoleteTests.forEach(file => {
-          console.log(`  - ${file.path} (${file.reason})`);
-        });
+        cleanup.obsoleteTests.forEach((_file) => {});
       }
-      
+
       if (cleanup.unusedMocks.length > 0) {
-        console.log(`\nUnused mock files (${cleanup.unusedMocks.length}):`);
-        cleanup.unusedMocks.forEach(file => {
-          console.log(`  - ${file}`);
-        });
+        cleanup.unusedMocks.forEach((_file) => {});
       }
-      
+
       if (!options.dryRun) {
         await performCleanup(cleanup);
-        console.log('✅ Cleanup complete!');
       }
-      
-    } catch (error) {
-      console.error('❌ Error performing cleanup:', error.message);
+    } catch (_error) {
       process.exit(1);
     }
   });
@@ -142,33 +119,23 @@ program
   .action(async (options) => {
     try {
       const updates = await analyzeTestDependencies();
-      
+
       if (updates.length === 0) {
-        console.log('✅ All test dependencies are up to date!');
         return;
       }
-      
-      console.log(`📦 Found ${updates.length} test files with outdated dependencies:`);
-      
+
       for (const update of updates) {
-        console.log(`\n📄 ${update.file}:`);
-        update.changes.forEach(change => {
-          console.log(`  - ${change.from} → ${change.to} (${change.reason})`);
-        });
-        
+        update.changes.forEach((_change) => {});
+
         if (!options.dryRun) {
           await applyDependencyUpdates(update);
         }
       }
-      
+
       if (options.dryRun) {
-        console.log('\n💡 Run without --dry-run to apply updates');
       } else {
-        console.log('\n✅ Dependency updates complete!');
       }
-      
-    } catch (error) {
-      console.error('❌ Error updating dependencies:', error.message);
+    } catch (_error) {
       process.exit(1);
     }
   });
@@ -180,35 +147,20 @@ program
   .option('--profile', 'Generate detailed performance profile')
   .action(async (options) => {
     try {
-      console.log('⚡ Analyzing test performance...');
-      
       const performance = await analyzeTestPerformance({
         generateProfile: options.profile,
       });
-      
-      console.log('\n📊 Performance Analysis:');
-      console.log(`Total test time: ${performance.totalTime}ms`);
-      console.log(`Average test time: ${Math.round(performance.averageTime)}ms`);
-      console.log(`Slowest tests (${performance.slowTests.length}):`);
-      
-      performance.slowTests.forEach((test, index) => {
-        console.log(`  ${index + 1}. ${test.name} - ${test.duration}ms`);
-      });
-      
+
+      performance.slowTests.forEach((_test, _index) => {});
+
       if (performance.recommendations.length > 0) {
-        console.log('\n💡 Optimization recommendations:');
-        performance.recommendations.forEach(rec => {
-          console.log(`  - ${rec}`);
-        });
+        performance.recommendations.forEach((_rec) => {});
       }
-      
+
       if (options.profile) {
         await generatePerformanceProfile(performance);
-        console.log('\n📈 Performance profile saved to test-performance-profile.json');
       }
-      
-    } catch (error) {
-      console.error('❌ Error analyzing performance:', error.message);
+    } catch (_error) {
       process.exit(1);
     }
   });
@@ -217,42 +169,34 @@ program
 program
   .command('fix')
   .description('Automatically fix common test issues')
-  .option('--type <types>', 'Types of issues to fix (comma-separated)', 'imports,mocks,assertions')
+  .option(
+    '--type <types>',
+    'Types of issues to fix (comma-separated)',
+    'imports,mocks,assertions'
+  )
   .option('--dry-run', 'Show what would be fixed without making changes')
   .action(async (options) => {
     try {
       const fixTypes = options.type.split(',').map((t: string) => t.trim());
-      
-      console.log(`🔧 Analyzing common test issues (${fixTypes.join(', ')})...`);
-      
+
       const issues = await analyzeCommonIssues(fixTypes);
-      
+
       if (issues.length === 0) {
-        console.log('✅ No common issues found!');
         return;
       }
-      
-      console.log(`Found ${issues.length} issues to fix:`);
-      
+
       for (const issue of issues) {
-        console.log(`\n📄 ${issue.file}:`);
-        issue.fixes.forEach(fix => {
-          console.log(`  - ${fix.description} (line ${fix.line})`);
-        });
-        
+        issue.fixes.forEach((_fix) => {});
+
         if (!options.dryRun) {
           await applyFixes(issue);
         }
       }
-      
+
       if (options.dryRun) {
-        console.log('\n💡 Run without --dry-run to apply fixes');
       } else {
-        console.log('\n✅ Issues fixed successfully!');
       }
-      
-    } catch (error) {
-      console.error('❌ Error fixing issues:', error.message);
+    } catch (_error) {
       process.exit(1);
     }
   });
@@ -261,16 +205,18 @@ program
 program
   .command('report')
   .description('Generate comprehensive test maintenance report')
-  .option('--format <format>', 'Output format (markdown, html, json)', 'markdown')
+  .option(
+    '--format <format>',
+    'Output format (markdown, html, json)',
+    'markdown'
+  )
   .option('--output <file>', 'Output file path')
   .action(async (options) => {
     try {
-      console.log('📊 Generating maintenance report...');
-      
       const report = await generateMaintenanceReport();
-      
+
       let formattedReport: string;
-      
+
       switch (options.format) {
         case 'html':
           formattedReport = formatReportAsHTML(report);
@@ -281,16 +227,12 @@ program
         default:
           formattedReport = formatReportAsMarkdown(report);
       }
-      
+
       if (options.output) {
         await fs.writeFile(options.output, formattedReport);
-        console.log(`✅ Report saved to ${options.output}`);
       } else {
-        console.log(formattedReport);
       }
-      
-    } catch (error) {
-      console.error('❌ Error generating report:', error.message);
+    } catch (_error) {
       process.exit(1);
     }
   });
@@ -339,25 +281,44 @@ interface TestCleanup {
   duplicateTests: string[];
 }
 
-async function performHealthCheck(targetPath: string, options: { coverageThreshold: number }): Promise<HealthCheck> {
+async function performHealthCheck(
+  targetPath: string,
+  options: { coverageThreshold: number }
+): Promise<HealthCheck> {
   const coverage = await getCoverageInfo(targetPath);
   const testQuality = await analyzeTestQuality(targetPath);
   const performance = await analyzeTestPerformance({ generateProfile: false });
   const maintenance = await analyzeMaintenance(targetPath);
-  
+
   const scores = {
-    coverage: coverage.percentage >= options.coverageThreshold ? 10 : Math.max(1, Math.round(coverage.percentage / 10)),
+    coverage:
+      coverage.percentage >= options.coverageThreshold
+        ? 10
+        : Math.max(1, Math.round(coverage.percentage / 10)),
     quality: testQuality.score,
     performance: performance.score,
     maintenance: maintenance.score,
   };
-  
-  const overallScore = Math.round((scores.coverage + scores.quality + scores.performance + scores.maintenance) / 4);
-  
+
+  const overallScore = Math.round(
+    (scores.coverage +
+      scores.quality +
+      scores.performance +
+      scores.maintenance) /
+      4
+  );
+
   return {
     overall: {
       score: overallScore,
-      status: overallScore >= 8 ? 'excellent' : overallScore >= 6 ? 'good' : overallScore >= 4 ? 'fair' : 'poor',
+      status:
+        overallScore >= 8
+          ? 'excellent'
+          : overallScore >= 6
+            ? 'good'
+            : overallScore >= 4
+              ? 'fair'
+              : 'poor',
     },
     coverage: {
       percentage: coverage.percentage,
@@ -376,9 +337,12 @@ async function performHealthCheck(targetPath: string, options: { coverageThresho
 
 async function getCoverageInfo(targetPath: string) {
   try {
-    const { stdout } = await execAsync('pnpm test -- --coverage --reporter=json', { cwd: targetPath });
+    const { stdout } = await execAsync(
+      'pnpm test -- --coverage --reporter=json',
+      { cwd: targetPath }
+    );
     const coverage = JSON.parse(stdout);
-    
+
     return {
       percentage: Math.round(coverage.total.lines.percentage || 0),
       missing: coverage.uncoveredFiles || [],
@@ -392,61 +356,71 @@ async function analyzeTestQuality(targetPath: string) {
   const testFiles = await findTestFiles(targetPath);
   let totalScore = 0;
   const issues: string[] = [];
-  
+
   for (const file of testFiles) {
     const content = await fs.readFile(file, 'utf8');
     const fileScore = analyzeTestFile(content, file, issues);
     totalScore += fileScore;
   }
-  
+
   return {
     score: testFiles.length > 0 ? Math.round(totalScore / testFiles.length) : 0,
     issues,
   };
 }
 
-function analyzeTestFile(content: string, filePath: string, issues: string[]): number {
+function analyzeTestFile(
+  content: string,
+  filePath: string,
+  issues: string[]
+): number {
   let score = 10;
-  
+
   // Check for describe blocks
   if (!content.includes('describe(')) {
     score -= 2;
     issues.push(`${filePath}: Missing describe blocks for test organization`);
   }
-  
+
   // Check for proper test names
   const testMatches = content.match(/it\(['"](.*?)['"],/g) || [];
-  const poorNames = testMatches.filter(match => 
-    match.includes('should work') || 
-    match.includes('works correctly') ||
-    match.length < 20
+  const poorNames = testMatches.filter(
+    (match) =>
+      match.includes('should work') ||
+      match.includes('works correctly') ||
+      match.length < 20
   );
-  
+
   if (poorNames.length > 0) {
     score -= 1;
     issues.push(`${filePath}: ${poorNames.length} tests with poor naming`);
   }
-  
+
   // Check for setup/cleanup
   if (content.includes('beforeEach') || content.includes('afterEach')) {
     score += 1;
   } else if (testMatches.length > 3) {
     score -= 1;
-    issues.push(`${filePath}: Missing test setup/cleanup for ${testMatches.length} tests`);
+    issues.push(
+      `${filePath}: Missing test setup/cleanup for ${testMatches.length} tests`
+    );
   }
-  
+
   // Check for mocking
   if (content.includes('vi.mock') && !content.includes('vi.clearAllMocks')) {
     score -= 1;
     issues.push(`${filePath}: Mocks used but no cleanup detected`);
   }
-  
+
   return Math.max(1, score);
 }
 
-async function detectFlakyTests(options: { runs: number; failureThreshold: number }): Promise<FlakyTest[]> {
+async function detectFlakyTests(options: {
+  runs: number;
+  failureThreshold: number;
+}): Promise<FlakyTest[]> {
   const results = [];
-  
+
   for (let i = 0; i < options.runs; i++) {
     try {
       const { stdout } = await execAsync('pnpm test -- --reporter=json');
@@ -456,12 +430,12 @@ async function detectFlakyTests(options: { runs: number; failureThreshold: numbe
       results.push({ failed: true, error: error.message });
     }
   }
-  
+
   const flakyTests: FlakyTest[] = [];
   const testStats = new Map();
-  
+
   // Analyze results to find flaky tests
-  results.forEach(result => {
+  results.forEach((result) => {
     if (result.testResults) {
       result.testResults.forEach((testFile: any) => {
         testFile.assertionResults?.forEach((test: any) => {
@@ -469,10 +443,10 @@ async function detectFlakyTests(options: { runs: number; failureThreshold: numbe
           if (!testStats.has(key)) {
             testStats.set(key, { total: 0, failures: 0, errors: [] });
           }
-          
+
           const stats = testStats.get(key);
           stats.total++;
-          
+
           if (test.status === 'failed') {
             stats.failures++;
             stats.errors.push(test.failureMessages?.[0] || 'Unknown error');
@@ -481,7 +455,7 @@ async function detectFlakyTests(options: { runs: number; failureThreshold: numbe
       });
     }
   });
-  
+
   // Identify flaky tests
   testStats.forEach((stats, key) => {
     const failureRate = stats.failures / stats.total;
@@ -495,26 +469,28 @@ async function detectFlakyTests(options: { runs: number; failureThreshold: numbe
       });
     }
   });
-  
+
   return flakyTests;
 }
 
 async function fixFlakyTests(flakyTests: FlakyTest[]): Promise<void> {
   for (const test of flakyTests) {
-    console.log(`🔧 Attempting to fix flaky test: ${test.testName}`);
-    
     const content = await fs.readFile(test.file, 'utf8');
     let fixedContent = content;
-    
+
     // Common flaky test fixes
-    
+
     // Fix timing issues - add waitFor
-    if (test.commonErrors.some(err => err.includes('timeout') || err.includes('not found'))) {
+    if (
+      test.commonErrors.some(
+        (err) => err.includes('timeout') || err.includes('not found')
+      )
+    ) {
       fixedContent = fixedContent.replace(
         /expect\(screen\.get/g,
         'await waitFor(() => expect(screen.get'
       );
-      
+
       // Add import if not present
       if (!fixedContent.includes('import { waitFor }')) {
         fixedContent = fixedContent.replace(
@@ -523,15 +499,14 @@ async function fixFlakyTests(flakyTests: FlakyTest[]): Promise<void> {
         );
       }
     }
-    
+
     // Fix race conditions - add proper async/await
-    if (test.commonErrors.some(err => err.includes('Promise'))) {
-      fixedContent = fixedContent.replace(
-        /it\('.*?', \(\) => {/g,
-        match => match.replace('() => {', 'async () => {')
+    if (test.commonErrors.some((err) => err.includes('Promise'))) {
+      fixedContent = fixedContent.replace(/it\('.*?', \(\) => {/g, (match) =>
+        match.replace('() => {', 'async () => {')
       );
     }
-    
+
     // Add proper cleanup
     if (!fixedContent.includes('afterEach')) {
       const insertPoint = fixedContent.indexOf('describe(');
@@ -543,32 +518,40 @@ async function fixFlakyTests(flakyTests: FlakyTest[]): Promise<void> {
     cleanup();
   });
 `;
-        fixedContent = fixedContent.slice(0, describeEnd) + setupCode + fixedContent.slice(describeEnd);
+        fixedContent =
+          fixedContent.slice(0, describeEnd) +
+          setupCode +
+          fixedContent.slice(describeEnd);
       }
     }
-    
+
     if (fixedContent !== content) {
       await fs.writeFile(test.file, fixedContent);
-      console.log(`  ✅ Applied fixes to ${test.file}`);
     } else {
-      console.log(`  ⚠️  No automatic fix available for ${test.file}`);
     }
   }
 }
 
 async function findTestFiles(targetPath: string): Promise<string[]> {
   const files: string[] = [];
-  
+
   async function walk(dir: string): Promise<void> {
     try {
       const entries = await fs.readdir(dir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name);
-        
-        if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+
+        if (
+          entry.isDirectory() &&
+          !entry.name.startsWith('.') &&
+          entry.name !== 'node_modules'
+        ) {
           await walk(fullPath);
-        } else if (entry.isFile() && /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(entry.name)) {
+        } else if (
+          entry.isFile() &&
+          /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(entry.name)
+        ) {
           files.push(fullPath);
         }
       }
@@ -576,12 +559,15 @@ async function findTestFiles(targetPath: string): Promise<string[]> {
       // Skip directories we can't read
     }
   }
-  
+
   await walk(targetPath);
   return files;
 }
 
-async function analyzeTestCleanup(options: { dryRun: boolean; aggressive: boolean }): Promise<TestCleanup> {
+async function analyzeTestCleanup(_options: {
+  dryRun: boolean;
+  aggressive: boolean;
+}): Promise<TestCleanup> {
   // Implementation would analyze for obsolete tests, unused mocks, etc.
   return {
     obsoleteTests: [],
@@ -590,7 +576,7 @@ async function analyzeTestCleanup(options: { dryRun: boolean; aggressive: boolea
   };
 }
 
-async function performCleanup(cleanup: TestCleanup): Promise<void> {
+async function performCleanup(_cleanup: TestCleanup): Promise<void> {
   // Implementation would perform the actual cleanup
 }
 
@@ -599,11 +585,11 @@ async function analyzeTestDependencies() {
   return [];
 }
 
-async function applyDependencyUpdates(update: any): Promise<void> {
+async function applyDependencyUpdates(_update: any): Promise<void> {
   // Implementation would apply dependency updates
 }
 
-async function analyzeTestPerformance(options: { generateProfile: boolean }) {
+async function analyzeTestPerformance(_options: { generateProfile: boolean }) {
   // Implementation would analyze test performance
   return {
     totalTime: 0,
@@ -614,20 +600,20 @@ async function analyzeTestPerformance(options: { generateProfile: boolean }) {
   };
 }
 
-async function generatePerformanceProfile(performance: any): Promise<void> {
+async function generatePerformanceProfile(_performance: any): Promise<void> {
   // Implementation would generate performance profile
 }
 
-async function analyzeCommonIssues(fixTypes: string[]) {
+async function analyzeCommonIssues(_fixTypes: string[]) {
   // Implementation would analyze common test issues
   return [];
 }
 
-async function applyFixes(issue: any): Promise<void> {
+async function applyFixes(_issue: any): Promise<void> {
   // Implementation would apply fixes
 }
 
-async function analyzeMaintenance(targetPath: string) {
+async function analyzeMaintenance(_targetPath: string) {
   // Implementation would analyze maintenance issues
   return {
     score: 8,
@@ -671,31 +657,22 @@ function formatReportAsHTML(report: any): string {
 }
 
 function printHealthReport(health: HealthCheck): void {
-  const statusEmoji = {
+  const _statusEmoji = {
     excellent: '🌟',
     good: '✅',
     fair: '⚠️',
     poor: '❌',
   };
-  
-  console.log(`\n${statusEmoji[health.overall.status]} Test Suite Health: ${health.overall.status.toUpperCase()} (${health.overall.score}/10)\n`);
-  
-  console.log('📊 Detailed Scores:');
-  console.log(`  Coverage: ${health.coverage.percentage}% (threshold: ${health.coverage.threshold}%)`);
-  console.log(`  Quality: ${health.testQuality.score}/10`);
-  console.log(`  Performance: ${health.performance.score}/10 (${health.performance.slowTests} slow tests)`);
-  console.log(`  Maintenance: ${health.maintenance.score}/10`);
-  
+
   if (health.testQuality.issues.length > 0) {
-    console.log('\n⚠️  Quality Issues:');
-    health.testQuality.issues.forEach(issue => console.log(`  - ${issue}`));
+    health.testQuality.issues.forEach((_issue) => );
   }
-  
+
   if (health.coverage.missing.length > 0) {
-    console.log(`\n📉 Missing Coverage (${health.coverage.missing.length} files):`);
-    health.coverage.missing.slice(0, 5).forEach(file => console.log(`  - ${file}`));
+    health.coverage.missing
+      .slice(0, 5)
+      .forEach((_file) => );
     if (health.coverage.missing.length > 5) {
-      console.log(`  ... and ${health.coverage.missing.length - 5} more`);
     }
   }
 }

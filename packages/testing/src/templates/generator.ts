@@ -4,20 +4,20 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import type { 
-  TestTemplate, 
-  GeneratorConfig, 
-  ScaffoldOptions, 
-  TestAnalysisResult 
-} from './types.js';
-import { 
-  componentTestTemplate,
-  utilityTestTemplate,
+import {
   apiTestTemplate,
+  componentTestTemplate,
   hookTestTemplate,
   integrationTestTemplate,
-  securityTestTemplate
+  securityTestTemplate,
+  utilityTestTemplate,
 } from './index.js';
+import type {
+  GeneratorConfig,
+  ScaffoldOptions,
+  TestAnalysisResult,
+  TestTemplate,
+} from './types.js';
 
 /**
  * Test template registry
@@ -42,10 +42,15 @@ export class TestGenerator {
     const { outputPath, template, options, overwrite = false } = config;
 
     // Check if file exists and handle overwrite logic
-    const fileExists = await fs.access(outputPath).then(() => true).catch(() => false);
-    
+    const fileExists = await fs
+      .access(outputPath)
+      .then(() => true)
+      .catch(() => false);
+
     if (fileExists && !overwrite) {
-      throw new Error(`Test file already exists: ${outputPath}. Use overwrite: true to replace it.`);
+      throw new Error(
+        `Test file already exists: ${outputPath}. Use overwrite: true to replace it.`
+      );
     }
 
     // Generate test content
@@ -57,15 +62,18 @@ export class TestGenerator {
 
     // Write test file
     await fs.writeFile(outputPath, testContent, 'utf8');
-
-    console.log(`✅ Generated test file: ${outputPath}`);
   }
 
   /**
    * Scaffold tests for an entire package
    */
   static async scaffoldPackageTests(options: ScaffoldOptions): Promise<void> {
-    const { packagePath, testType, templateOptions, createDirectory = true } = options;
+    const {
+      packagePath,
+      testType,
+      templateOptions,
+      createDirectory = true,
+    } = options;
 
     const template = TEMPLATES[testType];
     if (!template) {
@@ -74,7 +82,7 @@ export class TestGenerator {
 
     // Determine test directory
     const testDir = path.join(packagePath, '__tests__');
-    
+
     if (createDirectory) {
       await fs.mkdir(testDir, { recursive: true });
     }
@@ -84,7 +92,7 @@ export class TestGenerator {
     const testFilePath = path.join(testDir, testFileName);
 
     // Generate test
-    await this.generateTest({
+    await TestGenerator.generateTest({
       outputPath: testFilePath,
       template,
       options: templateOptions,
@@ -92,7 +100,7 @@ export class TestGenerator {
     });
 
     // Create vitest config if it doesn't exist
-    await this.ensureVitestConfig(packagePath);
+    await TestGenerator.ensureVitestConfig(packagePath);
   }
 
   /**
@@ -100,22 +108,27 @@ export class TestGenerator {
    */
   static async autoGenerateTests(sourcePath: string): Promise<void> {
     const sourceContent = await fs.readFile(sourcePath, 'utf8');
-    const analysis = await this.analyzeSourceFile(sourcePath, sourceContent);
+    const analysis = await TestGenerator.analyzeSourceFile(
+      sourcePath,
+      sourceContent
+    );
 
-    const packageDir = this.findPackageRoot(sourcePath);
+    const packageDir = TestGenerator.findPackageRoot(sourcePath);
     const relativePath = path.relative(packageDir, sourcePath);
-    const testPath = this.getTestPath(sourcePath);
+    const testPath = TestGenerator.getTestPath(sourcePath);
 
     // Determine test type and generate appropriate template options
-    const { testType, templateOptions } = this.inferTestConfiguration(analysis, relativePath);
+    const { testType, templateOptions } = TestGenerator.inferTestConfiguration(
+      analysis,
+      relativePath
+    );
 
     const template = TEMPLATES[testType];
     if (!template) {
-      console.warn(`⚠️  Could not determine test type for: ${sourcePath}`);
       return;
     }
 
-    await this.generateTest({
+    await TestGenerator.generateTest({
       outputPath: testPath,
       template,
       options: templateOptions,
@@ -127,12 +140,10 @@ export class TestGenerator {
    * Batch generate tests for multiple files
    */
   static async batchGenerate(sourcePaths: string[]): Promise<void> {
-    console.log(`🚀 Generating tests for ${sourcePaths.length} files...`);
-
     const results = await Promise.allSettled(
       sourcePaths.map(async (sourcePath) => {
         try {
-          await this.autoGenerateTests(sourcePath);
+          await TestGenerator.autoGenerateTests(sourcePath);
           return { success: true, path: sourcePath };
         } catch (error) {
           return { success: false, path: sourcePath, error: error.message };
@@ -140,16 +151,15 @@ export class TestGenerator {
       })
     );
 
-    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
-    const failed = results.filter(r => r.status === 'fulfilled' && !r.value.success).length;
-
-    console.log(`✅ Successfully generated ${successful} test files`);
+    const _successful = results.filter(
+      (r) => r.status === 'fulfilled' && r.value.success
+    ).length;
+    const failed = results.filter(
+      (r) => r.status === 'fulfilled' && !r.value.success
+    ).length;
     if (failed > 0) {
-      console.log(`❌ Failed to generate ${failed} test files`);
-      
-      results.forEach(result => {
+      results.forEach((result) => {
         if (result.status === 'fulfilled' && !result.value.success) {
-          console.log(`   - ${result.value.path}: ${result.value.error}`);
         }
       });
     }
@@ -158,7 +168,11 @@ export class TestGenerator {
   /**
    * Create test template for custom scenarios
    */
-  static createCustomTemplate(name: string, description: string, generateFn: (options: any) => string): TestTemplate {
+  static createCustomTemplate(
+    name: string,
+    description: string,
+    generateFn: (options: any) => string
+  ): TestTemplate {
     return {
       name,
       description,
@@ -177,49 +191,69 @@ export class TestGenerator {
    * List available templates
    */
   static listTemplates(): Array<{ key: string; template: TestTemplate }> {
-    return Object.entries(TEMPLATES).map(([key, template]) => ({ key, template }));
+    return Object.entries(TEMPLATES).map(([key, template]) => ({
+      key,
+      template,
+    }));
   }
 
   /**
    * Private helper methods
    */
 
-  private static async analyzeSourceFile(filePath: string, content: string): Promise<TestAnalysisResult> {
+  private static async analyzeSourceFile(
+    filePath: string,
+    content: string
+  ): Promise<TestAnalysisResult> {
     const lines = content.split('\n');
-    
+
     return {
       filePath,
-      testType: this.detectTestType(content, filePath),
+      testType: TestGenerator.detectTestType(content, filePath),
       coverage: {
         lines: 0,
-        functions: this.countFunctions(content),
-        branches: this.countBranches(content),
-        statements: this.countStatements(content),
+        functions: TestGenerator.countFunctions(content),
+        branches: TestGenerator.countBranches(content),
+        statements: TestGenerator.countStatements(content),
       },
-      patterns: this.detectPatterns(content),
-      suggestions: this.generateSuggestions(content),
-      issues: this.detectIssues(content, lines),
+      patterns: TestGenerator.detectPatterns(content),
+      suggestions: TestGenerator.generateSuggestions(content),
+      issues: TestGenerator.detectIssues(content, lines),
     };
   }
 
   private static detectTestType(content: string, filePath: string): string {
     // Component detection
-    if (content.includes('export default function') || content.includes('export const') && content.includes('React')) {
+    if (
+      content.includes('export default function') ||
+      (content.includes('export const') && content.includes('React'))
+    ) {
       return 'component';
     }
 
     // API route detection
-    if (filePath.includes('/api/') || content.includes('NextRequest') || content.includes('NextResponse')) {
+    if (
+      filePath.includes('/api/') ||
+      content.includes('NextRequest') ||
+      content.includes('NextResponse')
+    ) {
       return 'api';
     }
 
     // Hook detection
-    if ((content.includes('useState') || content.includes('useEffect')) && content.includes('export')) {
+    if (
+      (content.includes('useState') || content.includes('useEffect')) &&
+      content.includes('export')
+    ) {
       return 'hook';
     }
 
     // Security module detection
-    if (content.includes('auth') || content.includes('security') || content.includes('jwt')) {
+    if (
+      content.includes('auth') ||
+      content.includes('security') ||
+      content.includes('jwt')
+    ) {
       return 'security';
     }
 
@@ -228,7 +262,8 @@ export class TestGenerator {
   }
 
   private static countFunctions(content: string): number {
-    const functionRegex = /(function\s+\w+|const\s+\w+\s*=\s*\(|export\s+(default\s+)?function)/g;
+    const functionRegex =
+      /(function\s+\w+|const\s+\w+\s*=\s*\(|export\s+(default\s+)?function)/g;
     return (content.match(functionRegex) || []).length;
   }
 
@@ -286,8 +321,19 @@ export class TestGenerator {
     return suggestions;
   }
 
-  private static detectIssues(content: string, lines: string[]): Array<{ type: 'warning' | 'error' | 'info'; message: string; line?: number }> {
-    const issues: Array<{ type: 'warning' | 'error' | 'info'; message: string; line?: number }> = [];
+  private static detectIssues(
+    _content: string,
+    lines: string[]
+  ): Array<{
+    type: 'warning' | 'error' | 'info';
+    message: string;
+    line?: number;
+  }> {
+    const issues: Array<{
+      type: 'warning' | 'error' | 'info';
+      message: string;
+      line?: number;
+    }> = [];
 
     lines.forEach((line, index) => {
       if (line.includes('any')) {
@@ -318,7 +364,10 @@ export class TestGenerator {
     return issues;
   }
 
-  private static inferTestConfiguration(analysis: TestAnalysisResult, relativePath: string): { testType: string; templateOptions: any } {
+  private static inferTestConfiguration(
+    analysis: TestAnalysisResult,
+    relativePath: string
+  ): { testType: string; templateOptions: any } {
     const testType = analysis.testType;
     const fileName = path.basename(relativePath, path.extname(relativePath));
     const isAsync = analysis.patterns.includes('async');
@@ -413,10 +462,10 @@ export class TestGenerator {
 
   private static findPackageRoot(filePath: string): string {
     let currentDir = path.dirname(filePath);
-    
+
     while (currentDir !== path.dirname(currentDir)) {
       const packageJsonPath = path.join(currentDir, 'package.json');
-      
+
       try {
         fs.accessSync(packageJsonPath);
         return currentDir;
@@ -424,25 +473,25 @@ export class TestGenerator {
         currentDir = path.dirname(currentDir);
       }
     }
-    
+
     throw new Error(`Could not find package.json for file: ${filePath}`);
   }
 
   private static getTestPath(sourcePath: string): string {
-    const packageRoot = this.findPackageRoot(sourcePath);
+    const packageRoot = TestGenerator.findPackageRoot(sourcePath);
     const relativePath = path.relative(packageRoot, sourcePath);
     const parsed = path.parse(relativePath);
-    
+
     // Place test files in __tests__ directory
     const testDir = path.join(packageRoot, '__tests__');
     const testFileName = `${parsed.name}.test${parsed.ext}`;
-    
+
     return path.join(testDir, testFileName);
   }
 
   private static async ensureVitestConfig(packagePath: string): Promise<void> {
     const configPath = path.join(packagePath, 'vitest.config.ts');
-    
+
     try {
       await fs.access(configPath);
       return; // Config already exists
@@ -465,7 +514,6 @@ export default createVitestConfig('${packageName}', {
 `;
 
       await fs.writeFile(configPath, configContent, 'utf8');
-      console.log(`✅ Created vitest config: ${configPath}`);
     }
   }
 }
@@ -503,7 +551,10 @@ export async function autoGenerateTestsForDirectory(
   directoryPath: string,
   options: { extensions?: string[]; exclude?: string[] } = {}
 ): Promise<void> {
-  const { extensions = ['.ts', '.tsx', '.js', '.jsx'], exclude = ['*.test.*', '*.spec.*', '__tests__'] } = options;
+  const {
+    extensions = ['.ts', '.tsx', '.js', '.jsx'],
+    exclude = ['*.test.*', '*.spec.*', '__tests__'],
+  } = options;
 
   const files = await findSourceFiles(directoryPath, extensions, exclude);
   await TestGenerator.batchGenerate(files);
@@ -518,33 +569,39 @@ async function findSourceFiles(
   exclude: string[]
 ): Promise<string[]> {
   const files: string[] = [];
-  
+
   async function walk(currentDir: string): Promise<void> {
     const entries = await fs.readdir(currentDir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(currentDir, entry.name);
-      
+
       if (entry.isDirectory()) {
         // Skip excluded directories
-        if (!exclude.some(pattern => entry.name.includes(pattern.replace('*', '')))) {
+        if (
+          !exclude.some((pattern) =>
+            entry.name.includes(pattern.replace('*', ''))
+          )
+        ) {
           await walk(fullPath);
         }
       } else if (entry.isFile()) {
         // Include files with correct extensions, excluding test files
-        const hasValidExtension = extensions.some(ext => entry.name.endsWith(ext));
-        const isExcluded = exclude.some(pattern => {
+        const hasValidExtension = extensions.some((ext) =>
+          entry.name.endsWith(ext)
+        );
+        const isExcluded = exclude.some((pattern) => {
           const regex = new RegExp(pattern.replace('*', '.*'));
           return regex.test(entry.name);
         });
-        
+
         if (hasValidExtension && !isExcluded) {
           files.push(fullPath);
         }
       }
     }
   }
-  
+
   await walk(dir);
   return files;
 }

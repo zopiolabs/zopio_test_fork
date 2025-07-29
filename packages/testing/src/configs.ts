@@ -23,12 +23,14 @@ function getCoverageThresholds(packageType: string) {
     nextjs: { lines: 80, branches: 75, functions: 80, statements: 80 },
   };
 
-  return thresholds[packageType as keyof typeof thresholds] || {
-    lines: 80,
-    branches: 75,
-    functions: 80,
-    statements: 80,
-  };
+  return (
+    thresholds[packageType as keyof typeof thresholds] || {
+      lines: 80,
+      branches: 75,
+      functions: 80,
+      statements: 80,
+    }
+  );
 }
 
 /**
@@ -63,7 +65,14 @@ export function createVitestConfig(
       unstubEnvs: true,
       coverage: {
         provider: 'v8',
-        reporter: ['text', 'json', 'html', 'lcov', 'json-summary', 'text-summary'],
+        reporter: [
+          'text',
+          'json',
+          'html',
+          'lcov',
+          'json-summary',
+          'text-summary',
+        ],
         reportsDirectory: './coverage',
         exclude: [
           'node_modules/**',
@@ -96,18 +105,18 @@ export function createVitestConfig(
         packageType === 'database' || packageType === 'integration'
           ? 10000
           : 5000,
-      
+
       // Output configuration for CI/CD
       outputFile: {
         json: './test-results.json',
         html: './test-results.html',
       },
-      
+
       // Reporter configuration
-      reporters: process.env.CI 
-        ? ['default', 'json', 'junit'] 
+      reporters: process.env.CI
+        ? ['default', 'json', 'junit']
         : ['default', 'html'],
-      
+
       // Performance monitoring
       logHeapUsage: true,
       slowTestThreshold: 1000,

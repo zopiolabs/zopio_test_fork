@@ -2,8 +2,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 /**
  * Test metrics tracking and reporting
@@ -110,12 +109,21 @@ export class TestMetricsTracker {
     const averages = {
       duration: recent.reduce((acc, m) => acc + m.duration, 0) / recent.length,
       coverage: {
-        lines: recent.reduce((acc, m) => acc + m.coverage.lines, 0) / recent.length,
-        branches: recent.reduce((acc, m) => acc + m.coverage.branches, 0) / recent.length,
-        functions: recent.reduce((acc, m) => acc + m.coverage.functions, 0) / recent.length,
-        statements: recent.reduce((acc, m) => acc + m.coverage.statements, 0) / recent.length,
+        lines:
+          recent.reduce((acc, m) => acc + m.coverage.lines, 0) / recent.length,
+        branches:
+          recent.reduce((acc, m) => acc + m.coverage.branches, 0) /
+          recent.length,
+        functions:
+          recent.reduce((acc, m) => acc + m.coverage.functions, 0) /
+          recent.length,
+        statements:
+          recent.reduce((acc, m) => acc + m.coverage.statements, 0) /
+          recent.length,
       },
-      passRate: recent.reduce((acc, m) => acc + (m.passedTests / m.totalTests), 0) / recent.length,
+      passRate:
+        recent.reduce((acc, m) => acc + m.passedTests / m.totalTests, 0) /
+        recent.length,
     };
 
     const trends = this.calculateTrendDirection(recent, older);
@@ -131,8 +139,8 @@ export class TestMetricsTracker {
    * Detect flaky tests
    */
   detectFlakiness(metrics: TestMetrics[]): string[] {
-    const testResults = new Map<string, number[]>();
-    
+    const _testResults = new Map<string, number[]>();
+
     // Analyze test patterns across runs
     for (const metric of metrics) {
       // This would need integration with actual test results
@@ -160,18 +168,24 @@ export class TestMetricsTracker {
 
     // Performance analysis
     if (trends.trends.performanceTrend === 'declining') {
-      recommendations.push('Test performance is declining. Consider optimizing slow tests.');
+      recommendations.push(
+        'Test performance is declining. Consider optimizing slow tests.'
+      );
     }
 
     // Coverage analysis
     if (trends.averages.coverage.lines < 80) {
       coverageGaps.push('Overall line coverage below 80%');
-      recommendations.push('Increase test coverage, especially for core functionality.');
+      recommendations.push(
+        'Increase test coverage, especially for core functionality.'
+      );
     }
 
     // Flakiness analysis
     if (trends.trends.flakinessTrend === 'declining') {
-      recommendations.push('Test flakiness is increasing. Review and stabilize failing tests.');
+      recommendations.push(
+        'Test flakiness is increasing. Review and stabilize failing tests.'
+      );
     }
 
     return {
@@ -193,22 +207,45 @@ export class TestMetricsTracker {
       };
     }
 
-    const recentAvgCoverage = recent.reduce((acc, m) => acc + m.coverage.lines, 0) / recent.length;
-    const olderAvgCoverage = older.reduce((acc, m) => acc + m.coverage.lines, 0) / older.length;
+    const recentAvgCoverage =
+      recent.reduce((acc, m) => acc + m.coverage.lines, 0) / recent.length;
+    const olderAvgCoverage =
+      older.reduce((acc, m) => acc + m.coverage.lines, 0) / older.length;
     const coverageDiff = recentAvgCoverage - olderAvgCoverage;
 
-    const recentAvgDuration = recent.reduce((acc, m) => acc + m.duration, 0) / recent.length;
-    const olderAvgDuration = older.reduce((acc, m) => acc + m.duration, 0) / older.length;
+    const recentAvgDuration =
+      recent.reduce((acc, m) => acc + m.duration, 0) / recent.length;
+    const olderAvgDuration =
+      older.reduce((acc, m) => acc + m.duration, 0) / older.length;
     const durationDiff = recentAvgDuration - olderAvgDuration;
 
-    const recentFlakiness = recent.reduce((acc, m) => acc + m.flakeDetection.retryCount, 0) / recent.length;
-    const olderFlakiness = older.reduce((acc, m) => acc + m.flakeDetection.retryCount, 0) / older.length;
+    const recentFlakiness =
+      recent.reduce((acc, m) => acc + m.flakeDetection.retryCount, 0) /
+      recent.length;
+    const olderFlakiness =
+      older.reduce((acc, m) => acc + m.flakeDetection.retryCount, 0) /
+      older.length;
     const flakinessDiff = recentFlakiness - olderFlakiness;
 
     return {
-      coverageTrend: coverageDiff > 2 ? 'improving' : coverageDiff < -2 ? 'declining' : 'stable',
-      performanceTrend: durationDiff < -1000 ? 'improving' : durationDiff > 1000 ? 'declining' : 'stable',
-      flakinessTrend: flakinessDiff < -0.1 ? 'improving' : flakinessDiff > 0.1 ? 'declining' : 'stable',
+      coverageTrend:
+        coverageDiff > 2
+          ? 'improving'
+          : coverageDiff < -2
+            ? 'declining'
+            : 'stable',
+      performanceTrend:
+        durationDiff < -1000
+          ? 'improving'
+          : durationDiff > 1000
+            ? 'declining'
+            : 'stable',
+      flakinessTrend:
+        flakinessDiff < -0.1
+          ? 'improving'
+          : flakinessDiff > 0.1
+            ? 'declining'
+            : 'stable',
     };
   }
 }
@@ -223,14 +260,23 @@ export function generateCoverageBadge(coverage: TestMetrics['coverage']): {
   color: string;
 } {
   const avgCoverage = Math.round(
-    (coverage.lines + coverage.branches + coverage.functions + coverage.statements) / 4
+    (coverage.lines +
+      coverage.branches +
+      coverage.functions +
+      coverage.statements) /
+      4
   );
 
   let color = 'red';
-  if (avgCoverage >= 90) color = 'brightgreen';
-  else if (avgCoverage >= 80) color = 'green';
-  else if (avgCoverage >= 70) color = 'yellow';
-  else if (avgCoverage >= 60) color = 'orange';
+  if (avgCoverage >= 90) {
+    color = 'brightgreen';
+  } else if (avgCoverage >= 80) {
+    color = 'green';
+  } else if (avgCoverage >= 70) {
+    color = 'yellow';
+  } else if (avgCoverage >= 60) {
+    color = 'orange';
+  }
 
   return {
     schemaVersion: 1,
@@ -252,12 +298,12 @@ export function exportMetricsForCI(metrics: TestMetrics): void {
       `TEST_COVERAGE_FUNCTIONS=${metrics.coverage.functions}`,
       `TEST_COVERAGE_STATEMENTS=${metrics.coverage.statements}`,
       `TEST_DURATION=${metrics.duration}`,
-      `TEST_PASS_RATE=${(metrics.passedTests / metrics.totalTests * 100).toFixed(2)}`,
+      `TEST_PASS_RATE=${((metrics.passedTests / metrics.totalTests) * 100).toFixed(2)}`,
     ];
 
     const envFile = process.env.GITHUB_ENV;
     const content = readFileSync(envFile, 'utf-8');
-    writeFileSync(envFile, content + '\n' + exports.join('\n'));
+    writeFileSync(envFile, `${content}\n${exports.join('\n')}`);
   }
 
   // Export JSON summary for other systems
@@ -268,10 +314,13 @@ export function exportMetricsForCI(metrics: TestMetrics): void {
       slowTestCount: metrics.slowTests.length,
     },
     quality: {
-      passRate: (metrics.passedTests / metrics.totalTests * 100),
+      passRate: (metrics.passedTests / metrics.totalTests) * 100,
       flakeScore: metrics.flakeDetection.retryCount,
     },
   };
 
-  writeFileSync('./coverage/test-summary.json', JSON.stringify(summary, null, 2));
+  writeFileSync(
+    './coverage/test-summary.json',
+    JSON.stringify(summary, null, 2)
+  );
 }

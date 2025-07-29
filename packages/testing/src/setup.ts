@@ -102,7 +102,7 @@ export interface TestProviders {
 /**
  * Setup test providers wrapper
  */
-export function createProvidersWrapper(providers: TestProviders = {}) {
+export function createProvidersWrapper(_providers: TestProviders = {}) {
   return function ProvidersWrapper({ children }: { children: any }) {
     // Here you would wrap with your actual app providers
     // For example: ThemeProvider, AuthProvider, etc.

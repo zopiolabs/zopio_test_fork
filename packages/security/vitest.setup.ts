@@ -1,4 +1,4 @@
-import { vi, beforeEach } from 'vitest';
+import { beforeEach } from 'vitest';
 
 // Set up global mocks
 beforeEach(() => {

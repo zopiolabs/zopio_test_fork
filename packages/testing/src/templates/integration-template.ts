@@ -2,28 +2,29 @@
  * SPDX-License-Identifier: MIT
  */
 
-import type { TestTemplate, IntegrationTestOptions } from './types.js';
+import type { IntegrationTestOptions, TestTemplate } from './types.js';
 
 /**
  * Template for integration tests
  */
 export const integrationTestTemplate: TestTemplate = {
   name: 'Integration Test',
-  description: 'Template for testing integration between multiple modules and external services',
-  
+  description:
+    'Template for testing integration between multiple modules and external services',
+
   generate: (options: IntegrationTestOptions) => {
-    const { 
-      testName, 
+    const {
+      testName,
       modules = [],
       hasDatabase = true,
       hasExternalServices = true,
       hasAuthentication = true,
-      testEndToEnd = true
+      testEndToEnd = true,
     } = options;
 
-    const moduleImports = modules.map(module => 
-      `import { ${module.name} } from '${module.path}';`
-    ).join('\n');
+    const moduleImports = modules
+      .map((module) => `import { ${module.name} } from '${module.path}';`)
+      .join('\n');
 
     return `/**
  * SPDX-License-Identifier: MIT
@@ -35,7 +36,9 @@ ${hasAuthentication ? `import { createTestUser, cleanupTestUser } from '@repo/te
 import { createTestContext, cleanupTestContext } from '@repo/testing/utils';
 ${moduleImports}
 
-${hasExternalServices ? `// Mock external services
+${
+  hasExternalServices
+    ? `// Mock external services
 const mockExternalAPI = vi.fn();
 const mockPaymentService = vi.fn();
 const mockNotificationService = vi.fn();
@@ -50,17 +53,19 @@ vi.mock('@repo/payments', () => ({
 
 vi.mock('@repo/notifications', () => ({
   notificationService: mockNotificationService,
-}));` : ''}
+}));`
+    : ''
+}
 
 describe('${testName} Integration Tests', () => {
   let testContext: any;
-  ${hasAuthentication ? `let testUser: any;` : ''}
-  ${hasDatabase ? `let testDatabase: any;` : ''}
+  ${hasAuthentication ? 'let testUser: any;' : ''}
+  ${hasDatabase ? 'let testDatabase: any;' : ''}
 
   beforeAll(async () => {
     // Set up test environment
     testContext = await createTestContext();
-    ${hasDatabase ? `testDatabase = testContext.database;` : ''}
+    ${hasDatabase ? 'testDatabase = testContext.database;' : ''}
   });
 
   afterAll(async () => {
@@ -71,50 +76,72 @@ describe('${testName} Integration Tests', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     
-    ${hasAuthentication ? `// Create test user for each test
+    ${
+      hasAuthentication
+        ? `// Create test user for each test
     testUser = await createTestUser({
       email: 'test@example.com',
       role: 'user',
-    });` : ''}
+    });`
+        : ''
+    }
 
-    ${hasExternalServices ? `// Set up external service mocks
+    ${
+      hasExternalServices
+        ? `// Set up external service mocks
     mockExternalAPI.mockResolvedValue({ success: true, data: {} });
     mockPaymentService.mockResolvedValue({ paymentId: 'payment_123', status: 'succeeded' });
-    mockNotificationService.mockResolvedValue({ messageId: 'msg_123', sent: true });` : ''}
+    mockNotificationService.mockResolvedValue({ messageId: 'msg_123', sent: true });`
+        : ''
+    }
 
-    ${hasDatabase ? `// Clean up database before each test
+    ${
+      hasDatabase
+        ? `// Clean up database before each test
     await testDatabase.$transaction(async (tx: any) => {
       // Clear test data
       await tx.user.deleteMany({ where: { email: { contains: 'test' } } });
       await tx.post.deleteMany({ where: { title: { contains: 'test' } } });
-    });` : ''}
+    });`
+        : ''
+    }
   });
 
   afterEach(async () => {
-    ${hasAuthentication ? `// Clean up test user
+    ${
+      hasAuthentication
+        ? `// Clean up test user
     if (testUser) {
       await cleanupTestUser(testUser.id);
-    }` : ''}
+    }`
+        : ''
+    }
   });
 
   describe('Module Integration', () => {
-    ${modules.map(module => `
+    ${modules
+      .map(
+        (module) => `
     it('should integrate ${module.name} correctly', async () => {
       // Test integration with ${module.name}
       const result = await ${module.name}.performOperation({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         data: 'test data'
       });
       
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
-    });`).join('\n')}
+    });`
+      )
+      .join('\n')}
 
     it('should handle cross-module data flow', async () => {
       // Test data flow between modules
-      ${modules.length > 1 ? `
+      ${
+        modules.length > 1
+          ? `
       const step1Result = await ${modules[0]?.name}.initialize({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         config: { test: true }
       });
       
@@ -122,17 +149,23 @@ describe('${testName} Integration Tests', () => {
       
       expect(step1Result.success).toBe(true);
       expect(step2Result.success).toBe(true);
-      expect(step2Result.data).toContain(step1Result.data.id);` : `
+      expect(step2Result.data).toContain(step1Result.data.id);`
+          : `
       // Single module test
       const result = await ${modules[0]?.name}.execute();
-      expect(result).toBeDefined();`}
+      expect(result).toBeDefined();`
+      }
     });
 
     it('should handle module dependencies', async () => {
       // Test that modules properly depend on each other
-      ${modules.map(module => `
+      ${modules
+        .map(
+          (module) => `
       const ${module.name.toLowerCase()}Status = await ${module.name}.healthCheck();
-      expect(${module.name.toLowerCase()}Status.healthy).toBe(true);`).join('')}
+      expect(${module.name.toLowerCase()}Status.healthy).toBe(true);`
+        )
+        .join('')}
       
       // Test integrated functionality
       const integratedResult = await performIntegratedOperation();
@@ -140,21 +173,27 @@ describe('${testName} Integration Tests', () => {
     });
   });
 
-  ${hasDatabase ? `describe('Database Integration', () => {
+  ${
+    hasDatabase
+      ? `describe('Database Integration', () => {
     it('should handle database transactions across modules', async () => {
       const result = await testDatabase.$transaction(async (tx: any) => {
         // Create data through module 1
         const created = await ${modules[0]?.name}.createWithTransaction(tx, {
-          ${hasAuthentication ? `userId: testUser.id,` : ''}
+          ${hasAuthentication ? 'userId: testUser.id,' : ''}
           title: 'Test Integration'
         });
         
         // Update data through module 2
-        ${modules[1] ? `const updated = await ${modules[1].name}.updateWithTransaction(tx, created.id, {
+        ${
+          modules[1]
+            ? `const updated = await ${modules[1].name}.updateWithTransaction(tx, created.id, {
           status: 'processed'
         });
         
-        return { created, updated };` : `return { created };`}
+        return { created, updated };`
+            : 'return { created };'
+        }
       });
       
       expect(result.created).toBeDefined();
@@ -175,7 +214,7 @@ describe('${testName} Integration Tests', () => {
     it('should handle concurrent database operations', async () => {
       const operations = Array.from({ length: 10 }, (_, i) => 
         ${modules[0]?.name}.createConcurrently({
-          ${hasAuthentication ? `userId: testUser.id,` : ''}
+          ${hasAuthentication ? 'userId: testUser.id,' : ''}
           title: \`Concurrent Test \${i}\`
         })
       );
@@ -189,33 +228,45 @@ describe('${testName} Integration Tests', () => {
     it('should maintain data consistency', async () => {
       // Create related data across modules
       const parentData = await ${modules[0]?.name}.create({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         title: 'Parent Item'
       });
       
-      ${modules[1] ? `const childData = await ${modules[1].name}.create({
+      ${
+        modules[1]
+          ? `const childData = await ${modules[1].name}.create({
         parentId: parentData.id,
         content: 'Child Item'
-      });` : ''}
+      });`
+          : ''
+      }
       
       // Verify relationships
       const retrieved = await ${modules[0]?.name}.getWithRelations(parentData.id);
       expect(retrieved.id).toBe(parentData.id);
-      ${modules[1] ? `expect(retrieved.children).toHaveLength(1);
-      expect(retrieved.children[0].id).toBe(childData.id);` : ''}
+      ${
+        modules[1]
+          ? `expect(retrieved.children).toHaveLength(1);
+      expect(retrieved.children[0].id).toBe(childData.id);`
+          : ''
+      }
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${hasExternalServices ? `describe('External Service Integration', () => {
+  ${
+    hasExternalServices
+      ? `describe('External Service Integration', () => {
     it('should integrate with external APIs', async () => {
       const result = await ${modules[0]?.name}.callExternalService({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         action: 'fetch_data'
       });
       
       expect(mockExternalAPI).toHaveBeenCalledWith({
         action: 'fetch_data',
-        ${hasAuthentication ? `userId: testUser.id` : ''}
+        ${hasAuthentication ? 'userId: testUser.id' : ''}
       });
       expect(result.success).toBe(true);
     });
@@ -224,7 +275,7 @@ describe('${testName} Integration Tests', () => {
       mockExternalAPI.mockRejectedValue(new Error('Service unavailable'));
       
       const result = await ${modules[0]?.name}.callExternalService({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         action: 'fetch_data'
       });
       
@@ -240,7 +291,7 @@ describe('${testName} Integration Tests', () => {
       );
       
       await expect(${modules[0]?.name}.callExternalService({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         action: 'fetch_data',
         timeout: 1000
       })).rejects.toThrow('Request timeout');
@@ -250,16 +301,20 @@ describe('${testName} Integration Tests', () => {
       mockExternalAPI.mockRejectedValue(new Error('Rate limit exceeded'));
       
       const result = await ${modules[0]?.name}.callExternalService({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         action: 'fetch_data'
       });
       
       expect(result.success).toBe(false);
       expect(result.shouldRetry).toBe(true);
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${hasAuthentication ? `describe('Authentication Integration', () => {
+  ${
+    hasAuthentication
+      ? `describe('Authentication Integration', () => {
     it('should handle authenticated operations', async () => {
       const result = await ${modules[0]?.name}.performAuthenticatedOperation({
         userId: testUser.id,
@@ -298,12 +353,16 @@ describe('${testName} Integration Tests', () => {
       
       await cleanupTestUser(limitedUser.id);
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${testEndToEnd ? `describe('End-to-End Workflows', () => {
+  ${
+    testEndToEnd
+      ? `describe('End-to-End Workflows', () => {
     it('should complete full user workflow', async () => {
       // Step 1: User registration/authentication
-      ${hasAuthentication ? `const user = testUser;` : `const user = { id: 'test-user' };`}
+      ${hasAuthentication ? 'const user = testUser;' : `const user = { id: 'test-user' };`}
       
       // Step 2: Initial data creation
       const initialData = await ${modules[0]?.name}.initialize({
@@ -313,23 +372,31 @@ describe('${testName} Integration Tests', () => {
       
       expect(initialData.success).toBe(true);
       
-      ${modules[1] ? `// Step 3: Process data through second module
+      ${
+        modules[1]
+          ? `// Step 3: Process data through second module
       const processedData = await ${modules[1].name}.process({
         userId: user.id,
         dataId: initialData.data.id,
         action: 'transform'
       });
       
-      expect(processedData.success).toBe(true);` : ''}
+      expect(processedData.success).toBe(true);`
+          : ''
+      }
       
-      ${hasExternalServices ? `// Step 4: External service integration
+      ${
+        hasExternalServices
+          ? `// Step 4: External service integration
       const externalResult = await ${modules[0]?.name}.syncWithExternal({
         userId: user.id,
         dataId: initialData.data.id
       });
       
       expect(externalResult.success).toBe(true);
-      expect(mockExternalAPI).toHaveBeenCalled();` : ''}
+      expect(mockExternalAPI).toHaveBeenCalled();`
+          : ''
+      }
       
       // Step 5: Verify final state
       const finalState = await ${modules[0]?.name}.getFinalState(initialData.data.id);
@@ -340,7 +407,7 @@ describe('${testName} Integration Tests', () => {
     it('should handle workflow interruptions', async () => {
       // Start workflow
       const workflow = await ${modules[0]?.name}.startWorkflow({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         type: 'interruptible'
       });
       
@@ -359,40 +426,54 @@ describe('${testName} Integration Tests', () => {
       
       // Step 1
       await ${modules[0]?.name}.workflowStep1({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         workflowId,
         data: { step: 1 }
       });
       
-      ${modules[1] ? `// Step 2
+      ${
+        modules[1]
+          ? `// Step 2
       await ${modules[1].name}.workflowStep2({
         workflowId,
         data: { step: 2 }
-      });` : ''}
+      });`
+          : ''
+      }
       
       // Verify consistency
       const workflowState = await ${modules[0]?.name}.getWorkflowState(workflowId);
       expect(workflowState.steps).toHaveLength(${modules.length});
       expect(workflowState.consistent).toBe(true);
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
   describe('Error Handling and Recovery', () => {
     it('should handle cascade failures', async () => {
       // Cause failure in one module
-      ${hasDatabase ? `const originalQuery = testDatabase.query;
-      testDatabase.query = vi.fn().mockRejectedValue(new Error('Database failure'));` : ''}
+      ${
+        hasDatabase
+          ? `const originalQuery = testDatabase.query;
+      testDatabase.query = vi.fn().mockRejectedValue(new Error('Database failure'));`
+          : ''
+      }
       
       const result = await ${modules[0]?.name}.performOperation({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         data: 'test'
       });
       
       expect(result.success).toBe(false);
       expect(result.error).toContain('Database failure');
       
-      ${hasDatabase ? `// Restore database
-      testDatabase.query = originalQuery;` : ''}
+      ${
+        hasDatabase
+          ? `// Restore database
+      testDatabase.query = originalQuery;`
+          : ''
+      }
     });
 
     it('should implement circuit breaker pattern', async () => {
@@ -426,7 +507,7 @@ describe('${testName} Integration Tests', () => {
       });
       
       const result = await ${modules[0]?.name}.callExternalServiceWithRetry({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         action: 'retry_test',
         maxRetries: 3
       });
@@ -440,7 +521,7 @@ describe('${testName} Integration Tests', () => {
     it('should handle high-concurrency operations', async () => {
       const operations = Array.from({ length: 100 }, (_, i) => 
         ${modules[0]?.name}.performOperation({
-          ${hasAuthentication ? `userId: testUser.id,` : ''}
+          ${hasAuthentication ? 'userId: testUser.id,' : ''}
           data: \`concurrent-\${i}\`
         })
       );
@@ -462,7 +543,7 @@ describe('${testName} Integration Tests', () => {
       }));
       
       const result = await ${modules[0]?.name}.processLargeDataset({
-        ${hasAuthentication ? `userId: testUser.id,` : ''}
+        ${hasAuthentication ? 'userId: testUser.id,' : ''}
         dataset: largeDataset
       });
       
@@ -477,5 +558,5 @@ async function performIntegratedOperation() {
   // Implementation would depend on specific modules
   return { success: true };
 }`;
-  }
+  },
 };

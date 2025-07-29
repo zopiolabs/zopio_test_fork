@@ -9,16 +9,17 @@ import type { TestTemplate, UtilityTestOptions } from './types.js';
  */
 export const utilityTestTemplate: TestTemplate = {
   name: 'Utility Function Test',
-  description: 'Template for testing utility functions with comprehensive edge cases',
-  
+  description:
+    'Template for testing utility functions with comprehensive edge cases',
+
   generate: (options: UtilityTestOptions) => {
-    const { 
-      functionName, 
-      functionPath, 
+    const {
+      functionName,
+      functionPath,
       isAsync = false,
       hasValidation = true,
       hasErrorHandling = true,
-      testPerformance = false
+      testPerformance = false,
     } = options;
 
     return `/**
@@ -28,17 +29,25 @@ export const utilityTestTemplate: TestTemplate = {
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ${functionName} } from '${functionPath}';
 
-${isAsync ? `// Mock external dependencies for async operations
+${
+  isAsync
+    ? `// Mock external dependencies for async operations
 const mockExternalService = vi.fn();
 vi.mock('../lib/external-service.js', () => ({
   externalService: mockExternalService,
-}));` : ''}
+}));`
+    : ''
+}
 
 describe('${functionName}', () => {
-  ${isAsync ? `beforeEach(() => {
+  ${
+    isAsync
+      ? `beforeEach(() => {
     vi.clearAllMocks();
     mockExternalService.mockResolvedValue({ success: true });
-  });` : ''}
+  });`
+      : ''
+  }
 
   describe('Basic Functionality', () => {
     it('should return expected result for valid input', ${isAsync ? 'async ' : ''}() => {
@@ -64,7 +73,9 @@ describe('${functionName}', () => {
     });
   });
 
-  ${hasValidation ? `describe('Input Validation', () => {
+  ${
+    hasValidation
+      ? `describe('Input Validation', () => {
     it('should validate required parameters', ${isAsync ? 'async ' : ''}() => {
       ${isAsync ? 'await expect(' : 'expect('}${functionName}${isAsync ? '(null)' : '(null)'}${isAsync ? ')' : ''}.toThrow('Input is required');
     });
@@ -76,10 +87,16 @@ describe('${functionName}', () => {
     it('should validate parameter ranges/constraints', ${isAsync ? 'async ' : ''}() => {
       ${isAsync ? 'await expect(' : 'expect('}${functionName}${isAsync ? '("")' : '("")'}${isAsync ? ')' : ''}.toThrow('Input cannot be empty');
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${hasErrorHandling ? `describe('Error Handling', () => {
-    ${isAsync ? `it('should handle external service failures', async () => {
+  ${
+    hasErrorHandling
+      ? `describe('Error Handling', () => {
+    ${
+      isAsync
+        ? `it('should handle external service failures', async () => {
       mockExternalService.mockRejectedValue(new Error('Service unavailable'));
       
       await expect(${functionName}('input')).rejects.toThrow('Service unavailable');
@@ -93,7 +110,8 @@ describe('${functionName}', () => {
       );
       
       await expect(${functionName}('input')).rejects.toThrow('Timeout');
-    });` : `it('should handle invalid input gracefully', () => {
+    });`
+        : `it('should handle invalid input gracefully', () => {
       expect(() => ${functionName}(null as any)).toThrow();
     });
 
@@ -103,8 +121,11 @@ describe('${functionName}', () => {
       } catch (error) {
         expect(error.message).toContain('meaningful error description');
       }
-    });`}
-  });` : ''}
+    });`
+    }
+  });`
+      : ''
+  }
 
   describe('Edge Cases', () => {
     it('should handle empty input', ${isAsync ? 'async ' : ''}() => {
@@ -131,7 +152,9 @@ describe('${functionName}', () => {
     });
   });
 
-  ${testPerformance ? `describe('Performance', () => {
+  ${
+    testPerformance
+      ? `describe('Performance', () => {
     it('should execute within acceptable time limits', ${isAsync ? 'async ' : ''}() => {
       const start = performance.now();
       ${isAsync ? 'await ' : ''}${functionName}('performance test input');
@@ -149,7 +172,9 @@ describe('${functionName}', () => {
       expect(results).toHaveLength(10);
       expect(results.every(result => result !== null)).toBe(true);
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
   describe('Type Safety', () => {
     it('should maintain type safety', ${isAsync ? 'async ' : ''}() => {
@@ -160,7 +185,9 @@ describe('${functionName}', () => {
     });
   });
 
-  ${isAsync ? `describe('Async Behavior', () => {
+  ${
+    isAsync
+      ? `describe('Async Behavior', () => {
     it('should resolve promises correctly', async () => {
       const result = await ${functionName}('async input');
       expect(result).toBeDefined();
@@ -180,7 +207,9 @@ describe('${functionName}', () => {
       // Should timeout or handle long-running operations appropriately
       await expect(${functionName}('slow input')).resolves.toBeDefined();
     }, 6000);
-  });` : ''}
-});`;
+  });`
+      : ''
   }
+});`;
+  },
 };

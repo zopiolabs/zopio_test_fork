@@ -2,24 +2,25 @@
  * SPDX-License-Identifier: MIT
  */
 
-import type { TestTemplate, HookTestOptions } from './types.js';
+import type { HookTestOptions, TestTemplate } from './types.js';
 
 /**
  * Template for React hook tests
  */
 export const hookTestTemplate: TestTemplate = {
   name: 'React Hook Test',
-  description: 'Template for testing custom React hooks with state management and effects',
-  
+  description:
+    'Template for testing custom React hooks with state management and effects',
+
   generate: (options: HookTestOptions) => {
-    const { 
-      hookName, 
-      hookPath, 
+    const {
+      hookName,
+      hookPath,
       hasAsyncBehavior = false,
       hasStateManagement = true,
       hasEffects = false,
       hasCleanup = false,
-      testErrorStates = true
+      testErrorStates = true,
     } = options;
 
     return `/**
@@ -30,36 +31,52 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { ${hookName} } from '${hookPath}';
 
-${hasAsyncBehavior ? `// Mock external async dependencies
+${
+  hasAsyncBehavior
+    ? `// Mock external async dependencies
 const mockAsyncService = vi.fn();
 vi.mock('../lib/async-service.js', () => ({
   asyncService: mockAsyncService,
-}));` : ''}
+}));`
+    : ''
+}
 
-${hasEffects ? `// Mock external effects
+${
+  hasEffects
+    ? `// Mock external effects
 const mockExternalEffect = vi.fn();
 vi.mock('../lib/external-effect.js', () => ({
   externalEffect: mockExternalEffect,
-}));` : ''}
+}));`
+    : ''
+}
 
 describe('${hookName}', () => {
-  ${hasAsyncBehavior ? `beforeEach(() => {
+  ${
+    hasAsyncBehavior
+      ? `beforeEach(() => {
     vi.clearAllMocks();
     mockAsyncService.mockResolvedValue({ success: true, data: 'mock data' });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${hasCleanup ? `afterEach(() => {
+  ${
+    hasCleanup
+      ? `afterEach(() => {
     // Cleanup any side effects
     vi.clearAllTimers();
     vi.useRealTimers();
-  });` : ''}
+  });`
+      : ''
+  }
 
   describe('Initialization', () => {
     it('should initialize with default values', () => {
       const { result } = renderHook(() => ${hookName}());
       
       expect(result.current).toBeDefined();
-      ${hasStateManagement ? `expect(result.current.state).toBeDefined();` : ''}
+      ${hasStateManagement ? 'expect(result.current.state).toBeDefined();' : ''}
     });
 
     it('should accept initial parameters', () => {
@@ -67,7 +84,7 @@ describe('${hookName}', () => {
       const { result } = renderHook(() => ${hookName}(initialValue));
       
       expect(result.current).toBeDefined();
-      ${hasStateManagement ? `expect(result.current.state).toBe(initialValue);` : ''}
+      ${hasStateManagement ? 'expect(result.current.state).toBe(initialValue);' : ''}
     });
 
     it('should handle undefined initial parameters', () => {
@@ -77,7 +94,9 @@ describe('${hookName}', () => {
     });
   });
 
-  ${hasStateManagement ? `describe('State Management', () => {
+  ${
+    hasStateManagement
+      ? `describe('State Management', () => {
     it('should update state correctly', () => {
       const { result } = renderHook(() => ${hookName}());
       
@@ -120,9 +139,13 @@ describe('${hookName}', () => {
       
       expect(result.current.renderCount || 1).toBe(initialRenderCount);
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${hasAsyncBehavior ? `describe('Async Behavior', () => {
+  ${
+    hasAsyncBehavior
+      ? `describe('Async Behavior', () => {
     it('should handle async operations', async () => {
       const { result } = renderHook(() => ${hookName}());
       
@@ -158,7 +181,9 @@ describe('${hookName}', () => {
       expect(mockAsyncService).toHaveBeenCalledTimes(1);
     });
 
-    ${testErrorStates ? `it('should handle async errors', async () => {
+    ${
+      testErrorStates
+        ? `it('should handle async errors', async () => {
       mockAsyncService.mockRejectedValue(new Error('Async error'));
       
       const { result } = renderHook(() => ${hookName}());
@@ -191,7 +216,9 @@ describe('${hookName}', () => {
       await waitFor(() => {
         expect(result.current.error).toBe('Network timeout');
       }, { timeout: 2000 });
-    });` : ''}
+    });`
+        : ''
+    }
 
     it('should cancel pending requests on unmount', async () => {
       const { result, unmount } = renderHook(() => ${hookName}());
@@ -206,9 +233,13 @@ describe('${hookName}', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       // No assertions needed - should not throw or cause memory leaks
     });
-  });` : ''}
+  });`
+      : ''
+  }
 
-  ${hasEffects ? `describe('Effects', () => {
+  ${
+    hasEffects
+      ? `describe('Effects', () => {
     it('should run effects on mount', () => {
       renderHook(() => ${hookName}());
       
@@ -241,7 +272,9 @@ describe('${hookName}', () => {
       expect(mockExternalEffect).toHaveBeenCalledTimes(1);
     });
 
-    ${hasCleanup ? `it('should cleanup effects on unmount', () => {
+    ${
+      hasCleanup
+        ? `it('should cleanup effects on unmount', () => {
       const mockCleanup = vi.fn();
       mockExternalEffect.mockReturnValue(mockCleanup);
       
@@ -264,8 +297,12 @@ describe('${hookName}', () => {
       rerender({ dependency: 'changed' });
       
       expect(mockCleanup).toHaveBeenCalled();
-    });` : ''}
-  });` : ''}
+    });`
+        : ''
+    }
+  });`
+      : ''
+  }
 
   describe('Edge Cases', () => {
     it('should handle rapid consecutive calls', () => {
@@ -273,7 +310,7 @@ describe('${hookName}', () => {
       
       act(() => {
         for (let i = 0; i < 100; i++) {
-          ${hasStateManagement ? `result.current.setState(\`value-\${i}\`);` : `result.current.execute();`}
+          ${hasStateManagement ? 'result.current.setState(`value-${i}`);' : 'result.current.execute();'}
         }
       });
       
@@ -287,7 +324,7 @@ describe('${hookName}', () => {
       expect(result.current).toBeDefined();
       expect(() => {
         act(() => {
-          ${hasStateManagement ? `result.current.setState(undefined);` : `result.current.execute(null);`}
+          ${hasStateManagement ? 'result.current.setState(undefined);' : 'result.current.execute(null);'}
         });
       }).not.toThrow();
     });
@@ -343,14 +380,18 @@ describe('${hookName}', () => {
       const initialRenderCount = renderCount;
       
       act(() => {
-        ${hasStateManagement ? `result.current.setState('same value');
+        ${
+          hasStateManagement
+            ? `result.current.setState('same value');
         result.current.setState('same value');
-        result.current.setState('same value');` : `result.current.execute();`}
+        result.current.setState('same value');`
+            : 'result.current.execute();'
+        }
       });
       
       expect(renderCount).toBeLessThanOrEqual(initialRenderCount + 2); // Allow for reasonable re-renders
     });
   });
 });`;
-  }
+  },
 };

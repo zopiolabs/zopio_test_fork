@@ -107,7 +107,13 @@ export interface GeneratorConfig {
  */
 export interface ScaffoldOptions {
   packagePath: string;
-  testType: 'component' | 'utility' | 'api' | 'hook' | 'integration' | 'security';
+  testType:
+    | 'component'
+    | 'utility'
+    | 'api'
+    | 'hook'
+    | 'integration'
+    | 'security';
   templateOptions: any;
   createDirectory?: boolean;
 }

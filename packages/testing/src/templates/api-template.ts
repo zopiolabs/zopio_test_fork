@@ -2,29 +2,34 @@
  * SPDX-License-Identifier: MIT
  */
 
-import type { TestTemplate, APITestOptions } from './types.js';
+import type { APITestOptions, TestTemplate } from './types.js';
 
 /**
  * Template for API route handler tests
  */
 export const apiTestTemplate: TestTemplate = {
   name: 'API Route Test',
-  description: 'Template for testing Next.js API routes with authentication, validation, and error handling',
-  
+  description:
+    'Template for testing Next.js API routes with authentication, validation, and error handling',
+
   generate: (options: APITestOptions) => {
-    const { 
-      routeName, 
-      routePath, 
+    const {
+      routeName,
+      routePath,
       methods = ['GET'],
       requiresAuth = true,
       hasValidation = true,
       hasRateLimit = false,
-      testDatabase = false
+      testDatabase = false,
     } = options;
 
-    const methodTests = methods.map(method => `
+    const methodTests = methods
+      .map(
+        (method) => `
   describe('${method} ${routePath}', () => {
-    ${requiresAuth ? `it('should require authentication', async () => {
+    ${
+      requiresAuth
+        ? `it('should require authentication', async () => {
       const request = createMockRequest({ method: '${method}' });
       const response = createMockResponse();
       
@@ -49,9 +54,13 @@ export const apiTestTemplate: TestTemplate = {
       await ${routeName}(request, response);
       
       expect(response.status).toHaveBeenCalledWith(401);
-    });` : ''}
+    });`
+        : ''
+    }
 
-    ${hasValidation ? `it('should validate request body', async () => {
+    ${
+      hasValidation
+        ? `it('should validate request body', async () => {
       const request = createMockRequest({ 
         method: '${method}',
         ${requiresAuth ? 'headers: mockAuthHeaders,' : ''}
@@ -80,9 +89,13 @@ export const apiTestTemplate: TestTemplate = {
       await ${routeName}(request, response);
       
       expect(response.status).toHaveBeenCalledWith(400);
-    });` : ''}
+    });`
+        : ''
+    }
 
-    ${hasRateLimit ? `it('should enforce rate limits', async () => {
+    ${
+      hasRateLimit
+        ? `it('should enforce rate limits', async () => {
       // Simulate multiple requests from same IP
       const requests = Array.from({ length: 10 }, () => 
         createMockRequest({ 
@@ -102,7 +115,9 @@ export const apiTestTemplate: TestTemplate = {
       await ${routeName}(requests[0], finalResponse);
       
       expect(finalResponse.status).toHaveBeenCalledWith(429);
-    });` : ''}
+    });`
+        : ''
+    }
 
     it('should handle successful ${method.toLowerCase()} request', async () => {
       const request = createMockRequest({ 
@@ -134,10 +149,12 @@ export const apiTestTemplate: TestTemplate = {
       
       await ${routeName}(request, response);
       
-      ${hasValidation ? `expect(response.status).toHaveBeenCalledWith(400);` : `expect(response.status).toHaveBeenCalledWith(200);`}
+      ${hasValidation ? 'expect(response.status).toHaveBeenCalledWith(400);' : 'expect(response.status).toHaveBeenCalledWith(200);'}
     });
 
-    ${testDatabase ? `it('should handle database errors', async () => {
+    ${
+      testDatabase
+        ? `it('should handle database errors', async () => {
       const request = createMockRequest({ 
         method: '${method}',
         ${requiresAuth ? 'headers: mockAuthHeaders,' : ''}
@@ -173,8 +190,12 @@ export const apiTestTemplate: TestTemplate = {
       await ${routeName}(request, response);
       
       expect(response.status).toHaveBeenCalledWith(504);
-    });` : ''}
-  });`).join('\n');
+    });`
+        : ''
+    }
+  });`
+      )
+      .join('\n');
 
     return `/**
  * SPDX-License-Identifier: MIT
@@ -185,23 +206,35 @@ import { createMocks } from 'node-mocks-http';
 import { ${routeName} } from '${routePath}';
 
 // Mock external dependencies
-${requiresAuth ? `const mockVerifyToken = vi.fn();
+${
+  requiresAuth
+    ? `const mockVerifyToken = vi.fn();
 vi.mock('@repo/auth/verify-token', () => ({
   verifyToken: mockVerifyToken,
-}));` : ''}
+}));`
+    : ''
+}
 
-${testDatabase ? `const mockDatabase = {
+${
+  testDatabase
+    ? `const mockDatabase = {
   query: vi.fn(),
   transaction: vi.fn(),
 };
 vi.mock('@repo/database', () => ({
   database: mockDatabase,
-}));` : ''}
+}));`
+    : ''
+}
 
-${hasRateLimit ? `const mockRateLimit = vi.fn();
+${
+  hasRateLimit
+    ? `const mockRateLimit = vi.fn();
 vi.mock('@repo/rate-limit', () => ({
   checkRateLimit: mockRateLimit,
-}));` : ''}
+}));`
+    : ''
+}
 
 // Test helpers
 const createMockRequest = (options: any = {}) => {
@@ -222,7 +255,9 @@ const createMockResponse = () => {
 };
 
 // Mock data
-${requiresAuth ? `const mockAuthHeaders = {
+${
+  requiresAuth
+    ? `const mockAuthHeaders = {
   authorization: 'Bearer valid-token',
 };
 
@@ -230,27 +265,41 @@ const mockUserContext = {
   userId: 'user-123',
   role: 'user',
   tenantId: 'tenant-456',
-};` : ''}
+};`
+    : ''
+}
 
-${methods.includes('POST') || methods.includes('PUT') ? `const mockValidBody = {
+${
+  methods.includes('POST') || methods.includes('PUT')
+    ? `const mockValidBody = {
   title: 'Test Title',
   content: 'Test content',
-};` : ''}
+};`
+    : ''
+}
 
-${testDatabase ? `const mockDatabaseResult = {
+${
+  testDatabase
+    ? `const mockDatabaseResult = {
   id: 'result-123',
   createdAt: new Date(),
   updatedAt: new Date(),
-};` : ''}
+};`
+    : ''
+}
 
 describe('${routeName} API Route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
-    ${requiresAuth ? `mockVerifyToken.mockResolvedValue(mockUserContext);` : ''}
-    ${testDatabase ? `mockDatabase.query.mockResolvedValue(mockDatabaseResult);
-    mockDatabase.transaction.mockImplementation((fn) => fn(mockDatabase));` : ''}
-    ${hasRateLimit ? `mockRateLimit.mockResolvedValue({ allowed: true });` : ''}
+    ${requiresAuth ? 'mockVerifyToken.mockResolvedValue(mockUserContext);' : ''}
+    ${
+      testDatabase
+        ? `mockDatabase.query.mockResolvedValue(mockDatabaseResult);
+    mockDatabase.transaction.mockImplementation((fn) => fn(mockDatabase));`
+        : ''
+    }
+    ${hasRateLimit ? 'mockRateLimit.mockResolvedValue({ allowed: true });' : ''}
   });
 
   it('should reject unsupported HTTP methods', async () => {
@@ -330,7 +379,7 @@ describe('${routeName} API Route', () => {
   describe('Content Type Handling', () => {
     it('should handle JSON content type', async () => {
       const request = createMockRequest({ 
-        method: '${methods.find(m => m === 'POST' || m === 'PUT') || methods[0]}',
+        method: '${methods.find((m) => m === 'POST' || m === 'PUT') || methods[0]}',
         headers: { 
           'content-type': 'application/json',
           ${requiresAuth ? '...mockAuthHeaders' : ''}
@@ -345,7 +394,7 @@ describe('${routeName} API Route', () => {
 
     it('should reject unsupported content types', async () => {
       const request = createMockRequest({ 
-        method: '${methods.find(m => m === 'POST' || m === 'PUT') || methods[0]}',
+        method: '${methods.find((m) => m === 'POST' || m === 'PUT') || methods[0]}',
         headers: { 
           'content-type': 'text/plain',
           ${requiresAuth ? '...mockAuthHeaders' : ''}
@@ -359,5 +408,5 @@ describe('${routeName} API Route', () => {
     });
   });
 });`;
-  }
+  },
 };

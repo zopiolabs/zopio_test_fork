@@ -2,9 +2,9 @@
  * SPDX-License-Identifier: MIT
  */
 
+import { exec } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const execAsync = promisify(exec);
@@ -28,18 +28,14 @@ export class ContinuousImprovementFramework {
    * Initialize continuous improvement tracking
    */
   async initialize(): Promise<void> {
-    console.log('🚀 Initializing continuous improvement framework...');
-    
     // Load historical metrics
     await this.loadHistoricalMetrics();
-    
+
     // Set up monitoring hooks
     await this.setupMonitoringHooks();
-    
+
     // Initialize baseline metrics
     await this.collectBaselineMetrics();
-    
-    console.log('✅ Continuous improvement framework initialized');
   }
 
   /**
@@ -47,7 +43,7 @@ export class ContinuousImprovementFramework {
    */
   async collectMetrics(): Promise<TestMetric> {
     const timestamp = new Date();
-    
+
     const [coverage, quality, performance, maintenance] = await Promise.all([
       this.collectCoverageMetrics(),
       this.collectQualityMetrics(),
@@ -61,7 +57,12 @@ export class ContinuousImprovementFramework {
       quality,
       performance,
       maintenance,
-      overall: this.calculateOverallScore(coverage, quality, performance, maintenance),
+      overall: this.calculateOverallScore(
+        coverage,
+        quality,
+        performance,
+        maintenance
+      ),
     };
 
     this.metricsHistory.push(metric);
@@ -73,9 +74,11 @@ export class ContinuousImprovementFramework {
   /**
    * Analyze trends and generate insights
    */
-  async analyzeTrends(periodDays: number = 30): Promise<TrendAnalysis> {
+  async analyzeTrends(periodDays = 30): Promise<TrendAnalysis> {
     const cutoffDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
-    const recentMetrics = this.metricsHistory.filter(m => m.timestamp >= cutoffDate);
+    const recentMetrics = this.metricsHistory.filter(
+      (m) => m.timestamp >= cutoffDate
+    );
 
     if (recentMetrics.length < 2) {
       throw new Error('Insufficient data for trend analysis');
@@ -101,26 +104,27 @@ export class ContinuousImprovementFramework {
   async generateRecommendations(): Promise<ImprovementRecommendation[]> {
     const currentMetrics = await this.collectMetrics();
     const trends = await this.analyzeTrends();
-    
+
     return this.improvementSuggestions.generate(currentMetrics, trends);
   }
 
   /**
    * Execute improvement actions
    */
-  async executeImprovement(recommendation: ImprovementRecommendation): Promise<ImprovementResult> {
-    console.log(`🔧 Executing improvement: ${recommendation.title}`);
-    
+  async executeImprovement(
+    recommendation: ImprovementRecommendation
+  ): Promise<ImprovementResult> {
     const startTime = Date.now();
     const beforeMetrics = await this.collectMetrics();
 
     try {
       // Execute the improvement action
-      const executionResult = await this.executeImprovementAction(recommendation);
-      
+      const executionResult =
+        await this.executeImprovementAction(recommendation);
+
       // Wait for effects to settle
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+
       // Collect after metrics
       const afterMetrics = await this.collectMetrics();
       const executionTime = Date.now() - startTime;
@@ -141,7 +145,6 @@ export class ContinuousImprovementFramework {
       await this.feedbackLoop.recordImprovement(result);
 
       return result;
-
     } catch (error: any) {
       const executionTime = Date.now() - startTime;
 
@@ -151,7 +154,13 @@ export class ContinuousImprovementFramework {
         executionTime,
         beforeMetrics,
         afterMetrics: beforeMetrics,
-        impact: { overall: 0, coverage: 0, quality: 0, performance: 0, maintenance: 0 },
+        impact: {
+          overall: 0,
+          coverage: 0,
+          quality: 0,
+          performance: 0,
+          maintenance: 0,
+        },
         success: false,
         details: { error: error.message },
         rollbackPossible: false,
@@ -170,7 +179,8 @@ export class ContinuousImprovementFramework {
     const currentMetrics = await this.collectMetrics();
     const trends = await this.analyzeTrends();
     const recommendations = await this.generateRecommendations();
-    const executedImprovements = await this.feedbackLoop.getExecutedImprovements();
+    const executedImprovements =
+      await this.feedbackLoop.getExecutedImprovements();
 
     return {
       timestamp: new Date(),
@@ -181,10 +191,14 @@ export class ContinuousImprovementFramework {
       summary: {
         overallHealthScore: currentMetrics.overall,
         trendsDirection: this.getTrendsDirection(trends),
-        priorityRecommendations: recommendations.filter(r => r.priority === 'high').length,
-        recentImprovements: executedImprovements.filter(i => 
-          i.recommendation.executedAt && 
-          Date.now() - i.recommendation.executedAt.getTime() < 7 * 24 * 60 * 60 * 1000
+        priorityRecommendations: recommendations.filter(
+          (r) => r.priority === 'high'
+        ).length,
+        recentImprovements: executedImprovements.filter(
+          (i) =>
+            i.recommendation.executedAt &&
+            Date.now() - i.recommendation.executedAt.getTime() <
+              7 * 24 * 60 * 60 * 1000
         ).length,
       },
       actionPlan: this.generateActionPlan(recommendations),
@@ -217,14 +231,17 @@ export class ContinuousImprovementFramework {
     };
 
     await this.saveMonitoringConfig(monitoringConfig);
-    console.log('📊 Automated monitoring configured');
   }
 
   // Private helper methods
 
   private async loadHistoricalMetrics(): Promise<void> {
     try {
-      const metricsPath = path.join(this.projectPath, '.test-metrics', 'history.json');
+      const metricsPath = path.join(
+        this.projectPath,
+        '.test-metrics',
+        'history.json'
+      );
       const data = await fs.readFile(metricsPath, 'utf8');
       this.metricsHistory = JSON.parse(data).map((m: any) => ({
         ...m,
@@ -245,29 +262,29 @@ npx test-maintenance health --json > .test-metrics/latest.json
 
     const hooksDir = path.join(this.projectPath, '.git', 'hooks');
     const postCommitHook = path.join(hooksDir, 'post-commit');
-    
+
     try {
       await fs.writeFile(postCommitHook, hookScript);
       await fs.chmod(postCommitHook, 0o755);
-    } catch {
-      console.warn('⚠️  Could not set up Git hooks');
-    }
+    } catch {}
   }
 
   private async collectBaselineMetrics(): Promise<void> {
-    const baseline = await this.collectMetrics();
-    console.log(`📊 Baseline metrics collected - Overall score: ${baseline.overall}/10`);
+    const _baseline = await this.collectMetrics();
   }
 
   private async collectCoverageMetrics(): Promise<CoverageMetrics> {
     try {
-      const { stdout } = await execAsync('pnpm test -- --coverage --reporter=json', {
-        cwd: this.projectPath,
-      });
-      
+      const { stdout } = await execAsync(
+        'pnpm test -- --coverage --reporter=json',
+        {
+          cwd: this.projectPath,
+        }
+      );
+
       const result = JSON.parse(stdout);
       const total = result.total || {};
-      
+
       return {
         lines: Math.round(total.lines?.pct || 0),
         functions: Math.round(total.functions?.pct || 0),
@@ -277,7 +294,11 @@ npx test-maintenance health --json > .test-metrics/latest.json
       };
     } catch {
       return {
-        lines: 0, functions: 0, branches: 0, statements: 0, trend: 'declining',
+        lines: 0,
+        functions: 0,
+        branches: 0,
+        statements: 0,
+        trend: 'declining',
       };
     }
   }
@@ -295,7 +316,8 @@ npx test-maintenance health --json > .test-metrics/latest.json
         issueCount += analysis.issues;
       }
 
-      const averageScore = testFiles.length > 0 ? totalScore / testFiles.length : 0;
+      const averageScore =
+        testFiles.length > 0 ? totalScore / testFiles.length : 0;
 
       return {
         score: Math.round(averageScore),
@@ -329,14 +351,19 @@ npx test-maintenance health --json > .test-metrics/latest.json
         trend: 'stable', // Would be calculated from history
       };
     } catch {
-      return { averageExecutionTime: 0, slowTestCount: 0, flakiness: 0, trend: 'declining' };
+      return {
+        averageExecutionTime: 0,
+        slowTestCount: 0,
+        flakiness: 0,
+        trend: 'declining',
+      };
     }
   }
 
   private async collectMaintenanceMetrics(): Promise<MaintenanceMetrics> {
     const testFiles = await this.findTestFiles();
     const sourceFiles = await this.findSourceFiles();
-    
+
     return {
       testCoverage: testFiles.length / Math.max(1, sourceFiles.length),
       obsoleteTests: 0, // Would be calculated by analyzing unused tests
@@ -353,38 +380,43 @@ npx test-maintenance health --json > .test-metrics/latest.json
   ): number {
     const coverageScore = coverage.lines / 10;
     const qualityScore = quality.score;
-    const performanceScore = Math.max(0, 10 - (performance.slowTestCount * 2));
+    const performanceScore = Math.max(0, 10 - performance.slowTestCount * 2);
     const maintenanceScore = Math.min(10, maintenance.testCoverage * 10);
 
-    return Math.round((coverageScore + qualityScore + performanceScore + maintenanceScore) / 4);
+    return Math.round(
+      (coverageScore + qualityScore + performanceScore + maintenanceScore) / 4
+    );
   }
 
   private calculateCoverageTrend(metrics: TestMetric[]): TrendData {
-    const values = metrics.map(m => m.coverage.lines);
+    const values = metrics.map((m) => m.coverage.lines);
     return this.calculateTrendData(values);
   }
 
   private calculateQualityTrend(metrics: TestMetric[]): TrendData {
-    const values = metrics.map(m => m.quality.score);
+    const values = metrics.map((m) => m.quality.score);
     return this.calculateTrendData(values);
   }
 
   private calculatePerformanceTrend(metrics: TestMetric[]): TrendData {
-    const values = metrics.map(m => m.performance.averageExecutionTime);
+    const values = metrics.map((m) => m.performance.averageExecutionTime);
     return this.calculateTrendData(values, true); // Lower is better for performance
   }
 
   private calculateMaintenanceTrend(metrics: TestMetric[]): TrendData {
-    const values = metrics.map(m => m.maintenance.testCoverage * 10);
+    const values = metrics.map((m) => m.maintenance.testCoverage * 10);
     return this.calculateTrendData(values);
   }
 
   private calculateOverallTrend(metrics: TestMetric[]): TrendData {
-    const values = metrics.map(m => m.overall);
+    const values = metrics.map((m) => m.overall);
     return this.calculateTrendData(values);
   }
 
-  private calculateTrendData(values: number[], lowerIsBetter = false): TrendData {
+  private calculateTrendData(
+    values: number[],
+    lowerIsBetter = false
+  ): TrendData {
     if (values.length < 2) {
       return { direction: 'stable', change: 0, confidence: 0 };
     }
@@ -393,12 +425,22 @@ npx test-maintenance health --json > .test-metrics/latest.json
     const older = values.slice(-10, -5) || values.slice(0, -5);
 
     const recentAvg = recent.reduce((sum, v) => sum + v, 0) / recent.length;
-    const olderAvg = older.length > 0 ? older.reduce((sum, v) => sum + v, 0) / older.length : recentAvg;
+    const olderAvg =
+      older.length > 0
+        ? older.reduce((sum, v) => sum + v, 0) / older.length
+        : recentAvg;
 
     const change = ((recentAvg - olderAvg) / olderAvg) * 100;
-    const direction = Math.abs(change) < 2 ? 'stable' : 
-                     (lowerIsBetter ? (change < 0 ? 'improving' : 'declining') :
-                      (change > 0 ? 'improving' : 'declining'));
+    const direction =
+      Math.abs(change) < 2
+        ? 'stable'
+        : lowerIsBetter
+          ? change < 0
+            ? 'improving'
+            : 'declining'
+          : change > 0
+            ? 'improving'
+            : 'declining';
 
     return {
       direction,
@@ -413,32 +455,40 @@ npx test-maintenance health --json > .test-metrics/latest.json
     // Coverage insights
     const coverageTrend = this.calculateCoverageTrend(metrics);
     if (coverageTrend.direction === 'declining') {
-      insights.push(`Coverage has been declining by ${Math.abs(coverageTrend.change)}% - consider prioritizing test writing`);
+      insights.push(
+        `Coverage has been declining by ${Math.abs(coverageTrend.change)}% - consider prioritizing test writing`
+      );
     }
 
     // Quality insights
     const qualityTrend = this.calculateQualityTrend(metrics);
     if (qualityTrend.direction === 'improving') {
-      insights.push(`Test quality has been improving by ${qualityTrend.change}% - good progress on code standards`);
+      insights.push(
+        `Test quality has been improving by ${qualityTrend.change}% - good progress on code standards`
+      );
     }
 
     // Performance insights
     const performanceTrend = this.calculatePerformanceTrend(metrics);
     if (performanceTrend.direction === 'declining') {
-      insights.push(`Test execution time increasing by ${Math.abs(performanceTrend.change)}% - investigate slow tests`);
+      insights.push(
+        `Test execution time increasing by ${Math.abs(performanceTrend.change)}% - investigate slow tests`
+      );
     }
 
     return insights;
   }
 
-  private async generatePredictions(metrics: TestMetric[]): Promise<PredictionData[]> {
+  private async generatePredictions(
+    metrics: TestMetric[]
+  ): Promise<PredictionData[]> {
     const predictions: PredictionData[] = [];
 
     // Simple linear regression for predictions
     if (metrics.length >= 10) {
-      const coverageValues = metrics.map(m => m.coverage.lines);
+      const coverageValues = metrics.map((m) => m.coverage.lines);
       const coveragePrediction = this.predictNextValue(coverageValues);
-      
+
       predictions.push({
         metric: 'coverage',
         predictedValue: Math.round(coveragePrediction),
@@ -467,7 +517,9 @@ npx test-maintenance health --json > .test-metrics/latest.json
     return slope * n + intercept; // Predict next value
   }
 
-  private async executeImprovementAction(recommendation: ImprovementRecommendation): Promise<{
+  private async executeImprovementAction(
+    recommendation: ImprovementRecommendation
+  ): Promise<{
     success: boolean;
     details: any;
     rollbackPossible: boolean;
@@ -476,24 +528,28 @@ npx test-maintenance health --json > .test-metrics/latest.json
     switch (recommendation.type) {
       case 'generate-missing-tests':
         return this.generateMissingTests(recommendation);
-      
+
       case 'optimize-slow-tests':
         return this.optimizeSlowTests(recommendation);
-      
+
       case 'fix-quality-issues':
         return this.fixQualityIssues(recommendation);
-      
+
       case 'update-dependencies':
         return this.updateTestDependencies(recommendation);
-      
+
       default:
         throw new Error(`Unknown improvement type: ${recommendation.type}`);
     }
   }
 
-  private async generateMissingTests(recommendation: ImprovementRecommendation): Promise<any> {
+  private async generateMissingTests(
+    recommendation: ImprovementRecommendation
+  ): Promise<any> {
     try {
-      await execAsync('npx scaffold-package complete .', { cwd: this.projectPath });
+      await execAsync('npx scaffold-package complete .', {
+        cwd: this.projectPath,
+      });
       return {
         success: true,
         details: { testsGenerated: recommendation.estimatedImpact },
@@ -508,14 +564,20 @@ npx test-maintenance health --json > .test-metrics/latest.json
     }
   }
 
-  private async optimizeSlowTests(recommendation: ImprovementRecommendation): Promise<any> {
+  private async optimizeSlowTests(
+    _recommendation: ImprovementRecommendation
+  ): Promise<any> {
     // Implementation would optimize slow tests
     return { success: true, details: {}, rollbackPossible: false };
   }
 
-  private async fixQualityIssues(recommendation: ImprovementRecommendation): Promise<any> {
+  private async fixQualityIssues(
+    recommendation: ImprovementRecommendation
+  ): Promise<any> {
     try {
-      await execAsync('npx test-maintenance fix --type=all', { cwd: this.projectPath });
+      await execAsync('npx test-maintenance fix --type=all', {
+        cwd: this.projectPath,
+      });
       return {
         success: true,
         details: { issuesFixed: recommendation.estimatedImpact },
@@ -530,9 +592,13 @@ npx test-maintenance health --json > .test-metrics/latest.json
     }
   }
 
-  private async updateTestDependencies(recommendation: ImprovementRecommendation): Promise<any> {
+  private async updateTestDependencies(
+    recommendation: ImprovementRecommendation
+  ): Promise<any> {
     try {
-      await execAsync('npx test-maintenance update-deps', { cwd: this.projectPath });
+      await execAsync('npx test-maintenance update-deps', {
+        cwd: this.projectPath,
+      });
       return {
         success: true,
         details: { dependenciesUpdated: recommendation.estimatedImpact },
@@ -547,17 +613,25 @@ npx test-maintenance health --json > .test-metrics/latest.json
     }
   }
 
-  private calculateImpact(before: TestMetric, after: TestMetric): ImpactMeasurement {
+  private calculateImpact(
+    before: TestMetric,
+    after: TestMetric
+  ): ImpactMeasurement {
     return {
       overall: after.overall - before.overall,
       coverage: after.coverage.lines - before.coverage.lines,
       quality: after.quality.score - before.quality.score,
-      performance: before.performance.averageExecutionTime - after.performance.averageExecutionTime,
-      maintenance: (after.maintenance.testCoverage - before.maintenance.testCoverage) * 10,
+      performance:
+        before.performance.averageExecutionTime -
+        after.performance.averageExecutionTime,
+      maintenance:
+        (after.maintenance.testCoverage - before.maintenance.testCoverage) * 10,
     };
   }
 
-  private getTrendsDirection(trends: TrendAnalysis): 'improving' | 'declining' | 'stable' {
+  private getTrendsDirection(
+    trends: TrendAnalysis
+  ): 'improving' | 'declining' | 'stable' {
     const directions = [
       trends.coverage.direction,
       trends.quality.direction,
@@ -565,23 +639,34 @@ npx test-maintenance health --json > .test-metrics/latest.json
       trends.maintenance.direction,
     ];
 
-    const improving = directions.filter(d => d === 'improving').length;
-    const declining = directions.filter(d => d === 'declining').length;
+    const improving = directions.filter((d) => d === 'improving').length;
+    const declining = directions.filter((d) => d === 'declining').length;
 
-    if (improving > declining) return 'improving';
-    if (declining > improving) return 'declining';
+    if (improving > declining) {
+      return 'improving';
+    }
+    if (declining > improving) {
+      return 'declining';
+    }
     return 'stable';
   }
 
-  private generateActionPlan(recommendations: ImprovementRecommendation[]): ActionPlan {
-    const highPriority = recommendations.filter(r => r.priority === 'high');
-    const mediumPriority = recommendations.filter(r => r.priority === 'medium');
+  private generateActionPlan(
+    recommendations: ImprovementRecommendation[]
+  ): ActionPlan {
+    const highPriority = recommendations.filter((r) => r.priority === 'high');
+    const mediumPriority = recommendations.filter(
+      (r) => r.priority === 'medium'
+    );
 
     return {
       immediate: highPriority.slice(0, 3),
       shortTerm: mediumPriority.slice(0, 5),
-      longTerm: recommendations.filter(r => r.priority === 'low').slice(0, 3),
-      estimatedTotalEffort: recommendations.reduce((sum, r) => sum + r.estimatedEffort, 0),
+      longTerm: recommendations.filter((r) => r.priority === 'low').slice(0, 3),
+      estimatedTotalEffort: recommendations.reduce(
+        (sum, r) => sum + r.estimatedEffort,
+        0
+      ),
     };
   }
 
@@ -591,11 +676,17 @@ npx test-maintenance health --json > .test-metrics/latest.json
 
     // Save individual metric
     const filename = `metric-${metric.timestamp.toISOString().split('T')[0]}.json`;
-    await fs.writeFile(path.join(metricsDir, filename), JSON.stringify(metric, null, 2));
+    await fs.writeFile(
+      path.join(metricsDir, filename),
+      JSON.stringify(metric, null, 2)
+    );
 
     // Update history
     const historyPath = path.join(metricsDir, 'history.json');
-    await fs.writeFile(historyPath, JSON.stringify(this.metricsHistory, null, 2));
+    await fs.writeFile(
+      historyPath,
+      JSON.stringify(this.metricsHistory, null, 2)
+    );
 
     // Save latest
     const latestPath = path.join(metricsDir, 'latest.json');
@@ -603,7 +694,11 @@ npx test-maintenance health --json > .test-metrics/latest.json
   }
 
   private async saveMonitoringConfig(config: any): Promise<void> {
-    const configPath = path.join(this.projectPath, '.test-metrics', 'monitoring.json');
+    const configPath = path.join(
+      this.projectPath,
+      '.test-metrics',
+      'monitoring.json'
+    );
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
   }
 
@@ -617,7 +712,10 @@ npx test-maintenance health --json > .test-metrics/latest.json
     return [];
   }
 
-  private analyzeTestFileQuality(content: string): { score: number; issues: number } {
+  private analyzeTestFileQuality(content: string): {
+    score: number;
+    issues: number;
+  } {
     // Basic quality analysis
     let score = 10;
     let issues = 0;
@@ -652,7 +750,10 @@ class FeedbackLoop {
 }
 
 class ImprovementEngine {
-  generate(currentMetrics: TestMetric, trends: TrendAnalysis): ImprovementRecommendation[] {
+  generate(
+    currentMetrics: TestMetric,
+    _trends: TrendAnalysis
+  ): ImprovementRecommendation[] {
     const recommendations: ImprovementRecommendation[] = [];
 
     // Coverage recommendations
@@ -772,7 +873,11 @@ export interface ImprovementRecommendation {
   id: string;
   title: string;
   description: string;
-  type: 'generate-missing-tests' | 'optimize-slow-tests' | 'fix-quality-issues' | 'update-dependencies';
+  type:
+    | 'generate-missing-tests'
+    | 'optimize-slow-tests'
+    | 'fix-quality-issues'
+    | 'update-dependencies';
   priority: 'high' | 'medium' | 'low';
   estimatedEffort: number; // hours
   estimatedImpact: number;
@@ -825,6 +930,8 @@ export interface ActionPlan {
 /**
  * Create a continuous improvement framework instance
  */
-export function createContinuousImprovementFramework(projectPath?: string): ContinuousImprovementFramework {
+export function createContinuousImprovementFramework(
+  projectPath?: string
+): ContinuousImprovementFramework {
   return new ContinuousImprovementFramework(projectPath);
 }

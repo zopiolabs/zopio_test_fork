@@ -3,9 +3,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { Command } from 'commander';
 import * as path from 'node:path';
-import { TestGenerator, generateTestFile, autoGenerateTestsForDirectory } from '../templates/generator.js';
+import { Command } from 'commander';
+import {
+  TestGenerator,
+  autoGenerateTestsForDirectory,
+  generateTestFile,
+} from '../templates/generator.js';
 
 const program = new Command();
 
@@ -18,7 +22,10 @@ program
 program
   .command('single')
   .description('Generate a single test file')
-  .requiredOption('-t, --type <type>', 'Test type (component, utility, api, hook, integration, security)')
+  .requiredOption(
+    '-t, --type <type>',
+    'Test type (component, utility, api, hook, integration, security)'
+  )
   .requiredOption('-o, --output <path>', 'Output file path')
   .option('-f, --force', 'Overwrite existing file')
   .option('--name <name>', 'Component/function/module name')
@@ -31,7 +38,7 @@ program
   .action(async (options) => {
     try {
       const methods = options.methods.split(',').map((m: string) => m.trim());
-      
+
       const templateOptions = {
         componentName: options.name,
         functionName: options.name,
@@ -69,10 +76,7 @@ program
         templateOptions,
         options.force
       );
-
-      console.log(`✅ Generated ${options.type} test: ${options.output}`);
-    } catch (error) {
-      console.error('❌ Error generating test:', error.message);
+    } catch (_error) {
       process.exit(1);
     }
   });
@@ -82,24 +86,27 @@ program
   .command('auto')
   .description('Auto-generate tests for source files')
   .argument('<source>', 'Source file or directory')
-  .option('-e, --extensions <exts>', 'File extensions to process', '.ts,.tsx,.js,.jsx')
-  .option('--exclude <patterns>', 'Exclude patterns', '*.test.*,*.spec.*,__tests__,node_modules')
+  .option(
+    '-e, --extensions <exts>',
+    'File extensions to process',
+    '.ts,.tsx,.js,.jsx'
+  )
+  .option(
+    '--exclude <patterns>',
+    'Exclude patterns',
+    '*.test.*,*.spec.*,__tests__,node_modules'
+  )
   .action(async (source, options) => {
     try {
       const sourcePath = path.resolve(source);
       const extensions = options.extensions.split(',');
       const exclude = options.exclude.split(',');
 
-      console.log(`🔍 Analyzing source: ${sourcePath}`);
-      
       await autoGenerateTestsForDirectory(sourcePath, {
         extensions,
         exclude,
       });
-
-      console.log('✅ Auto-generation complete');
-    } catch (error) {
-      console.error('❌ Error auto-generating tests:', error.message);
+    } catch (_error) {
       process.exit(1);
     }
   });
@@ -110,12 +117,8 @@ program
   .description('List available test templates')
   .action(() => {
     const templates = TestGenerator.listTemplates();
-    
-    console.log('📋 Available test templates:\n');
-    
-    templates.forEach(({ key, template }) => {
-      console.log(`  ${key.padEnd(12)} - ${template.description}`);
-    });
+
+    templates.forEach(({ key, template }) => {});
   });
 
 // Interactive template command
@@ -125,7 +128,7 @@ program
   .action(async () => {
     try {
       const { default: inquirer } = await import('inquirer');
-      
+
       const answers = await inquirer.prompt([
         {
           type: 'list',
@@ -150,7 +153,8 @@ program
           type: 'input',
           name: 'path',
           message: 'What is the import path?',
-          validate: (input: string) => input.length > 0 || 'Import path is required',
+          validate: (input: string) =>
+            input.length > 0 || 'Import path is required',
         },
         {
           type: 'input',
@@ -163,14 +167,16 @@ program
           name: 'async',
           message: 'Does this involve async operations?',
           default: false,
-          when: (answers: any) => ['utility', 'api', 'hook'].includes(answers.type),
+          when: (answers: any) =>
+            ['utility', 'api', 'hook'].includes(answers.type),
         },
         {
           type: 'confirm',
           name: 'database',
           message: 'Does this involve database operations?',
           default: false,
-          when: (answers: any) => ['api', 'integration', 'security'].includes(answers.type),
+          when: (answers: any) =>
+            ['api', 'integration', 'security'].includes(answers.type),
         },
         {
           type: 'checkbox',
@@ -225,14 +231,10 @@ program
         templateOptions,
         answers.overwrite
       );
-
-      console.log(`✅ Generated ${answers.type} test: ${answers.output}`);
     } catch (error) {
       if (error.message.includes('User force closed')) {
-        console.log('\n👋 Generation cancelled');
         process.exit(0);
       }
-      console.error('❌ Error in interactive mode:', error.message);
       process.exit(1);
     }
   });
@@ -246,15 +248,13 @@ program
   .action(async (files, options) => {
     try {
       const resolvedFiles = files.map((file: string) => path.resolve(file));
-      
-      console.log(`🚀 Generating tests for ${resolvedFiles.length} files...`);
-      
+
       if (options.type) {
         // Generate with specific type for all files
         for (const file of resolvedFiles) {
           const name = path.basename(file, path.extname(file));
           const testPath = file.replace(/\.(ts|tsx|js|jsx)$/, '.test.$1');
-          
+
           await generateTestFile(options.type, testPath, {
             componentName: name,
             functionName: name,
@@ -268,10 +268,7 @@ program
         // Auto-detect type for each file
         await TestGenerator.batchGenerate(resolvedFiles);
       }
-      
-      console.log('✅ Batch generation complete');
-    } catch (error) {
-      console.error('❌ Error in batch generation:', error.message);
+    } catch (_error) {
       process.exit(1);
     }
   });

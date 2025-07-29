@@ -2,9 +2,9 @@
  * SPDX-License-Identifier: MIT
  */
 
+import { exec } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const execAsync = promisify(exec);
@@ -25,15 +25,15 @@ export class CoverageVisualizer {
    */
   async loadCoverage(): Promise<CoverageData> {
     try {
-      // Run tests with coverage
-      console.log('📊 Generating coverage data...');
-      
-      const { stdout } = await execAsync('pnpm test -- --coverage --reporter=json', {
-        cwd: this.projectPath,
-      });
+      const { stdout } = await execAsync(
+        'pnpm test -- --coverage --reporter=json',
+        {
+          cwd: this.projectPath,
+        }
+      );
 
       const testResult = JSON.parse(stdout);
-      
+
       // Load coverage files
       const coverageDir = path.join(this.projectPath, 'coverage');
       const lcovPath = path.join(coverageDir, 'lcov.info');
@@ -44,16 +44,12 @@ export class CoverageVisualizer {
 
       try {
         lcovData = await fs.readFile(lcovPath, 'utf8');
-      } catch {
-        console.warn('⚠️  LCOV file not found');
-      }
+      } catch {}
 
       try {
         const jsonContent = await fs.readFile(jsonPath, 'utf8');
         jsonData = JSON.parse(jsonContent);
-      } catch {
-        console.warn('⚠️  JSON coverage file not found');
-      }
+      } catch {}
 
       this.coverageData = {
         summary: this.extractSummary(testResult),
@@ -65,7 +61,6 @@ export class CoverageVisualizer {
       };
 
       return this.coverageData;
-
     } catch (error: any) {
       throw new Error(`Failed to load coverage data: ${error.message}`);
     }
@@ -79,12 +74,12 @@ export class CoverageVisualizer {
       await this.loadCoverage();
     }
 
-    const reportPath = outputPath || path.join(this.projectPath, 'coverage-report.html');
+    const reportPath =
+      outputPath || path.join(this.projectPath, 'coverage-report.html');
     const htmlContent = this.generateHTMLReport(this.coverageData!);
-    
+
     await fs.writeFile(reportPath, htmlContent);
-    console.log(`📄 Interactive coverage report generated: ${reportPath}`);
-    
+
     return reportPath;
   }
 
@@ -96,13 +91,13 @@ export class CoverageVisualizer {
       await this.loadCoverage();
     }
 
-    const files = this.coverageData!.files.filter(file => 
+    const files = this.coverageData?.files.filter((file) =>
       file.path.startsWith(targetDir)
     );
 
     const heatmap: CoverageHeatmap = {
       directory: targetDir,
-      files: files.map(file => ({
+      files: files.map((file) => ({
         path: file.path,
         coverage: file.coverage.lines.percentage,
         complexity: this.calculateComplexity(file),
@@ -111,9 +106,12 @@ export class CoverageVisualizer {
       })),
       summary: {
         totalFiles: files.length,
-        averageCoverage: files.reduce((sum, f) => sum + f.coverage.lines.percentage, 0) / files.length,
-        lowCoverageFiles: files.filter(f => f.coverage.lines.percentage < 80).length,
-        highRiskFiles: files.filter(f => this.calculateRisk(f) > 0.7).length,
+        averageCoverage:
+          files.reduce((sum, f) => sum + f.coverage.lines.percentage, 0) /
+          files.length,
+        lowCoverageFiles: files.filter((f) => f.coverage.lines.percentage < 80)
+          .length,
+        highRiskFiles: files.filter((f) => this.calculateRisk(f) > 0.7).length,
       },
     };
 
@@ -131,7 +129,7 @@ export class CoverageVisualizer {
     const gaps: CoverageGap[] = [];
     const priorities: TestPriority[] = [];
 
-    for (const file of this.coverageData!.files) {
+    for (const file of this.coverageData?.files) {
       // Identify uncovered critical paths
       const criticalGaps = this.findCriticalGaps(file);
       gaps.push(...criticalGaps);
@@ -149,8 +147,11 @@ export class CoverageVisualizer {
       recommendations: this.generateCoverageRecommendations(gaps, priorities),
       summary: {
         totalGaps: gaps.length,
-        criticalGaps: gaps.filter(g => g.impact > 0.8).length,
-        estimatedEffort: priorities.reduce((sum, p) => sum + p.estimatedHours, 0),
+        criticalGaps: gaps.filter((g) => g.impact > 0.8).length,
+        estimatedEffort: priorities.reduce(
+          (sum, p) => sum + p.estimatedHours,
+          0
+        ),
       },
     };
   }
@@ -158,9 +159,10 @@ export class CoverageVisualizer {
   /**
    * Compare coverage between two commits/branches
    */
-  async compareCoverage(baseline: string, current: string = 'HEAD'): Promise<CoverageComparison> {
-    console.log(`📊 Comparing coverage: ${baseline} → ${current}`);
-
+  async compareCoverage(
+    baseline: string,
+    current = 'HEAD'
+  ): Promise<CoverageComparison> {
     // Get coverage for baseline
     await execAsync(`git checkout ${baseline}`, { cwd: this.projectPath });
     const baselineCoverage = await this.loadCoverage();
@@ -179,11 +181,17 @@ export class CoverageVisualizer {
         coverage: currentCoverage.summary,
       },
       changes: this.calculateCoverageChanges(baselineCoverage, currentCoverage),
-      newFiles: currentCoverage.files.filter(file => 
-        !baselineCoverage.files.some(baseFile => baseFile.path === file.path)
+      newFiles: currentCoverage.files.filter(
+        (file) =>
+          !baselineCoverage.files.some(
+            (baseFile) => baseFile.path === file.path
+          )
       ),
-      deletedFiles: baselineCoverage.files.filter(file => 
-        !currentCoverage.files.some(currentFile => currentFile.path === file.path)
+      deletedFiles: baselineCoverage.files.filter(
+        (file) =>
+          !currentCoverage.files.some(
+            (currentFile) => currentFile.path === file.path
+          )
       ),
       modifiedFiles: this.findModifiedFiles(baselineCoverage, currentCoverage),
     };
@@ -194,7 +202,9 @@ export class CoverageVisualizer {
   /**
    * Generate coverage diff visualization
    */
-  async generateDiffVisualization(comparison: CoverageComparison): Promise<string> {
+  async generateDiffVisualization(
+    comparison: CoverageComparison
+  ): Promise<string> {
     const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -227,7 +237,9 @@ export class CoverageVisualizer {
 
   <div class="changes">
     <h2>File Changes</h2>
-    ${comparison.modifiedFiles.map(file => `
+    ${comparison.modifiedFiles
+      .map(
+        (file) => `
       <div class="file-diff">
         <h3>${file.path}</h3>
         <div class="coverage-bar">
@@ -235,14 +247,16 @@ export class CoverageVisualizer {
         </div>
         <p>Coverage: ${file.baseline.coverage.lines.percentage}% → ${file.current.coverage.lines.percentage}%</p>
       </div>
-    `).join('')}
+    `
+      )
+      .join('')}
   </div>
 </body>
 </html>`;
 
     const diffPath = path.join(this.projectPath, 'coverage-diff.html');
     await fs.writeFile(diffPath, htmlContent);
-    
+
     return diffPath;
   }
 
@@ -256,10 +270,13 @@ export class CoverageVisualizer {
       try {
         await execAsync(`git checkout ${commit}`, { cwd: this.projectPath });
         const coverage = await this.loadCoverage();
-        
-        const commitInfo = await execAsync(`git show --format="%H %s %ad" --no-patch ${commit}`, {
-          cwd: this.projectPath,
-        });
+
+        const commitInfo = await execAsync(
+          `git show --format="%H %s %ad" --no-patch ${commit}`,
+          {
+            cwd: this.projectPath,
+          }
+        );
 
         const [hash, ...messageParts] = commitInfo.stdout.trim().split(' ');
         const message = messageParts.join(' ');
@@ -271,9 +288,7 @@ export class CoverageVisualizer {
           coverage: coverage.summary,
           fileCount: coverage.files.length,
         });
-      } catch (error) {
-        console.warn(`⚠️  Failed to analyze commit ${commit}: ${error}`);
-      }
+      } catch (_error) {}
     }
 
     return trends.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
@@ -282,8 +297,9 @@ export class CoverageVisualizer {
   // Private helper methods
 
   private extractSummary(testResult: any): CoverageSummary {
-    const total = testResult.coverageMap?.getCoverageSummary?.() || testResult.total || {};
-    
+    const total =
+      testResult.coverageMap?.getCoverageSummary?.() || testResult.total || {};
+
     return {
       lines: {
         total: total.lines?.total || 0,
@@ -313,34 +329,54 @@ export class CoverageVisualizer {
 
     for (const [filePath, data] of Object.entries(jsonData)) {
       const fileData = data as any;
-      
+
       files.push({
         path: filePath,
         coverage: {
           lines: {
             total: Object.keys(fileData.statementMap || {}).length,
             covered: Object.values(fileData.s || {}).filter(Boolean).length,
-            percentage: Math.round((Object.values(fileData.s || {}).filter(Boolean).length / Math.max(1, Object.keys(fileData.statementMap || {}).length)) * 100),
+            percentage: Math.round(
+              (Object.values(fileData.s || {}).filter(Boolean).length /
+                Math.max(1, Object.keys(fileData.statementMap || {}).length)) *
+                100
+            ),
           },
           functions: {
             total: Object.keys(fileData.fnMap || {}).length,
             covered: Object.values(fileData.f || {}).filter(Boolean).length,
-            percentage: Math.round((Object.values(fileData.f || {}).filter(Boolean).length / Math.max(1, Object.keys(fileData.fnMap || {}).length)) * 100),
+            percentage: Math.round(
+              (Object.values(fileData.f || {}).filter(Boolean).length /
+                Math.max(1, Object.keys(fileData.fnMap || {}).length)) *
+                100
+            ),
           },
           branches: {
             total: Object.keys(fileData.branchMap || {}).length,
-            covered: Object.values(fileData.b || {}).flat().filter(Boolean).length,
-            percentage: Math.round((Object.values(fileData.b || {}).flat().filter(Boolean).length / Math.max(1, Object.values(fileData.b || {}).flat().length)) * 100),
+            covered: Object.values(fileData.b || {})
+              .flat()
+              .filter(Boolean).length,
+            percentage: Math.round(
+              (Object.values(fileData.b || {})
+                .flat()
+                .filter(Boolean).length /
+                Math.max(1, Object.values(fileData.b || {}).flat().length)) *
+                100
+            ),
           },
           statements: {
             total: Object.keys(fileData.statementMap || {}).length,
             covered: Object.values(fileData.s || {}).filter(Boolean).length,
-            percentage: Math.round((Object.values(fileData.s || {}).filter(Boolean).length / Math.max(1, Object.keys(fileData.statementMap || {}).length)) * 100),
+            percentage: Math.round(
+              (Object.values(fileData.s || {}).filter(Boolean).length /
+                Math.max(1, Object.keys(fileData.statementMap || {}).length)) *
+                100
+            ),
           },
         },
         uncoveredLines: Object.entries(fileData.s || {})
           .filter(([, covered]) => !covered)
-          .map(([line]) => parseInt(line)),
+          .map(([line]) => Number.parseInt(line)),
         uncoveredFunctions: Object.entries(fileData.f || {})
           .filter(([, covered]) => !covered)
           .map(([fnId]) => fileData.fnMap[fnId]?.name || `function_${fnId}`),
@@ -355,11 +391,11 @@ export class CoverageVisualizer {
 
     for (const [filePath, data] of Object.entries(jsonData)) {
       const fileData = data as any;
-      
+
       // Find consecutive uncovered lines
       const uncoveredLines = Object.entries(fileData.s || {})
         .filter(([, covered]) => !covered)
-        .map(([line]) => parseInt(line))
+        .map(([line]) => Number.parseInt(line))
         .sort((a, b) => a - b);
 
       let currentRegion: UncoveredRegion | null = null;
@@ -394,13 +430,15 @@ export class CoverageVisualizer {
 
     for (const [filePath, data] of Object.entries(jsonData)) {
       const fileData = data as any;
-      
+
       // Calculate complexity and coverage correlation
       const functionCount = Object.keys(fileData.fnMap || {}).length;
       const branchCount = Object.keys(fileData.branchMap || {}).length;
       const complexity = functionCount + branchCount;
-      
-      const linesCovered = Object.values(fileData.s || {}).filter(Boolean).length;
+
+      const linesCovered = Object.values(fileData.s || {}).filter(
+        Boolean
+      ).length;
       const totalLines = Object.keys(fileData.statementMap || {}).length;
       const coverage = totalLines > 0 ? linesCovered / totalLines : 1;
 
@@ -469,17 +507,23 @@ export class CoverageVisualizer {
     </div>
 
     <h2>Coverage Hotspots</h2>
-    ${coverageData.hotspots.map(hotspot => `
+    ${coverageData.hotspots
+      .map(
+        (hotspot) => `
       <div class="hotspot">
         <strong>${hotspot.file}</strong><br>
         Risk: ${Math.round(hotspot.risk * 100)}% | Complexity: ${hotspot.complexity} | Coverage: ${hotspot.coverage}%<br>
         <em>${hotspot.reason}</em>
       </div>
-    `).join('')}
+    `
+      )
+      .join('')}
 
     <h2>File Coverage</h2>
     <div class="file-list">
-      ${coverageData.files.map(file => `
+      ${coverageData.files
+        .map(
+          (file) => `
         <div class="file-item">
           <div class="file-name">${file.path}</div>
           <div class="coverage-bar">
@@ -487,7 +531,9 @@ export class CoverageVisualizer {
           </div>
           <div class="coverage-text">${file.coverage.lines.percentage}%</div>
         </div>
-      `).join('')}
+      `
+        )
+        .join('')}
     </div>
   </div>
 </body>
@@ -506,9 +552,15 @@ export class CoverageVisualizer {
   }
 
   private getCoverageColor(percentage: number): string {
-    if (percentage >= 90) return '#28a745';
-    if (percentage >= 80) return '#ffc107';
-    if (percentage >= 60) return '#fd7e14';
+    if (percentage >= 90) {
+      return '#28a745';
+    }
+    if (percentage >= 80) {
+      return '#ffc107';
+    }
+    if (percentage >= 60) {
+      return '#fd7e14';
+    }
     return '#dc3545';
   }
 
@@ -544,9 +596,9 @@ export class CoverageVisualizer {
     const complexity = this.calculateComplexity(file);
     const coverage = file.coverage.lines.percentage / 100;
     const risk = this.calculateRisk(file);
-    
+
     const score = (1 - coverage) * 0.4 + (complexity / 50) * 0.3 + risk * 0.3;
-    
+
     return {
       file: file.path,
       score,
@@ -559,63 +611,93 @@ export class CoverageVisualizer {
     };
   }
 
-  private generateCoverageRecommendations(gaps: CoverageGap[], priorities: TestPriority[]): string[] {
+  private generateCoverageRecommendations(
+    gaps: CoverageGap[],
+    priorities: TestPriority[]
+  ): string[] {
     const recommendations: string[] = [];
 
-    if (gaps.some(g => g.priority === 'critical')) {
+    if (gaps.some((g) => g.priority === 'critical')) {
       recommendations.push('Address critical coverage gaps immediately');
     }
 
     if (priorities.length > 10) {
-      recommendations.push('Consider implementing coverage requirements in CI/CD');
+      recommendations.push(
+        'Consider implementing coverage requirements in CI/CD'
+      );
     }
 
-    const totalEffort = priorities.reduce((sum, p) => sum + p.estimatedHours, 0);
+    const totalEffort = priorities.reduce(
+      (sum, p) => sum + p.estimatedHours,
+      0
+    );
     if (totalEffort > 40) {
-      recommendations.push(`Large testing effort estimated (${totalEffort}h) - consider phased approach`);
+      recommendations.push(
+        `Large testing effort estimated (${totalEffort}h) - consider phased approach`
+      );
     }
 
     return recommendations;
   }
 
-  private calculateCoverageChanges(baseline: CoverageData, current: CoverageData): CoverageChanges {
+  private calculateCoverageChanges(
+    baseline: CoverageData,
+    current: CoverageData
+  ): CoverageChanges {
     return {
       lines: {
         baseline: baseline.summary.lines.percentage,
         current: current.summary.lines.percentage,
-        change: current.summary.lines.percentage - baseline.summary.lines.percentage,
+        change:
+          current.summary.lines.percentage - baseline.summary.lines.percentage,
       },
       functions: {
         baseline: baseline.summary.functions.percentage,
         current: current.summary.functions.percentage,
-        change: current.summary.functions.percentage - baseline.summary.functions.percentage,
+        change:
+          current.summary.functions.percentage -
+          baseline.summary.functions.percentage,
       },
       branches: {
         baseline: baseline.summary.branches.percentage,
         current: current.summary.branches.percentage,
-        change: current.summary.branches.percentage - baseline.summary.branches.percentage,
+        change:
+          current.summary.branches.percentage -
+          baseline.summary.branches.percentage,
       },
       statements: {
         baseline: baseline.summary.statements.percentage,
         current: current.summary.statements.percentage,
-        change: current.summary.statements.percentage - baseline.summary.statements.percentage,
+        change:
+          current.summary.statements.percentage -
+          baseline.summary.statements.percentage,
       },
     };
   }
 
-  private findModifiedFiles(baseline: CoverageData, current: CoverageData): ModifiedFile[] {
+  private findModifiedFiles(
+    baseline: CoverageData,
+    current: CoverageData
+  ): ModifiedFile[] {
     const modified: ModifiedFile[] = [];
 
     for (const currentFile of current.files) {
-      const baselineFile = baseline.files.find(f => f.path === currentFile.path);
-      
-      if (baselineFile && 
-          baselineFile.coverage.lines.percentage !== currentFile.coverage.lines.percentage) {
+      const baselineFile = baseline.files.find(
+        (f) => f.path === currentFile.path
+      );
+
+      if (
+        baselineFile &&
+        baselineFile.coverage.lines.percentage !==
+          currentFile.coverage.lines.percentage
+      ) {
         modified.push({
           path: currentFile.path,
           baseline: baselineFile,
           current: currentFile,
-          change: currentFile.coverage.lines.percentage - baselineFile.coverage.lines.percentage,
+          change:
+            currentFile.coverage.lines.percentage -
+            baselineFile.coverage.lines.percentage,
         });
       }
     }
@@ -710,7 +792,11 @@ export interface CoverageGapAnalysis {
 
 export interface CoverageGap {
   file: string;
-  type: 'low-coverage' | 'uncovered-functions' | 'missing-branches' | 'critical-path';
+  type:
+    | 'low-coverage'
+    | 'uncovered-functions'
+    | 'missing-branches'
+    | 'critical-path';
   description: string;
   impact: number;
   effort: 'low' | 'medium' | 'high';
@@ -762,6 +848,8 @@ export interface ModifiedFile {
 /**
  * Create a coverage visualizer instance
  */
-export function createCoverageVisualizer(projectPath?: string): CoverageVisualizer {
+export function createCoverageVisualizer(
+  projectPath?: string
+): CoverageVisualizer {
   return new CoverageVisualizer(projectPath);
 }

@@ -2,8 +2,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-import type { Reporter, File, Task } from 'vitest';
-import { TestMetricsTracker, type TestMetrics } from '../metrics';
+import type { File, Reporter, Task } from 'vitest';
+import { type TestMetrics, TestMetricsTracker } from '../metrics';
 
 /**
  * Custom Vitest reporter for quality metrics tracking
@@ -37,7 +37,7 @@ export class QualityMetricsReporter implements Reporter {
 
     // Collect test statistics
     const stats = this.collectTestStats(files);
-    
+
     // Track slow tests
     this.trackSlowTests(files);
 
@@ -99,7 +99,7 @@ export class QualityMetricsReporter implements Reporter {
       task.tasks?.forEach(countTests);
     };
 
-    files.forEach(file => countTests(file));
+    files.forEach((file) => countTests(file));
 
     return { total, passed, failed, skipped };
   }
@@ -119,18 +119,20 @@ export class QualityMetricsReporter implements Reporter {
     const SLOW_TEST_THRESHOLD = 1000; // 1 second
 
     const collectSlowTests = (task: Task, filePath: string) => {
-      if (task.type === 'test' && task.result?.duration) {
-        if (task.result.duration > SLOW_TEST_THRESHOLD) {
-          this.slowTests.push({
-            name: `${filePath} > ${task.name}`,
-            duration: task.result.duration,
-          });
-        }
+      if (
+        task.type === 'test' &&
+        task.result?.duration &&
+        task.result.duration > SLOW_TEST_THRESHOLD
+      ) {
+        this.slowTests.push({
+          name: `${filePath} > ${task.name}`,
+          duration: task.result.duration,
+        });
       }
-      task.tasks?.forEach(t => collectSlowTests(t, filePath));
+      task.tasks?.forEach((t) => collectSlowTests(t, filePath));
     };
 
-    files.forEach(file => {
+    files.forEach((file) => {
       if (file.filepath) {
         collectSlowTests(file, file.filepath);
       }
@@ -138,7 +140,7 @@ export class QualityMetricsReporter implements Reporter {
 
     // Sort by duration (slowest first)
     this.slowTests.sort((a, b) => b.duration - a.duration);
-    
+
     // Keep only top 10 slowest tests
     this.slowTests = this.slowTests.slice(0, 10);
   }
@@ -149,19 +151,21 @@ export class QualityMetricsReporter implements Reporter {
     const checkSuspicious = (task: Task, filePath: string) => {
       if (task.type === 'test') {
         // Check for tests that failed after retries
-        if (task.result?.retryCount && task.result.retryCount > 0) {
-          if (task.result.state === 'fail') {
-            suspicious.push(`${filePath} > ${task.name}`);
-          }
+        if (
+          task.result?.retryCount &&
+          task.result.retryCount > 0 &&
+          task.result.state === 'fail'
+        ) {
+          suspicious.push(`${filePath} > ${task.name}`);
         }
-        
+
         // Check for tests with highly variable durations (if we had historical data)
         // This would require storing previous run data
       }
-      task.tasks?.forEach(t => checkSuspicious(t, filePath));
+      task.tasks?.forEach((t) => checkSuspicious(t, filePath));
     };
 
-    files.forEach(file => {
+    files.forEach((file) => {
       if (file.filepath) {
         checkSuspicious(file, file.filepath);
       }
@@ -173,25 +177,18 @@ export class QualityMetricsReporter implements Reporter {
   private logQualityInsights() {
     try {
       const insights = this.metricsTracker.generateInsights();
-      
+
       if (insights.recommendations.length > 0) {
-        console.log('\n📊 Test Quality Insights:');
-        insights.recommendations.forEach(rec => {
-          console.log(`  • ${rec}`);
-        });
+        insights.recommendations.forEach((_rec) => {});
       }
 
       if (this.slowTests.length > 0) {
-        console.log('\n⏱️  Slowest Tests:');
-        this.slowTests.slice(0, 5).forEach(test => {
-          console.log(`  • ${test.name}: ${test.duration}ms`);
-        });
+        this.slowTests.slice(0, 5).forEach((_test) => {});
       }
 
       if (this.retryCount > 0) {
-        console.log(`\n🔄 Test Retries: ${this.retryCount} (potential flakiness detected)`);
       }
-    } catch (error) {
+    } catch (_error) {
       // Silently continue if insights generation fails
     }
   }

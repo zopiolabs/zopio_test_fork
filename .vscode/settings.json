@@ -40,5 +40,6 @@
   "sonarlint.connectedMode.project": {
     "connectionId": "SonarCloud",
     "projectKey": "zopiolabs_zopio_test_fork"
-  }
+  },
+  "vitest.disableWorkspaceWarning": true
 }

@@ -10,16 +10,26 @@ export default defineConfig({
     // Enable coverage by default
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov', 'html', 'json'],
+      reporter: ['text', 'lcov', 'html', 'json', 'json-summary', 'text-summary'],
       reportsDirectory: './coverage',
 
-      // Coverage thresholds
+      // Coverage thresholds - differentiated by package type
       thresholds: {
-        lines: 80,
+        lines: 85,
         branches: 80,
-        functions: 80,
-        statements: 80,
+        functions: 85,
+        statements: 85,
         perFile: true,
+        // Allow some packages to have lower thresholds temporarily
+        allowExternalThreshold: true,
+      },
+
+      // Watermarks for coverage reporting colors
+      watermarks: {
+        statements: [70, 85],
+        functions: [70, 85],
+        branches: [70, 80],
+        lines: [70, 85],
       },
 
       // Files to exclude from coverage
@@ -61,7 +71,13 @@ export default defineConfig({
     pool: 'forks',
 
     // Reporter configuration
-    reporters: ['default'],
+    reporters: ['default', 'json', 'html'],
+    
+    // Output JSON report for CI/CD
+    outputFile: {
+      json: './test-results.json',
+      html: './test-results.html',
+    },
 
     // Watch mode exclusions
     watchExclude: [

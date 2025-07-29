@@ -101,9 +101,95 @@ jobs:
       - name: Run Type Checking
         run: pnpm typecheck
 
-      # Step 9: Run unit tests
+      # Step 9: Run unit tests with comprehensive coverage
       # Executes the test suite using Vitest through Turbo
       # Verifies that all components and functions work as expected
       # Ensures code changes don't break existing functionality
       - name: Run Unit Testing
-        run: pnpm test
+        run: pnpm test:ci
+        
+      # Step 10: Upload test results
+      # Store test results for analysis and reporting
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            **/test-results.json
+            **/test-results.html
+            **/coverage/
+          retention-days: 30
+          
+      # Step 11: Upload coverage reports to Codecov
+      # Provides coverage visualization and trend analysis
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      # Step 12: Comment PR with test results
+      # Provides immediate feedback on test status in the PR
+      - name: Comment PR with test results
+        uses: actions/github-script@v7
+        if: always() && github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Try to read test results
+            let testSummary = 'Test results not available';
+            try {
+              if (fs.existsSync('./test-results.json')) {
+                const results = JSON.parse(fs.readFileSync('./test-results.json', 'utf8'));
+                const total = results.numTotalTests || 0;
+                const passed = results.numPassedTests || 0;
+                const failed = results.numFailedTests || 0;
+                const skipped = results.numPendingTests || 0;
+                
+                testSummary = `
+            ## 🧪 Test Results
+            - **Total Tests:** ${total}
+            - **Passed:** ${passed} ✅
+            - **Failed:** ${failed} ${failed > 0 ? '❌' : ''}
+            - **Skipped:** ${skipped} ⏭️
+            - **Pass Rate:** ${total > 0 ? Math.round((passed / total) * 100) : 0}%
+                `;
+              }
+            } catch (error) {
+              console.log('Could not parse test results:', error.message);
+            }
+            
+            // Try to read coverage summary
+            let coverageSummary = 'Coverage results not available';
+            try {
+              if (fs.existsSync('./coverage/coverage-summary.json')) {
+                const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8'));
+                const total = coverage.total;
+                
+                coverageSummary = `
+            ## 📊 Coverage Report
+            - **Lines:** ${total.lines.pct}%
+            - **Branches:** ${total.branches.pct}%
+            - **Functions:** ${total.functions.pct}%
+            - **Statements:** ${total.statements.pct}%
+                `;
+              }
+            } catch (error) {
+              console.log('Could not parse coverage results:', error.message);
+            }
+            
+            const body = `${testSummary}\n${coverageSummary}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

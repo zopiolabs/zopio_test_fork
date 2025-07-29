@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
@@ -15,6 +18,8 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "typescript": "^5.8.3"
+    "@vitest/coverage-v8": "^2.1.8",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.8"
   }
 }

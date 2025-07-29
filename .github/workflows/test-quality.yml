@@ -1,0 +1,392 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# COMPREHENSIVE TEST QUALITY WORKFLOW
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Purpose: Comprehensive test quality assurance with advanced metrics,
+#          parallel execution, coverage analysis, and performance monitoring.
+#
+# Triggers:
+# - Pull requests targeting main branch
+# - Daily scheduled runs for quality monitoring
+# - Manual workflow dispatch for on-demand testing
+#
+# Key Features:
+# - Parallel test execution across multiple Node.js versions
+# - Advanced coverage reporting and analysis
+# - Test performance monitoring and flakiness detection
+# - Quality gates with configurable thresholds
+# - Comprehensive reporting and notifications
+# - Integration with external quality tools
+#
+# Quality Gates:
+# - Minimum coverage thresholds per package type
+# - Maximum test execution time limits
+# - Flakiness detection and reporting
+# - Performance regression detection
+# ═══════════════════════════════════════════════════════════════════════════
+
+name: Test Quality Assurance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.{ts,tsx,js,jsx}'
+      - '**/package.json'
+      - '**/vitest.config.*'
+      - '.github/workflows/test-quality.yml'
+  
+  schedule:
+    # Run daily at 6 AM UTC for quality monitoring
+    - cron: '0 6 * * *'
+  
+  workflow_dispatch:
+    inputs:
+      coverage_threshold:
+        description: 'Override coverage threshold (0-100)'
+        required: false
+        default: '80'
+        type: string
+      performance_budget:
+        description: 'Performance budget in seconds'
+        required: false
+        default: '300'
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Matrix testing across Node.js versions and package types
+  test-matrix:
+    name: Test Quality Matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20, 22]
+        test-group: [
+          'packages/auth*',
+          'packages/core-utils',
+          'packages/design-system',
+          'packages/database',
+          'packages/security',
+          'packages/observability',
+          'apps/app',
+          'apps/api'
+        ]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup test environment
+        run: |
+          # Create necessary environment files
+          echo "NODE_ENV=test" > .env.test
+          echo "DATABASE_URL=postgresql://test:test@localhost:5432/test" >> .env.test
+
+      - name: Run tests for ${{ matrix.test-group }}
+        run: |
+          # Set coverage threshold from input or default
+          COVERAGE_THRESHOLD="${{ github.event.inputs.coverage_threshold || '80' }}"
+          PERFORMANCE_BUDGET="${{ github.event.inputs.performance_budget || '300' }}"
+          
+          echo "Running tests with coverage threshold: ${COVERAGE_THRESHOLD}%"
+          echo "Performance budget: ${PERFORMANCE_BUDGET}s"
+          
+          # Run tests with timeout and coverage
+          timeout ${PERFORMANCE_BUDGET}s pnpm turbo test \
+            --filter="${{ matrix.test-group }}" \
+            -- --coverage --run --reporter=json --reporter=default \
+            --outputFile.json=./test-results-${{ matrix.node-version }}-$(echo "${{ matrix.test-group }}" | tr '/' '-').json
+        env:
+          NODE_VERSION: ${{ matrix.node-version }}
+          TEST_GROUP: ${{ matrix.test-group }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-node${{ matrix.node-version }}-${{ strategy.job-index }}
+          path: |
+            **/test-results-*.json
+            **/coverage/
+            **/test-metrics*.json
+          retention-days: 7
+
+      - name: Check coverage thresholds
+        if: always()
+        run: |
+          # Parse coverage and check thresholds
+          THRESHOLD="${{ github.event.inputs.coverage_threshold || '80' }}"
+          
+          if [ -f "./coverage/coverage-summary.json" ]; then
+            node -e "
+              const coverage = require('./coverage/coverage-summary.json');
+              const threshold = parseInt('$THRESHOLD');
+              const total = coverage.total;
+              
+              const results = {
+                lines: total.lines.pct,
+                branches: total.branches.pct, 
+                functions: total.functions.pct,
+                statements: total.statements.pct
+              };
+              
+              console.log('Coverage Results:');
+              Object.entries(results).forEach(([key, value]) => {
+                const status = value >= threshold ? '✅' : '❌';
+                console.log(\`  \${key}: \${value}% \${status}\`);
+              });
+              
+              const failed = Object.values(results).some(v => v < threshold);
+              if (failed) {
+                console.error(\`Coverage below threshold (\${threshold}%)\`);
+                process.exit(1);
+              }
+            "
+          else
+            echo "Warning: No coverage report found"
+          fi
+
+  # Aggregate test results and generate comprehensive report
+  test-analysis:
+    name: Test Analysis & Reporting
+    runs-on: ubuntu-latest
+    needs: test-matrix
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+          path: ./test-aggregation
+
+      - name: Aggregate test results
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const glob = require('glob');
+            
+            // Find all test result files
+            const resultFiles = glob.sync('./test-aggregation/**/test-results-*.json');
+            
+            let totalTests = 0;
+            let totalPassed = 0;
+            let totalFailed = 0;
+            let totalSkipped = 0;
+            let totalDuration = 0;
+            const slowTests = [];
+            const flakyTests = [];
+            
+            console.log(\`Found \${resultFiles.length} test result files\`);
+            
+            for (const file of resultFiles) {
+              try {
+                const results = JSON.parse(fs.readFileSync(file, 'utf8'));
+                
+                totalTests += results.numTotalTests || 0;
+                totalPassed += results.numPassedTests || 0;
+                totalFailed += results.numFailedTests || 0;
+                totalSkipped += results.numPendingTests || 0;
+                totalDuration += results.testResults?.reduce((acc, test) => {
+                  return acc + (test.perfStats?.runtime || 0);
+                }, 0) || 0;
+                
+                // Collect slow tests
+                results.testResults?.forEach(test => {
+                  if (test.perfStats?.runtime > 1000) {
+                    slowTests.push({
+                      name: test.name,
+                      duration: test.perfStats.runtime
+                    });
+                  }
+                });
+                
+              } catch (error) {
+                console.warn(\`Could not parse \${file}: \${error.message}\`);
+              }
+            }
+            
+            const summary = {
+              totalTests,
+              totalPassed,
+              totalFailed,
+              totalSkipped,
+              totalDuration,
+              passRate: totalTests > 0 ? (totalPassed / totalTests * 100).toFixed(2) : 0,
+              slowTests: slowTests.sort((a, b) => b.duration - a.duration).slice(0, 10),
+              performance: {
+                averageTestTime: totalTests > 0 ? (totalDuration / totalTests).toFixed(2) : 0,
+                totalDurationMinutes: (totalDuration / 1000 / 60).toFixed(2)
+              }
+            };
+            
+            fs.writeFileSync('./test-summary.json', JSON.stringify(summary, null, 2));
+            
+            console.log('📊 Test Summary:');
+            console.log(\`  Total Tests: \${totalTests}\`);
+            console.log(\`  Passed: \${totalPassed} (✅)\`);
+            console.log(\`  Failed: \${totalFailed} (\${totalFailed > 0 ? '❌' : '✅'})\`);
+            console.log(\`  Skipped: \${totalSkipped}\`);
+            console.log(\`  Pass Rate: \${summary.passRate}%\`);
+            console.log(\`  Total Duration: \${summary.performance.totalDurationMinutes} minutes\`);
+            
+            if (slowTests.length > 0) {
+              console.log('\\n⏱️  Slowest Tests:');
+              slowTests.slice(0, 5).forEach(test => {
+                console.log(\`  • \${test.name}: \${(test.duration / 1000).toFixed(2)}s\`);
+              });
+            }
+          "
+
+      - name: Generate quality report
+        run: |
+          # Generate comprehensive quality report
+          cat > quality-report.md << 'EOF'
+          # 📊 Test Quality Report
+          
+          ## Summary
+          - **Generated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          - **Workflow:** ${{ github.workflow }}
+          - **Commit:** ${{ github.sha }}
+          - **Branch:** ${{ github.ref_name }}
+          
+          ## Test Results
+          EOF
+          
+          # Add test summary from JSON
+          if [ -f "./test-summary.json" ]; then
+            node -e "
+              const summary = require('./test-summary.json');
+              console.log(\`- **Total Tests:** \${summary.totalTests}\`);
+              console.log(\`- **Pass Rate:** \${summary.passRate}%\`);
+              console.log(\`- **Duration:** \${summary.performance.totalDurationMinutes} minutes\`);
+              console.log(\`- **Average Test Time:** \${summary.performance.averageTestTime}ms\`);
+              console.log();
+              
+              if (summary.slowTests.length > 0) {
+                console.log('## 🐌 Slow Tests');
+                summary.slowTests.forEach(test => {
+                  console.log(\`- \${test.name}: \${(test.duration / 1000).toFixed(2)}s\`);
+                });
+                console.log();
+              }
+            " >> quality-report.md
+          fi
+          
+          echo "## 📈 Recommendations" >> quality-report.md
+          echo "- Monitor test performance trends" >> quality-report.md
+          echo "- Investigate and optimize slow tests" >> quality-report.md
+          echo "- Maintain coverage above 80%" >> quality-report.md
+
+      - name: Upload quality report
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: |
+            quality-report.md
+            test-summary.json
+          retention-days: 30
+
+      - name: Comment PR with quality report
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let reportContent = '# 📊 Test Quality Report\\n\\nQuality analysis completed.';
+            
+            try {
+              if (fs.existsSync('./quality-report.md')) {
+                reportContent = fs.readFileSync('./quality-report.md', 'utf8');
+              }
+            } catch (error) {
+              console.log('Could not read quality report:', error.message);
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: reportContent
+            });
+
+      - name: Notify on quality issues
+        if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Create an issue for quality failures on scheduled runs
+            const title = '🚨 Test Quality Issues Detected';
+            const body = \`
+            ## Test Quality Alert
+            
+            Automated quality checks have detected issues:
+            
+            - **Workflow:** ${{ github.workflow }}
+            - **Run:** ${{ github.run_id }}
+            - **Time:** \${new Date().toISOString()}
+            
+            Please review the failed checks and address any quality issues.
+            
+            [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            \`;
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,  
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['quality', 'testing', 'automated']
+            });

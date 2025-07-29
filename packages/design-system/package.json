@@ -59,7 +59,9 @@
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "test": "vitest run",
+    "test:watch": "vitest --coverage"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.11",
@@ -126,14 +128,23 @@
     "zod": "^3.25.28"
   },
   "devDependencies": {
+    "@repo/testing": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.1.7",
     "@tailwindcss/typography": "^0.5.16",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^22.15.21",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.5.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "jest-axe": "^9.0.0",
+    "jsdom": "^25.0.1",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.7",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
   }
 }

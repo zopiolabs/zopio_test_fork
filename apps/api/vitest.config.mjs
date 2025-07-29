@@ -12,7 +12,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
+    environment: 'node',
+    setupFiles: ['./__tests__/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],

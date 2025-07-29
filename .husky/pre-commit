@@ -23,6 +23,68 @@ pnpm lint-staged && {
   exit 1
 }
 
+# Run relevant tests for changed files
+echo "🧪 Running tests for changed files..."
+CHANGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx)$' | grep -v '\.d\.ts$' || true)
+
+if [ -n "$CHANGED_FILES" ]; then
+  echo "   - Detected changes in source files"
+  
+  # Find related test files and packages
+  TEST_PATTERNS=""
+  PACKAGES_TO_TEST=""
+  
+  for file in $CHANGED_FILES; do
+    # Determine package/app from file path
+    if [[ $file == packages/* ]]; then
+      PACKAGE_NAME=$(echo "$file" | cut -d'/' -f2)
+      if [ -n "$PACKAGE_NAME" ] && [[ "$PACKAGES_TO_TEST" != *"$PACKAGE_NAME"* ]]; then
+        PACKAGES_TO_TEST="$PACKAGES_TO_TEST packages/$PACKAGE_NAME"
+      fi
+    elif [[ $file == apps/* ]]; then
+      APP_NAME=$(echo "$file" | cut -d'/' -f2)  
+      if [ -n "$APP_NAME" ] && [[ "$PACKAGES_TO_TEST" != *"$APP_NAME"* ]]; then
+        PACKAGES_TO_TEST="$PACKAGES_TO_TEST apps/$APP_NAME"
+      fi
+    fi
+  done
+  
+  if [ -n "$PACKAGES_TO_TEST" ]; then
+    echo "   - Testing packages/apps: $PACKAGES_TO_TEST"
+    
+    # Run tests with timeout
+    timeout 60s pnpm turbo test --filter="{$(echo $PACKAGES_TO_TEST | tr ' ' ',')}" -- --run --reporter=basic 2>/dev/null && {
+      echo "   ✓ Related tests passed"
+    } || {
+      TEST_EXIT_CODE=$?
+      if [ $TEST_EXIT_CODE -eq 124 ]; then
+        echo "${RED}⚠️  Tests timed out (60s limit)${NC}"
+        echo "   Skipping test validation (will run in CI)"
+      else
+        echo "${RED}❌ Related tests failed${NC}"
+        echo "   Please fix failing tests before committing"
+        echo "   Run 'pnpm test' to see detailed results"
+        
+        # Ask if user wants to commit anyway
+        read -p "   Do you want to commit anyway? (y/N) " yn
+        case $yn in
+          [Yy]* )
+            echo "   ⚠️  Committing with failing tests (not recommended)"
+            ;;
+          * )
+            echo "   Please fix the tests before committing"
+            exit 1
+            ;;
+        esac
+      fi
+    }
+  else
+    echo "   - No testable packages found, skipping test validation"
+  fi
+else
+  echo "   - No source file changes detected, skipping tests"
+fi
+
 # Check for SPDX license headers in staged files
 echo "🔎 Checking SPDX license headers..."
 node scripts/check-spdx.js --staged --quiet && {

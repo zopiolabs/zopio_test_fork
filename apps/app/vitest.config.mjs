@@ -13,6 +13,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
+    setupFiles: ['./__tests__/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
@@ -34,3 +35,4 @@ export default defineConfig({
     },
   },
 });
+

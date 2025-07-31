@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { vi } from 'vitest';
+import { vi, expect } from 'vitest';
 import type { NextRequest } from 'next/server';
 
 /**
@@ -88,8 +88,10 @@ export const mockClerkAuth = {
    * Mock successful authentication
    */
   mockSuccess: (userId = 'user_test123') => {
-    const mockClerkAuthMiddleware = vi.fn().mockResolvedValue({
-      user: { id: userId },
+    const mockClerkAuthMiddleware = vi.fn().mockImplementation(async (req) => {
+      // Return the request itself to indicate successful authentication
+      // The route handler checks if the result is a Response to detect errors
+      return req;
     });
     
     vi.doMock('@repo/auth', () => ({
@@ -320,7 +322,9 @@ export const mockTrigger = {
   /**
    * Mock successful event sending
    */
-  mockSuccess: (result = { success: true, id: 'trigger_test123' }) => {
+  mockSuccess: <T extends { success: boolean; id?: string } = { success: boolean; id: string }>(
+    result: T = { success: true, id: 'trigger_test123' } as T
+  ) => {
     const mockSendEvent = vi.fn().mockResolvedValue(result);
     
     vi.doMock('@repo/trigger', () => ({

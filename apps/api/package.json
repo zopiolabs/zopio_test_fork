@@ -24,6 +24,7 @@
     "@repo/payments": "workspace:*",
     "@repo/testing": "workspace:*",
     "@repo/trigger": "workspace:*",
+    "@repo/trigger-rules": "workspace:*",
     "@sentry/nextjs": "^9.22.0",
     "@t3-oss/env-nextjs": "^0.13.4",
     "@trigger.dev/sdk": "^2.2.0",
@@ -36,12 +37,17 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "24.0.13",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
+    "fast-check": "^3.23.2",
+    "jsdom": "^26.0.1",
     "typescript": "^5.8.3"
   }
 }

@@ -1004,7 +1004,7 @@ describe('AI Package Integration Tests', () => {
         serviceCallCount++;
 
         if (response === null) {
-          const error = new Error('Service temporarily unavailable');
+          const error = new Error('Service temporarily unavailable. Please try again.');
           (error as any).status = 503;
           throw error;
         }

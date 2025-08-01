@@ -614,7 +614,7 @@ describe('AI Components Integration', () => {
          */
         render(
           <main>
-            <Thread aria-label="Main conversation area">
+            <Thread role="main" aria-label="Main conversation area">
               <Message data={createMessage({ role: 'user', content: 'Question' })} />
               <Message data={createMessage({ role: 'assistant', content: 'Answer' })} />
             </Thread>

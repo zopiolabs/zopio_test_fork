@@ -12,6 +12,9 @@
  * from potentially malicious content.
  */
 
+// Pre-compiled regex patterns for performance
+const REPEATED_CHARACTER_PATTERN = /(.)\1{50,}/; // 50+ repeated characters
+
 /**
  * Validation result interface
  */
@@ -45,134 +48,181 @@ interface ModelParameters {
 }
 
 /**
- * Validates model parameters for safety and correctness
- * @param params - Model parameters to validate
- * @returns Validation result with errors if any
+ * Validates maxTokens parameter
+ * @param maxTokens - MaxTokens value to validate
+ * @returns Array of error messages
  */
-export function validateModelParameters(params: unknown): ValidationResult {
+function validateMaxTokens(maxTokens: unknown): string[] {
+  if (maxTokens === undefined) {
+    return [];
+  }
+
   const errors: string[] = [];
+  if (typeof maxTokens !== 'number' || maxTokens < 1) {
+    errors.push('maxTokens must be a positive number');
+  }
+  if (typeof maxTokens === 'number' && maxTokens > 4096) {
+    errors.push('maxTokens cannot exceed 4096');
+  }
+  return errors;
+}
 
-  if (!params || typeof params !== 'object' || params === null) {
-    return { valid: false, errors: ['Parameters must be an object'] };
+/**
+ * Validates temperature parameter
+ * @param temperature - Temperature value to validate
+ * @returns Array of error messages
+ */
+function validateTemperature(temperature: unknown): string[] {
+  if (temperature === undefined) {
+    return [];
   }
 
-  // Type guard for params
-  const modelParams = params as Record<string, unknown>;
+  if (typeof temperature !== 'number' || temperature < 0 || temperature > 2) {
+    return ['temperature must be between 0 and 2'];
+  }
+  return [];
+}
 
-  // Validate maxTokens
-  if (modelParams.maxTokens !== undefined) {
-    if (
-      typeof modelParams.maxTokens !== 'number' ||
-      modelParams.maxTokens < 1
-    ) {
-      errors.push('maxTokens must be a positive number');
-    }
-    if (modelParams.maxTokens > 4096) {
-      errors.push('maxTokens cannot exceed 4096');
-    }
+/**
+ * Validates topP parameter
+ * @param topP - TopP value to validate
+ * @returns Array of error messages
+ */
+function validateTopP(topP: unknown): string[] {
+  if (topP === undefined) {
+    return [];
   }
 
-  // Validate temperature
-  if (
-    modelParams.temperature !== undefined &&
-    (typeof modelParams.temperature !== 'number' ||
-      modelParams.temperature < 0 ||
-      modelParams.temperature > 2)
-  ) {
-    errors.push('temperature must be between 0 and 2');
+  if (typeof topP !== 'number' || topP < 0 || topP > 1) {
+    return ['topP must be between 0 and 1'];
   }
+  return [];
+}
 
-  // Validate topP
-  if (
-    modelParams.topP !== undefined &&
-    (typeof modelParams.topP !== 'number' ||
-      modelParams.topP < 0 ||
-      modelParams.topP > 1)
-  ) {
-    errors.push('topP must be between 0 and 1');
-  }
-
-  // Validate frequency and presence penalties
+/**
+ * Validates penalty parameters
+ * @param params - Parameters object containing penalties
+ * @returns Array of error messages
+ */
+function validatePenalties(params: Record<string, unknown>): string[] {
+  const errors: string[] = [];
   const penaltyParams = ['presencePenalty', 'frequencyPenalty'];
+
   for (const param of penaltyParams) {
     if (
-      modelParams[param] !== undefined &&
-      (typeof modelParams[param] !== 'number' ||
-        modelParams[param] < -2 ||
-        modelParams[param] > 2)
+      params[param] !== undefined &&
+      (typeof params[param] !== 'number' ||
+        params[param] < -2 ||
+        params[param] > 2)
     ) {
       errors.push(`${param} must be between -2 and 2`);
     }
   }
+  return errors;
+}
 
-  // Validate logitBias
-  if (modelParams.logitBias !== undefined) {
-    if (
-      typeof modelParams.logitBias !== 'object' ||
-      Array.isArray(modelParams.logitBias)
-    ) {
-      errors.push('logitBias must be an object');
-    } else if (modelParams.logitBias) {
-      const logitBiasObj = modelParams.logitBias as Record<string, unknown>;
-      for (const [token, bias] of Object.entries(logitBiasObj)) {
-        if (typeof bias !== 'number' || bias < -100 || bias > 100) {
-          errors.push('logitBias values must be between -100 and 100');
-          break; // Avoid duplicate errors
-        }
-        // Validate token ID is reasonable
-        const tokenId = Number.parseInt(token, 10);
-        if (Number.isNaN(tokenId) || tokenId < 0 || tokenId > 100000) {
-          errors.push('logitBias keys must be valid token IDs');
-          break;
-        }
+/**
+ * Validates logitBias parameter
+ * @param logitBias - LogitBias value to validate
+ * @returns Array of error messages
+ */
+function validateLogitBias(logitBias: unknown): string[] {
+  if (logitBias === undefined) {
+    return [];
+  }
+
+  const errors: string[] = [];
+  if (typeof logitBias !== 'object' || Array.isArray(logitBias)) {
+    errors.push('logitBias must be an object');
+  } else if (logitBias) {
+    const logitBiasObj = logitBias as Record<string, unknown>;
+    for (const [token, bias] of Object.entries(logitBiasObj)) {
+      if (typeof bias !== 'number' || bias < -100 || bias > 100) {
+        errors.push('logitBias values must be between -100 and 100');
+        break;
+      }
+      const tokenId = Number.parseInt(token, 10);
+      if (Number.isNaN(tokenId) || tokenId < 0 || tokenId > 100000) {
+        errors.push('logitBias keys must be valid token IDs');
+        break;
       }
     }
   }
+  return errors;
+}
 
-  // Validate completion count
-  if (
-    modelParams.n !== undefined &&
-    (typeof modelParams.n !== 'number' ||
-      modelParams.n < 1 ||
-      modelParams.n > 10)
-  ) {
-    errors.push('n must be between 1 and 10');
+/**
+ * Validates completion count parameter
+ * @param n - Completion count value to validate
+ * @returns Array of error messages
+ */
+function validateCompletionCount(n: unknown): string[] {
+  if (n === undefined) {
+    return [];
   }
 
-  // Validate seed
-  if (
-    modelParams.seed !== undefined &&
-    (typeof modelParams.seed !== 'number' ||
-      modelParams.seed < 0 ||
-      modelParams.seed > Number.MAX_SAFE_INTEGER)
-  ) {
-    errors.push('seed must be a non-negative integer');
+  if (typeof n !== 'number' || n < 1 || n > 10) {
+    return ['n must be between 1 and 10'];
+  }
+  return [];
+}
+
+/**
+ * Validates seed parameter
+ * @param seed - Seed value to validate
+ * @returns Array of error messages
+ */
+function validateSeed(seed: unknown): string[] {
+  if (seed === undefined) {
+    return [];
   }
 
-  // Validate stop sequences
-  if (modelParams.stop !== undefined) {
-    if (typeof modelParams.stop === 'string') {
-      if (modelParams.stop.length > 100) {
-        errors.push('stop sequence cannot exceed 100 characters');
-      }
-    } else if (Array.isArray(modelParams.stop)) {
-      if (modelParams.stop.length > 4) {
-        errors.push('cannot specify more than 4 stop sequences');
-      }
-      for (const stopSeq of modelParams.stop) {
-        if (typeof stopSeq !== 'string' || stopSeq.length > 100) {
-          errors.push(
-            'each stop sequence must be a string of 100 characters or less'
-          );
-          break;
-        }
-      }
-    } else {
-      errors.push('stop must be a string or array of strings');
+  if (typeof seed !== 'number' || seed < 0 || seed > Number.MAX_SAFE_INTEGER) {
+    return ['seed must be a non-negative integer'];
+  }
+  return [];
+}
+
+/**
+ * Validates stop sequences parameter
+ * @param stop - Stop sequences value to validate
+ * @returns Array of error messages
+ */
+function validateStopSequences(stop: unknown): string[] {
+  if (stop === undefined) {
+    return [];
+  }
+
+  const errors: string[] = [];
+  if (typeof stop === 'string') {
+    if (stop.length > 100) {
+      errors.push('stop sequence cannot exceed 100 characters');
     }
+  } else if (Array.isArray(stop)) {
+    if (stop.length > 4) {
+      errors.push('cannot specify more than 4 stop sequences');
+    }
+    for (const stopSeq of stop) {
+      if (typeof stopSeq !== 'string' || stopSeq.length > 100) {
+        errors.push(
+          'each stop sequence must be a string of 100 characters or less'
+        );
+        break;
+      }
+    }
+  } else {
+    errors.push('stop must be a string or array of strings');
   }
+  return errors;
+}
 
-  // Check for dangerous or unknown parameters
+/**
+ * Validates for unknown or dangerous parameters
+ * @param params - Parameters object to validate
+ * @returns Array of error messages
+ */
+function validateUnknownParameters(params: Record<string, unknown>): string[] {
+  const errors: string[] = [];
   const allowedParams = new Set([
     'maxTokens',
     'temperature',
@@ -188,11 +238,39 @@ export function validateModelParameters(params: unknown): ValidationResult {
     'messages',
   ]);
 
-  for (const key of Object.keys(modelParams)) {
+  for (const key of Object.keys(params)) {
     if (!allowedParams.has(key)) {
       errors.push(`Unknown or disallowed parameter: ${key}`);
     }
   }
+  return errors;
+}
+
+/**
+ * Validates model parameters for safety and correctness
+ * @param params - Model parameters to validate
+ * @returns Validation result with errors if any
+ */
+export function validateModelParameters(params: unknown): ValidationResult {
+  const errors: string[] = [];
+
+  if (!params || typeof params !== 'object' || params === null) {
+    return { valid: false, errors: ['Parameters must be an object'] };
+  }
+
+  // Type guard for params
+  const modelParams = params as Record<string, unknown>;
+
+  // Validate individual parameters
+  errors.push(...validateMaxTokens(modelParams.maxTokens));
+  errors.push(...validateTemperature(modelParams.temperature));
+  errors.push(...validateTopP(modelParams.topP));
+  errors.push(...validatePenalties(modelParams));
+  errors.push(...validateLogitBias(modelParams.logitBias));
+  errors.push(...validateCompletionCount(modelParams.n));
+  errors.push(...validateSeed(modelParams.seed));
+  errors.push(...validateStopSequences(modelParams.stop));
+  errors.push(...validateUnknownParameters(modelParams));
 
   return { valid: errors.length === 0, errors };
 }
@@ -202,16 +280,15 @@ export function validateModelParameters(params: unknown): ValidationResult {
  * @param params - Raw model parameters
  * @returns Sanitized parameters with safe defaults
  */
-export function sanitizeModelParameters(params: unknown): ModelParameters {
-  if (!params || typeof params !== 'object' || params === null) {
-    return {};
-  }
-
-  const inputParams = params as Record<string, unknown>;
-
-  const sanitized: ModelParameters = {};
-
-  // Whitelist approach - only allow known safe parameters
+/**
+ * Sanitizes numeric parameters with validation
+ * @param inputParams - Input parameters object
+ * @param sanitized - Sanitized parameters object to populate
+ */
+function sanitizeNumericParameters(
+  inputParams: Record<string, unknown>,
+  sanitized: ModelParameters
+): void {
   const allowedParams = {
     maxTokens: { type: 'number', min: 1, max: 4096, default: 1000 },
     temperature: { type: 'number', min: 0, max: 2, default: 0.7 },
@@ -235,16 +312,34 @@ export function sanitizeModelParameters(params: unknown): ModelParameters {
       }
     }
   }
+}
 
-  // Handle special cases
+/**
+ * Sanitizes seed parameter
+ * @param inputParams - Input parameters object
+ * @param sanitized - Sanitized parameters object to populate
+ */
+function sanitizeSeed(
+  inputParams: Record<string, unknown>,
+  sanitized: ModelParameters
+): void {
   if (inputParams.seed !== undefined) {
     const seed = Number.parseInt(String(inputParams.seed), 10);
     if (!Number.isNaN(seed) && seed >= 0 && seed <= Number.MAX_SAFE_INTEGER) {
       sanitized.seed = seed;
     }
   }
+}
 
-  // Handle stop sequences with validation
+/**
+ * Sanitizes stop sequences parameter
+ * @param inputParams - Input parameters object
+ * @param sanitized - Sanitized parameters object to populate
+ */
+function sanitizeStopSequences(
+  inputParams: Record<string, unknown>,
+  sanitized: ModelParameters
+): void {
   if (inputParams.stop !== undefined) {
     if (
       typeof inputParams.stop === 'string' &&
@@ -259,14 +354,39 @@ export function sanitizeModelParameters(params: unknown): ModelParameters {
         .filter(
           (stop: unknown) => typeof stop === 'string' && stop.length <= 100
         )
-        .slice(0, 4); // Ensure max 4 items
+        .slice(0, 4);
       if (validStops.length > 0) {
         sanitized.stop = validStops;
       }
     }
   }
+}
 
-  // Handle logitBias with strict validation
+/**
+ * Checks if a token-bias pair is valid
+ * @param tokenId - The token ID to validate
+ * @param biasValue - The bias value to validate
+ * @returns True if valid
+ */
+function isValidTokenBias(tokenId: number, biasValue: number): boolean {
+  return (
+    !Number.isNaN(tokenId) &&
+    tokenId >= 0 &&
+    tokenId <= 100000 &&
+    biasValue >= -100 &&
+    biasValue <= 100
+  );
+}
+
+/**
+ * Sanitizes logit bias parameter
+ * @param inputParams - Input parameters object
+ * @param sanitized - Sanitized parameters object to populate
+ */
+function sanitizeLogitBias(
+  inputParams: Record<string, unknown>,
+  sanitized: ModelParameters
+): void {
   if (
     inputParams.logitBias &&
     typeof inputParams.logitBias === 'object' &&
@@ -278,19 +398,13 @@ export function sanitizeModelParameters(params: unknown): ModelParameters {
     const logitBiasObj = inputParams.logitBias as Record<string, unknown>;
     for (const [token, bias] of Object.entries(logitBiasObj)) {
       if (biasCount >= 300) {
-        break; // Limit bias entries to prevent abuse
+        break;
       }
 
       const tokenId = Number.parseInt(token, 10);
       const biasValue = typeof bias === 'number' ? bias : 0;
 
-      if (
-        !Number.isNaN(tokenId) &&
-        tokenId >= 0 &&
-        tokenId <= 100000 &&
-        biasValue >= -100 &&
-        biasValue <= 100
-      ) {
+      if (isValidTokenBias(tokenId, biasValue)) {
         sanitizedBias[token] = biasValue;
         biasCount++;
       }
@@ -300,6 +414,21 @@ export function sanitizeModelParameters(params: unknown): ModelParameters {
       sanitized.logitBias = sanitizedBias;
     }
   }
+}
+
+export function sanitizeModelParameters(params: unknown): ModelParameters {
+  if (!params || typeof params !== 'object' || params === null) {
+    return {};
+  }
+
+  const inputParams = params as Record<string, unknown>;
+  const sanitized: ModelParameters = {};
+
+  // Sanitize different parameter types
+  sanitizeNumericParameters(inputParams, sanitized);
+  sanitizeSeed(inputParams, sanitized);
+  sanitizeStopSequences(inputParams, sanitized);
+  sanitizeLogitBias(inputParams, sanitized);
 
   return sanitized;
 }
@@ -386,8 +515,7 @@ function validatePromptField(prompt: unknown): RequestValidationResult {
   }
 
   // Check for repeated characters (potential pattern attack)
-  const repeatedPattern = /(.)\1{50,}/; // 50+ repeated characters
-  if (repeatedPattern.test(prompt)) {
+  if (hasRepeatedCharacters(prompt)) {
     return {
       valid: false,
       error: 'Prompt contains excessive repeated characters',
@@ -402,14 +530,14 @@ function validatePromptField(prompt: unknown): RequestValidationResult {
  * @param request - Request object to validate
  * @returns Validation result
  */
-function validateOptionalParameters(request: unknown): RequestValidationResult {
-  if (!request || typeof request !== 'object' || request === null) {
-    return { valid: true };
-  }
-
-  const reqObj = request as Record<string, unknown>;
-
-  // Validate maxTokens if present
+/**
+ * Validates maxTokens in request
+ * @param reqObj - Request object
+ * @returns Validation result or null if valid
+ */
+function validateRequestMaxTokens(
+  reqObj: Record<string, unknown>
+): RequestValidationResult | null {
   if (
     'maxTokens' in reqObj &&
     (typeof reqObj.maxTokens !== 'number' ||
@@ -418,8 +546,17 @@ function validateOptionalParameters(request: unknown): RequestValidationResult {
   ) {
     return { valid: false, error: 'Invalid maxTokens parameter' };
   }
+  return null;
+}
 
-  // Validate temperature if present
+/**
+ * Validates temperature in request
+ * @param reqObj - Request object
+ * @returns Validation result or null if valid
+ */
+function validateRequestTemperature(
+  reqObj: Record<string, unknown>
+): RequestValidationResult | null {
   if (
     'temperature' in reqObj &&
     (typeof reqObj.temperature !== 'number' ||
@@ -428,14 +565,22 @@ function validateOptionalParameters(request: unknown): RequestValidationResult {
   ) {
     return { valid: false, error: 'Invalid temperature parameter' };
   }
+  return null;
+}
 
-  // Validate model if present
+/**
+ * Validates model parameter in request
+ * @param reqObj - Request object
+ * @returns Validation result or null if valid
+ */
+function validateRequestModel(
+  reqObj: Record<string, unknown>
+): RequestValidationResult | null {
   if ('model' in reqObj) {
     if (typeof reqObj.model !== 'string' || reqObj.model.length === 0) {
       return { valid: false, error: 'Invalid model parameter' };
     }
 
-    // Only allow known safe model names
     const allowedModels = [
       'gpt-3.5-turbo',
       'gpt-3.5-turbo-16k',
@@ -453,13 +598,31 @@ function validateOptionalParameters(request: unknown): RequestValidationResult {
       return { valid: false, error: 'Unsupported model parameter' };
     }
   }
+  return null;
+}
 
-  // Validate stream parameter if present
+/**
+ * Validates stream parameter in request
+ * @param reqObj - Request object
+ * @returns Validation result or null if valid
+ */
+function validateRequestStream(
+  reqObj: Record<string, unknown>
+): RequestValidationResult | null {
   if ('stream' in reqObj && typeof reqObj.stream !== 'boolean') {
     return { valid: false, error: 'Invalid stream parameter' };
   }
+  return null;
+}
 
-  // Check for dangerous parameters
+/**
+ * Checks for dangerous parameters in request
+ * @param reqObj - Request object
+ * @returns Validation result or null if valid
+ */
+function checkDangerousParameters(
+  reqObj: Record<string, unknown>
+): RequestValidationResult | null {
   const dangerousParams = [
     'eval',
     'exec',
@@ -487,6 +650,40 @@ function validateOptionalParameters(request: unknown): RequestValidationResult {
       };
     }
   }
+  return null;
+}
+
+function validateOptionalParameters(request: unknown): RequestValidationResult {
+  if (!request || typeof request !== 'object' || request === null) {
+    return { valid: true };
+  }
+
+  const reqObj = request as Record<string, unknown>;
+
+  // Run individual validations
+  const validators = [
+    validateRequestMaxTokens,
+    validateRequestTemperature,
+    validateRequestModel,
+    validateRequestStream,
+    checkDangerousParameters,
+  ];
+
+  for (const validator of validators) {
+    const result = validator(reqObj);
+    if (result) {
+      return result;
+    }
+  }
 
   return { valid: true };
+}
+
+/**
+ * Checks if a string contains excessive repeated characters
+ * @param str - String to check
+ * @returns True if excessive repeated characters are found
+ */
+function hasRepeatedCharacters(str: string): boolean {
+  return REPEATED_CHARACTER_PATTERN.test(str);
 }

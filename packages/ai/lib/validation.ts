@@ -41,7 +41,7 @@ interface ModelParameters {
   n?: number;
   seed?: number;
   stop?: string | string[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -49,37 +49,45 @@ interface ModelParameters {
  * @param params - Model parameters to validate
  * @returns Validation result with errors if any
  */
-export function validateModelParameters(params: any): ValidationResult {
+export function validateModelParameters(params: unknown): ValidationResult {
   const errors: string[] = [];
 
-  if (!params || typeof params !== 'object') {
+  if (!params || typeof params !== 'object' || params === null) {
     return { valid: false, errors: ['Parameters must be an object'] };
   }
 
+  // Type guard for params
+  const modelParams = params as Record<string, unknown>;
+
   // Validate maxTokens
-  if (params.maxTokens !== undefined) {
-    if (typeof params.maxTokens !== 'number' || params.maxTokens < 1) {
+  if (modelParams.maxTokens !== undefined) {
+    if (
+      typeof modelParams.maxTokens !== 'number' ||
+      modelParams.maxTokens < 1
+    ) {
       errors.push('maxTokens must be a positive number');
     }
-    if (params.maxTokens > 4096) {
+    if (modelParams.maxTokens > 4096) {
       errors.push('maxTokens cannot exceed 4096');
     }
   }
 
   // Validate temperature
   if (
-    params.temperature !== undefined &&
-    (typeof params.temperature !== 'number' ||
-      params.temperature < 0 ||
-      params.temperature > 2)
+    modelParams.temperature !== undefined &&
+    (typeof modelParams.temperature !== 'number' ||
+      modelParams.temperature < 0 ||
+      modelParams.temperature > 2)
   ) {
     errors.push('temperature must be between 0 and 2');
   }
 
   // Validate topP
   if (
-    params.topP !== undefined &&
-    (typeof params.topP !== 'number' || params.topP < 0 || params.topP > 1)
+    modelParams.topP !== undefined &&
+    (typeof modelParams.topP !== 'number' ||
+      modelParams.topP < 0 ||
+      modelParams.topP > 1)
   ) {
     errors.push('topP must be between 0 and 1');
   }
@@ -88,24 +96,25 @@ export function validateModelParameters(params: any): ValidationResult {
   const penaltyParams = ['presencePenalty', 'frequencyPenalty'];
   for (const param of penaltyParams) {
     if (
-      params[param] !== undefined &&
-      (typeof params[param] !== 'number' ||
-        params[param] < -2 ||
-        params[param] > 2)
+      modelParams[param] !== undefined &&
+      (typeof modelParams[param] !== 'number' ||
+        modelParams[param] < -2 ||
+        modelParams[param] > 2)
     ) {
       errors.push(`${param} must be between -2 and 2`);
     }
   }
 
   // Validate logitBias
-  if (params.logitBias !== undefined) {
+  if (modelParams.logitBias !== undefined) {
     if (
-      typeof params.logitBias !== 'object' ||
-      Array.isArray(params.logitBias)
+      typeof modelParams.logitBias !== 'object' ||
+      Array.isArray(modelParams.logitBias)
     ) {
       errors.push('logitBias must be an object');
-    } else {
-      for (const [token, bias] of Object.entries(params.logitBias)) {
+    } else if (modelParams.logitBias) {
+      const logitBiasObj = modelParams.logitBias as Record<string, unknown>;
+      for (const [token, bias] of Object.entries(logitBiasObj)) {
         if (typeof bias !== 'number' || bias < -100 || bias > 100) {
           errors.push('logitBias values must be between -100 and 100');
           break; // Avoid duplicate errors
@@ -122,33 +131,35 @@ export function validateModelParameters(params: any): ValidationResult {
 
   // Validate completion count
   if (
-    params.n !== undefined &&
-    (typeof params.n !== 'number' || params.n < 1 || params.n > 10)
+    modelParams.n !== undefined &&
+    (typeof modelParams.n !== 'number' ||
+      modelParams.n < 1 ||
+      modelParams.n > 10)
   ) {
     errors.push('n must be between 1 and 10');
   }
 
   // Validate seed
   if (
-    params.seed !== undefined &&
-    (typeof params.seed !== 'number' ||
-      params.seed < 0 ||
-      params.seed > Number.MAX_SAFE_INTEGER)
+    modelParams.seed !== undefined &&
+    (typeof modelParams.seed !== 'number' ||
+      modelParams.seed < 0 ||
+      modelParams.seed > Number.MAX_SAFE_INTEGER)
   ) {
     errors.push('seed must be a non-negative integer');
   }
 
   // Validate stop sequences
-  if (params.stop !== undefined) {
-    if (typeof params.stop === 'string') {
-      if (params.stop.length > 100) {
+  if (modelParams.stop !== undefined) {
+    if (typeof modelParams.stop === 'string') {
+      if (modelParams.stop.length > 100) {
         errors.push('stop sequence cannot exceed 100 characters');
       }
-    } else if (Array.isArray(params.stop)) {
-      if (params.stop.length > 4) {
+    } else if (Array.isArray(modelParams.stop)) {
+      if (modelParams.stop.length > 4) {
         errors.push('cannot specify more than 4 stop sequences');
       }
-      for (const stopSeq of params.stop) {
+      for (const stopSeq of modelParams.stop) {
         if (typeof stopSeq !== 'string' || stopSeq.length > 100) {
           errors.push(
             'each stop sequence must be a string of 100 characters or less'
@@ -177,7 +188,7 @@ export function validateModelParameters(params: any): ValidationResult {
     'messages',
   ]);
 
-  for (const key of Object.keys(params)) {
+  for (const key of Object.keys(modelParams)) {
     if (!allowedParams.has(key)) {
       errors.push(`Unknown or disallowed parameter: ${key}`);
     }
@@ -191,10 +202,12 @@ export function validateModelParameters(params: any): ValidationResult {
  * @param params - Raw model parameters
  * @returns Sanitized parameters with safe defaults
  */
-export function sanitizeModelParameters(params: any): ModelParameters {
-  if (!params || typeof params !== 'object') {
+export function sanitizeModelParameters(params: unknown): ModelParameters {
+  if (!params || typeof params !== 'object' || params === null) {
     return {};
   }
+
+  const inputParams = params as Record<string, unknown>;
 
   const sanitized: ModelParameters = {};
 
@@ -209,10 +222,10 @@ export function sanitizeModelParameters(params: any): ModelParameters {
   };
 
   for (const [key, config] of Object.entries(allowedParams)) {
-    if (key in params) {
-      const value = params[key];
+    if (key in inputParams) {
+      const value = inputParams[key];
       if (
-        typeof value === config.type &&
+        typeof value === 'number' &&
         value >= config.min &&
         value <= config.max
       ) {
@@ -224,20 +237,28 @@ export function sanitizeModelParameters(params: any): ModelParameters {
   }
 
   // Handle special cases
-  if (params.seed !== undefined) {
-    const seed = Number.parseInt(params.seed, 10);
+  if (inputParams.seed !== undefined) {
+    const seed = Number.parseInt(String(inputParams.seed), 10);
     if (!Number.isNaN(seed) && seed >= 0 && seed <= Number.MAX_SAFE_INTEGER) {
       sanitized.seed = seed;
     }
   }
 
   // Handle stop sequences with validation
-  if (params.stop !== undefined) {
-    if (typeof params.stop === 'string' && params.stop.length <= 100) {
-      sanitized.stop = params.stop;
-    } else if (Array.isArray(params.stop) && params.stop.length <= 4) {
-      const validStops = params.stop
-        .filter((stop: any) => typeof stop === 'string' && stop.length <= 100)
+  if (inputParams.stop !== undefined) {
+    if (
+      typeof inputParams.stop === 'string' &&
+      inputParams.stop.length <= 100
+    ) {
+      sanitized.stop = inputParams.stop;
+    } else if (
+      Array.isArray(inputParams.stop) &&
+      inputParams.stop.length <= 4
+    ) {
+      const validStops = inputParams.stop
+        .filter(
+          (stop: unknown) => typeof stop === 'string' && stop.length <= 100
+        )
         .slice(0, 4); // Ensure max 4 items
       if (validStops.length > 0) {
         sanitized.stop = validStops;
@@ -247,14 +268,15 @@ export function sanitizeModelParameters(params: any): ModelParameters {
 
   // Handle logitBias with strict validation
   if (
-    params.logitBias &&
-    typeof params.logitBias === 'object' &&
-    !Array.isArray(params.logitBias)
+    inputParams.logitBias &&
+    typeof inputParams.logitBias === 'object' &&
+    !Array.isArray(inputParams.logitBias)
   ) {
     const sanitizedBias: Record<string, number> = {};
     let biasCount = 0;
 
-    for (const [token, bias] of Object.entries(params.logitBias)) {
+    const logitBiasObj = inputParams.logitBias as Record<string, unknown>;
+    for (const [token, bias] of Object.entries(logitBiasObj)) {
       if (biasCount >= 300) {
         break; // Limit bias entries to prevent abuse
       }
@@ -288,39 +310,41 @@ export function sanitizeModelParameters(params: any): ModelParameters {
  * @returns Validation result with error message if invalid
  */
 export function validateRequestStructure(
-  request: any
+  request: unknown
 ): RequestValidationResult {
   // Check if request exists and is an object
-  if (!request || typeof request !== 'object') {
+  if (!request || typeof request !== 'object' || request === null) {
     return { valid: false, error: 'Invalid request format' };
   }
 
+  const requestObj = request as Record<string, unknown>;
+
   // Check for required prompt field
-  if (!('prompt' in request)) {
+  if (!('prompt' in requestObj)) {
     return { valid: false, error: 'Missing prompt field' };
   }
 
   // Validate prompt field
-  const promptValidation = validatePromptField(request.prompt);
+  const promptValidation = validatePromptField(requestObj.prompt);
   if (!promptValidation.valid) {
     return promptValidation;
   }
 
   // Validate optional parameters
-  const paramValidation = validateOptionalParameters(request);
+  const paramValidation = validateOptionalParameters(requestObj);
   if (!paramValidation.valid) {
     return paramValidation;
   }
 
   // Check for excessive number of fields (potential DoS)
-  const fieldCount = Object.keys(request).length;
+  const fieldCount = Object.keys(requestObj).length;
   if (fieldCount > 20) {
     return { valid: false, error: 'Request has too many fields' };
   }
 
   // Check total request size (approximate)
   try {
-    const requestSize = JSON.stringify(request).length;
+    const requestSize = JSON.stringify(requestObj).length;
     if (requestSize > 100000) {
       // 100KB limit
       return { valid: false, error: 'Request size too large' };
@@ -337,7 +361,7 @@ export function validateRequestStructure(
  * @param prompt - Prompt value to validate
  * @returns Validation result
  */
-function validatePromptField(prompt: any): RequestValidationResult {
+function validatePromptField(prompt: unknown): RequestValidationResult {
   if (typeof prompt !== 'string') {
     return { valid: false, error: 'Prompt must be a string' };
   }
@@ -378,30 +402,36 @@ function validatePromptField(prompt: any): RequestValidationResult {
  * @param request - Request object to validate
  * @returns Validation result
  */
-function validateOptionalParameters(request: any): RequestValidationResult {
+function validateOptionalParameters(request: unknown): RequestValidationResult {
+  if (!request || typeof request !== 'object' || request === null) {
+    return { valid: true };
+  }
+
+  const reqObj = request as Record<string, unknown>;
+
   // Validate maxTokens if present
   if (
-    'maxTokens' in request &&
-    (typeof request.maxTokens !== 'number' ||
-      request.maxTokens < 1 ||
-      request.maxTokens > 4096)
+    'maxTokens' in reqObj &&
+    (typeof reqObj.maxTokens !== 'number' ||
+      reqObj.maxTokens < 1 ||
+      reqObj.maxTokens > 4096)
   ) {
     return { valid: false, error: 'Invalid maxTokens parameter' };
   }
 
   // Validate temperature if present
   if (
-    'temperature' in request &&
-    (typeof request.temperature !== 'number' ||
-      request.temperature < 0 ||
-      request.temperature > 2)
+    'temperature' in reqObj &&
+    (typeof reqObj.temperature !== 'number' ||
+      reqObj.temperature < 0 ||
+      reqObj.temperature > 2)
   ) {
     return { valid: false, error: 'Invalid temperature parameter' };
   }
 
   // Validate model if present
-  if ('model' in request) {
-    if (typeof request.model !== 'string' || request.model.length === 0) {
+  if ('model' in reqObj) {
+    if (typeof reqObj.model !== 'string' || reqObj.model.length === 0) {
       return { valid: false, error: 'Invalid model parameter' };
     }
 
@@ -419,13 +449,13 @@ function validateOptionalParameters(request: any): RequestValidationResult {
       'text-ada-001',
     ];
 
-    if (!allowedModels.includes(request.model)) {
+    if (!allowedModels.includes(reqObj.model as string)) {
       return { valid: false, error: 'Unsupported model parameter' };
     }
   }
 
   // Validate stream parameter if present
-  if ('stream' in request && typeof request.stream !== 'boolean') {
+  if ('stream' in reqObj && typeof reqObj.stream !== 'boolean') {
     return { valid: false, error: 'Invalid stream parameter' };
   }
 
@@ -450,7 +480,7 @@ function validateOptionalParameters(request: any): RequestValidationResult {
   ];
 
   for (const dangerousParam of dangerousParams) {
-    if (dangerousParam in request) {
+    if (dangerousParam in reqObj) {
       return {
         valid: false,
         error: `Dangerous parameter detected: ${dangerousParam}`,

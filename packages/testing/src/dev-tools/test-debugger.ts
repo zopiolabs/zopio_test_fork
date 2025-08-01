@@ -9,6 +9,12 @@ import { promisify } from 'node:util';
 
 const execAsync = promisify(exec);
 
+// Top-level regex patterns for performance
+const ERROR_REGEX = /Error: (.+)/;
+const FAILED_REGEX = /Failed: (.+)/;
+const STACK_TRACE_REGEX = /at (.+) \((.+):(\d+):(\d+)\)/;
+const CONSOLE_LOG_REGEX = /(\w+):\s*(.+)/;
+
 /**
  * Interactive test debugger for troubleshooting failing tests
  */
@@ -114,17 +120,22 @@ export class TestDebugger {
         variableValues: this.extractVariableValues(stdout),
         suggestions: this.generateDebugSuggestions(stdout, stderr),
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       const duration = Date.now() - startTime;
+      const errorObj = error as {
+        stdout?: string;
+        stderr?: string;
+        message?: string;
+      };
 
       return {
         success: false,
         duration,
-        output: error.stdout || '',
-        errors: error.stderr || error.message,
+        output: errorObj.stdout || '',
+        errors: errorObj.stderr || errorObj.message || 'Unknown error',
         breakpointsHit: [],
         variableValues: new Map(),
-        suggestions: this.generateErrorSuggestions(error),
+        suggestions: this.generateErrorSuggestions(errorObj),
       };
     } finally {
       this.disableDebugMode();
@@ -145,8 +156,8 @@ export class TestDebugger {
     };
 
     // Generate suggestions based on error type
-    analysis.suggestedFixes = await this.generateFixSuggestions(analysis);
-    analysis.relatedIssues = await this.findRelatedIssues(analysis);
+    analysis.suggestedFixes = this.generateFixSuggestions(analysis);
+    analysis.relatedIssues = this.findRelatedIssues(analysis);
 
     return analysis;
   }
@@ -154,7 +165,9 @@ export class TestDebugger {
   /**
    * Create interactive debugging session
    */
-  async startInteractiveSession(): Promise<void> {}
+  async startInteractiveSession(): Promise<void> {
+    // Interactive session implementation will be added
+  }
 
   /**
    * Generate test isolation sandbox
@@ -228,7 +241,7 @@ export class TestDebugger {
         slowTests: this.identifySlowTests(result),
         bottlenecks: this.identifyBottlenecks(result),
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       const endTime = process.hrtime.bigint();
 
       return {
@@ -285,7 +298,7 @@ export class TestDebugger {
     if (errorLine) {
       // Extract specific error message
       const match =
-        errorLine.match(/Error: (.+)/) || errorLine.match(/Failed: (.+)/);
+        errorLine.match(ERROR_REGEX) || errorLine.match(FAILED_REGEX);
       if (match) {
         return match[1].trim();
       }
@@ -309,7 +322,7 @@ export class TestDebugger {
       }
 
       if (inStackTrace && line.trim().startsWith('at ')) {
-        const match = line.match(/at (.+) \((.+):(\d+):(\d+)\)/);
+        const match = line.match(STACK_TRACE_REGEX);
         if (match) {
           stackFrames.push({
             function: match[1],
@@ -332,14 +345,14 @@ export class TestDebugger {
     return stackFrames;
   }
 
-  private extractContextVariables(output: string): Map<string, any> {
-    const variables = new Map<string, any>();
+  private extractContextVariables(output: string): Map<string, unknown> {
+    const variables = new Map<string, unknown>();
 
     // Look for logged variable values
     const lines = output.split('\n');
     for (const line of lines) {
       // Look for console.log patterns with variable names
-      const match = line.match(/(\w+):\s*(.+)/);
+      const match = line.match(CONSOLE_LOG_REGEX);
       if (match) {
         try {
           variables.set(match[1], JSON.parse(match[2]));
@@ -352,9 +365,7 @@ export class TestDebugger {
     return variables;
   }
 
-  private async generateFixSuggestions(
-    analysis: FailureAnalysis
-  ): Promise<string[]> {
+  private generateFixSuggestions(analysis: FailureAnalysis): string[] {
     const suggestions: string[] = [];
 
     switch (analysis.errorType) {
@@ -396,9 +407,7 @@ export class TestDebugger {
     return suggestions;
   }
 
-  private async findRelatedIssues(
-    _analysis: FailureAnalysis
-  ): Promise<RelatedIssue[]> {
+  private findRelatedIssues(_analysis: FailureAnalysis): RelatedIssue[] {
     // In a real implementation, this would search through:
     // - Git history for similar issues
     // - Documentation for known issues
@@ -419,7 +428,7 @@ export class TestDebugger {
     return [];
   }
 
-  private extractVariableValues(_output: string): Map<string, any> {
+  private extractVariableValues(_output: string): Map<string, unknown> {
     return new Map();
   }
 
@@ -437,7 +446,7 @@ export class TestDebugger {
     return suggestions;
   }
 
-  private generateErrorSuggestions(error: any): string[] {
+  private generateErrorSuggestions(error: Record<string, unknown>): string[] {
     const suggestions: string[] = [];
 
     if (error.code === 'TIMEOUT') {
@@ -452,45 +461,80 @@ export class TestDebugger {
 
     // Extract import statements
     const importRegex = /import.*from\s+['"]([^'"]+)['"]/g;
-    let match;
+    let match: RegExpExecArray | null;
 
-    while ((match = importRegex.exec(content)) !== null) {
+    match = importRegex.exec(content);
+    while (match !== null) {
       dependencies.push(match[1]);
+      match = importRegex.exec(content);
     }
 
     // Extract require statements
     const requireRegex = /require\(['"]([^'"]+)['"]\)/g;
-    while ((match = requireRegex.exec(content)) !== null) {
+    match = requireRegex.exec(content);
+    while (match !== null) {
       dependencies.push(match[1]);
+      match = requireRegex.exec(content);
     }
 
     return [...new Set(dependencies)];
   }
 
-  private identifySlowTests(result: any): SlowTest[] {
-    const slowTests: SlowTest[] = [];
+  private extractSlowTestFromAssertion(
+    test: Record<string, unknown>,
+    fileName: string
+  ): SlowTest | null {
+    const duration = test.duration as number | undefined;
+    if (!duration || duration <= 1000) {
+      return null;
+    }
 
-    if (result.testResults) {
-      result.testResults.forEach((file: any) => {
-        if (file.assertionResults) {
-          file.assertionResults.forEach((test: any) => {
-            if (test.duration && test.duration > 1000) {
-              // Slower than 1 second
-              slowTests.push({
-                name: test.title,
-                file: file.name,
-                duration: test.duration,
-              });
-            }
-          });
-        }
-      });
+    return {
+      name: test.title as string,
+      file: fileName,
+      duration: duration,
+    };
+  }
+
+  private extractSlowTestsFromFile(file: Record<string, unknown>): SlowTest[] {
+    const slowTests: SlowTest[] = [];
+    const assertionResults = file.assertionResults as
+      | Record<string, unknown>[]
+      | undefined;
+
+    if (!assertionResults) {
+      return slowTests;
+    }
+
+    const fileName = file.name as string;
+    for (const test of assertionResults) {
+      const slowTest = this.extractSlowTestFromAssertion(test, fileName);
+      if (slowTest) {
+        slowTests.push(slowTest);
+      }
+    }
+
+    return slowTests;
+  }
+
+  private identifySlowTests(result: Record<string, unknown>): SlowTest[] {
+    const slowTests: SlowTest[] = [];
+    const testResults = result.testResults as
+      | Record<string, unknown>[]
+      | undefined;
+
+    if (!testResults) {
+      return slowTests;
+    }
+
+    for (const file of testResults) {
+      slowTests.push(...this.extractSlowTestsFromFile(file));
     }
 
     return slowTests.sort((a, b) => b.duration - a.duration);
   }
 
-  private identifyBottlenecks(_result: any): Bottleneck[] {
+  private identifyBottlenecks(_result: Record<string, unknown>): Bottleneck[] {
     // Analyze test execution patterns to identify bottlenecks
     return [];
   }
@@ -504,7 +548,7 @@ export interface DebugResult {
   output: string;
   errors: string;
   breakpointsHit: string[];
-  variableValues: Map<string, any>;
+  variableValues: Map<string, unknown>;
   suggestions: string[];
 }
 
@@ -512,7 +556,7 @@ export interface FailureAnalysis {
   errorType: ErrorType;
   rootCause: string;
   stackTrace: StackFrame[];
-  contextVariables: Map<string, any>;
+  contextVariables: Map<string, unknown>;
   suggestedFixes: string[];
   relatedIssues: RelatedIssue[];
 }
@@ -585,12 +629,10 @@ export function createTestDebugger(testPath: string): TestDebugger {
 /**
  * Quick debug helper for single test
  */
-export async function debugSingleTest(
-  _testPath: string,
-  _testName?: string
+export function debugSingleTest(
+  testPath: string,
+  testName?: string
 ): Promise<DebugResult> {
-  const
-  = new TestDebugger(testPath)
-  return;
-  .debugTest(testName)
+  const testDebugger = new TestDebugger(testPath);
+  return testDebugger.debugTest(testName);
 }

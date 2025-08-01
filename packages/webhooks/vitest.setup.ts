@@ -68,7 +68,9 @@ vi.mock('svix', () => ({
 }));
 
 // Export mock instances for use in tests
+// biome-ignore lint/suspicious/noExplicitAny: needed for global test mocks
 (globalThis as any).__mockSvixMethods = mockSvixMethods;
+// biome-ignore lint/suspicious/noExplicitAny: needed for global test mocks
 (globalThis as any).__mockWebhookMethods = mockWebhookMethods;
 
 // Mock environment variables for testing

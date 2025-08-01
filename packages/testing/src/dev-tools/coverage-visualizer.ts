@@ -44,12 +44,16 @@ export class CoverageVisualizer {
 
       try {
         lcovData = await fs.readFile(lcovPath, 'utf8');
-      } catch {}
+      } catch {
+        // Ignore if LCOV file doesn't exist
+      }
 
       try {
         const jsonContent = await fs.readFile(jsonPath, 'utf8');
         jsonData = JSON.parse(jsonContent);
-      } catch {}
+      } catch {
+        // Ignore if JSON coverage file doesn't exist
+      }
 
       this.coverageData = {
         summary: this.extractSummary(testResult),
@@ -61,8 +65,10 @@ export class CoverageVisualizer {
       };
 
       return this.coverageData;
-    } catch (error: any) {
-      throw new Error(`Failed to load coverage data: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(
+        `Failed to load coverage data: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -76,7 +82,10 @@ export class CoverageVisualizer {
 
     const reportPath =
       outputPath || path.join(this.projectPath, 'coverage-report.html');
-    const htmlContent = this.generateHTMLReport(this.coverageData!);
+    if (!this.coverageData) {
+      throw new Error('Coverage data not loaded');
+    }
+    const htmlContent = this.generateHTMLReport(this.coverageData);
 
     await fs.writeFile(reportPath, htmlContent);
 
@@ -129,7 +138,20 @@ export class CoverageVisualizer {
     const gaps: CoverageGap[] = [];
     const priorities: TestPriority[] = [];
 
-    for (const file of this.coverageData?.files) {
+    if (!this.coverageData?.files) {
+      return {
+        gaps: [],
+        priorities: [],
+        recommendations: ['No coverage data available'],
+        summary: {
+          totalGaps: 0,
+          criticalGaps: 0,
+          estimatedEffort: 0,
+        },
+      };
+    }
+
+    for (const file of this.coverageData.files) {
       // Identify uncovered critical paths
       const criticalGaps = this.findCriticalGaps(file);
       gaps.push(...criticalGaps);
@@ -288,7 +310,9 @@ export class CoverageVisualizer {
           coverage: coverage.summary,
           fileCount: coverage.files.length,
         });
-      } catch (_error) {}
+      } catch {
+        // Ignore failed coverage collection for this commit
+      }
     }
 
     return trends.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
@@ -296,7 +320,7 @@ export class CoverageVisualizer {
 
   // Private helper methods
 
-  private extractSummary(testResult: any): CoverageSummary {
+  private extractSummary(testResult: unknown): CoverageSummary {
     const total =
       testResult.coverageMap?.getCoverageSummary?.() || testResult.total || {};
 
@@ -324,73 +348,108 @@ export class CoverageVisualizer {
     };
   }
 
-  private processFilesCoverage(jsonData: any): FileCoverage[] {
+  private processFilesCoverage(
+    jsonData: Record<string, unknown>
+  ): FileCoverage[] {
     const files: FileCoverage[] = [];
 
     for (const [filePath, data] of Object.entries(jsonData)) {
-      const fileData = data as any;
-
-      files.push({
-        path: filePath,
-        coverage: {
-          lines: {
-            total: Object.keys(fileData.statementMap || {}).length,
-            covered: Object.values(fileData.s || {}).filter(Boolean).length,
-            percentage: Math.round(
-              (Object.values(fileData.s || {}).filter(Boolean).length /
-                Math.max(1, Object.keys(fileData.statementMap || {}).length)) *
-                100
-            ),
-          },
-          functions: {
-            total: Object.keys(fileData.fnMap || {}).length,
-            covered: Object.values(fileData.f || {}).filter(Boolean).length,
-            percentage: Math.round(
-              (Object.values(fileData.f || {}).filter(Boolean).length /
-                Math.max(1, Object.keys(fileData.fnMap || {}).length)) *
-                100
-            ),
-          },
-          branches: {
-            total: Object.keys(fileData.branchMap || {}).length,
-            covered: Object.values(fileData.b || {})
-              .flat()
-              .filter(Boolean).length,
-            percentage: Math.round(
-              (Object.values(fileData.b || {})
-                .flat()
-                .filter(Boolean).length /
-                Math.max(1, Object.values(fileData.b || {}).flat().length)) *
-                100
-            ),
-          },
-          statements: {
-            total: Object.keys(fileData.statementMap || {}).length,
-            covered: Object.values(fileData.s || {}).filter(Boolean).length,
-            percentage: Math.round(
-              (Object.values(fileData.s || {}).filter(Boolean).length /
-                Math.max(1, Object.keys(fileData.statementMap || {}).length)) *
-                100
-            ),
-          },
-        },
-        uncoveredLines: Object.entries(fileData.s || {})
-          .filter(([, covered]) => !covered)
-          .map(([line]) => Number.parseInt(line)),
-        uncoveredFunctions: Object.entries(fileData.f || {})
-          .filter(([, covered]) => !covered)
-          .map(([fnId]) => fileData.fnMap[fnId]?.name || `function_${fnId}`),
-      });
+      const fileData = data as Record<string, unknown>;
+      files.push(this.createFileCoverage(filePath, fileData));
     }
 
     return files;
   }
 
-  private findUncoveredLines(jsonData: any): UncoveredRegion[] {
+  private createFileCoverage(
+    filePath: string,
+    fileData: Record<string, unknown>
+  ): FileCoverage {
+    return {
+      path: filePath,
+      coverage: {
+        lines: this.calculateLinesCoverage(fileData),
+        functions: this.calculateFunctionsCoverage(fileData),
+        branches: this.calculateBranchCoverage(fileData),
+        statements: this.calculateStatementsCoverage(fileData),
+      },
+      uncoveredLines: this.extractUncoveredLines(fileData),
+      uncoveredFunctions: this.extractUncoveredFunctions(fileData),
+    };
+  }
+
+  private calculateLinesCoverage(
+    fileData: Record<string, unknown>
+  ): CoverageMetric {
+    const total = Object.keys(fileData.statementMap || {}).length;
+    const covered = Object.values(fileData.s || {}).filter(Boolean).length;
+    return {
+      total,
+      covered,
+      percentage: Math.round((covered / Math.max(1, total)) * 100),
+    };
+  }
+
+  private calculateFunctionsCoverage(
+    fileData: Record<string, unknown>
+  ): CoverageMetric {
+    const total = Object.keys(fileData.fnMap || {}).length;
+    const covered = Object.values(fileData.f || {}).filter(Boolean).length;
+    return {
+      total,
+      covered,
+      percentage: Math.round((covered / Math.max(1, total)) * 100),
+    };
+  }
+
+  private calculateBranchCoverage(
+    fileData: Record<string, unknown>
+  ): CoverageMetric {
+    const total = Object.keys(fileData.branchMap || {}).length;
+    const covered = Object.values(fileData.b || {})
+      .flat()
+      .filter(Boolean).length;
+    const totalBranches = Object.values(fileData.b || {}).flat().length;
+    return {
+      total,
+      covered,
+      percentage: Math.round((covered / Math.max(1, totalBranches)) * 100),
+    };
+  }
+
+  private calculateStatementsCoverage(
+    fileData: Record<string, unknown>
+  ): CoverageMetric {
+    const total = Object.keys(fileData.statementMap || {}).length;
+    const covered = Object.values(fileData.s || {}).filter(Boolean).length;
+    return {
+      total,
+      covered,
+      percentage: Math.round((covered / Math.max(1, total)) * 100),
+    };
+  }
+
+  private extractUncoveredLines(fileData: Record<string, unknown>): number[] {
+    return Object.entries(fileData.s || {})
+      .filter(([, covered]) => !covered)
+      .map(([line]) => Number.parseInt(line));
+  }
+
+  private extractUncoveredFunctions(
+    fileData: Record<string, unknown>
+  ): string[] {
+    return Object.entries(fileData.f || {})
+      .filter(([, covered]) => !covered)
+      .map(([fnId]) => fileData.fnMap[fnId]?.name || `function_${fnId}`);
+  }
+
+  private findUncoveredLines(
+    jsonData: Record<string, unknown>
+  ): UncoveredRegion[] {
     const uncovered: UncoveredRegion[] = [];
 
     for (const [filePath, data] of Object.entries(jsonData)) {
-      const fileData = data as any;
+      const fileData = data as Record<string, unknown>;
 
       // Find consecutive uncovered lines
       const uncoveredLines = Object.entries(fileData.s || {})
@@ -425,11 +484,13 @@ export class CoverageVisualizer {
     return uncovered;
   }
 
-  private identifyHotspots(jsonData: any): CoverageHotspot[] {
+  private identifyHotspots(
+    jsonData: Record<string, unknown>
+  ): CoverageHotspot[] {
     const hotspots: CoverageHotspot[] = [];
 
     for (const [filePath, data] of Object.entries(jsonData)) {
-      const fileData = data as any;
+      const fileData = data as Record<string, unknown>;
 
       // Calculate complexity and coverage correlation
       const functionCount = Object.keys(fileData.fnMap || {}).length;
@@ -457,7 +518,7 @@ export class CoverageVisualizer {
     return hotspots.sort((a, b) => b.risk - a.risk);
   }
 
-  private async analyzeTrends(): Promise<CoverageTrend[]> {
+  private analyzeTrends(): CoverageTrend[] {
     // Implementation would analyze historical coverage data
     return [];
   }

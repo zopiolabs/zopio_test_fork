@@ -145,7 +145,7 @@ export class ContinuousImprovementFramework {
       await this.feedbackLoop.recordImprovement(result);
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const executionTime = Date.now() - startTime;
 
       const result: ImprovementResult = {
@@ -162,7 +162,9 @@ export class ContinuousImprovementFramework {
           maintenance: 0,
         },
         success: false,
-        details: { error: error.message },
+        details: {
+          error: error instanceof Error ? error.message : String(error),
+        },
         rollbackPossible: false,
       };
 
@@ -243,7 +245,14 @@ export class ContinuousImprovementFramework {
         'history.json'
       );
       const data = await fs.readFile(metricsPath, 'utf8');
-      this.metricsHistory = JSON.parse(data).map((m: any) => ({
+      const parsedData = JSON.parse(data) as Array<{
+        timestamp: string;
+        coverage: CoverageMetrics;
+        quality: QualityMetrics;
+        performance: PerformanceMetrics;
+        maintenance: MaintenanceMetrics;
+      }>;
+      this.metricsHistory = parsedData.map((m) => ({
         ...m,
         timestamp: new Date(m.timestamp),
       }));
@@ -266,7 +275,9 @@ npx test-maintenance health --json > .test-metrics/latest.json
     try {
       await fs.writeFile(postCommitHook, hookScript);
       await fs.chmod(postCommitHook, 0o755);
-    } catch {}
+    } catch {
+      // Failed to set up git hook - ignore error
+    }
   }
 
   private async collectBaselineMetrics(): Promise<void> {
@@ -333,7 +344,7 @@ npx test-maintenance health --json > .test-metrics/latest.json
   private async collectPerformanceMetrics(): Promise<PerformanceMetrics> {
     try {
       const runs = 3;
-      const durations = [];
+      const durations: number[] = [];
 
       for (let i = 0; i < runs; i++) {
         const start = Date.now();
@@ -431,16 +442,15 @@ npx test-maintenance health --json > .test-metrics/latest.json
         : recentAvg;
 
     const change = ((recentAvg - olderAvg) / olderAvg) * 100;
-    const direction =
-      Math.abs(change) < 2
-        ? 'stable'
-        : lowerIsBetter
-          ? change < 0
-            ? 'improving'
-            : 'declining'
-          : change > 0
-            ? 'improving'
-            : 'declining';
+    const direction = (() => {
+      if (Math.abs(change) < 2) {
+        return 'stable';
+      }
+      if (lowerIsBetter) {
+        return change < 0 ? 'improving' : 'declining';
+      }
+      return change > 0 ? 'improving' : 'declining';
+    })();
 
     return {
       direction,
@@ -521,22 +531,22 @@ npx test-maintenance health --json > .test-metrics/latest.json
     recommendation: ImprovementRecommendation
   ): Promise<{
     success: boolean;
-    details: any;
+    details: { error?: string; [key: string]: unknown };
     rollbackPossible: boolean;
   }> {
     // Execute improvement based on type
     switch (recommendation.type) {
       case 'generate-missing-tests':
-        return this.generateMissingTests(recommendation);
+        return await this.generateMissingTests(recommendation);
 
       case 'optimize-slow-tests':
-        return this.optimizeSlowTests(recommendation);
+        return await this.optimizeSlowTests(recommendation);
 
       case 'fix-quality-issues':
-        return this.fixQualityIssues(recommendation);
+        return await this.fixQualityIssues(recommendation);
 
       case 'update-dependencies':
-        return this.updateTestDependencies(recommendation);
+        return await this.updateTestDependencies(recommendation);
 
       default:
         throw new Error(`Unknown improvement type: ${recommendation.type}`);
@@ -545,7 +555,11 @@ npx test-maintenance health --json > .test-metrics/latest.json
 
   private async generateMissingTests(
     recommendation: ImprovementRecommendation
-  ): Promise<any> {
+  ): Promise<{
+    success: boolean;
+    details: { error?: string; [key: string]: unknown };
+    rollbackPossible: boolean;
+  }> {
     try {
       await execAsync('npx scaffold-package complete .', {
         cwd: this.projectPath,
@@ -555,25 +569,39 @@ npx test-maintenance health --json > .test-metrics/latest.json
         details: { testsGenerated: recommendation.estimatedImpact },
         rollbackPossible: true,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        details: { error: error.message },
+        details: {
+          error: error instanceof Error ? error.message : String(error),
+        },
         rollbackPossible: false,
       };
     }
   }
 
-  private async optimizeSlowTests(
+  private optimizeSlowTests(
     _recommendation: ImprovementRecommendation
-  ): Promise<any> {
+  ): Promise<{
+    success: boolean;
+    details: { error?: string; [key: string]: unknown };
+    rollbackPossible: boolean;
+  }> {
     // Implementation would optimize slow tests
-    return { success: true, details: {}, rollbackPossible: false };
+    return Promise.resolve({
+      success: true,
+      details: {},
+      rollbackPossible: false,
+    });
   }
 
   private async fixQualityIssues(
     recommendation: ImprovementRecommendation
-  ): Promise<any> {
+  ): Promise<{
+    success: boolean;
+    details: { error?: string; [key: string]: unknown };
+    rollbackPossible: boolean;
+  }> {
     try {
       await execAsync('npx test-maintenance fix --type=all', {
         cwd: this.projectPath,
@@ -583,10 +611,12 @@ npx test-maintenance health --json > .test-metrics/latest.json
         details: { issuesFixed: recommendation.estimatedImpact },
         rollbackPossible: true,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        details: { error: error.message },
+        details: {
+          error: error instanceof Error ? error.message : String(error),
+        },
         rollbackPossible: false,
       };
     }
@@ -594,7 +624,11 @@ npx test-maintenance health --json > .test-metrics/latest.json
 
   private async updateTestDependencies(
     recommendation: ImprovementRecommendation
-  ): Promise<any> {
+  ): Promise<{
+    success: boolean;
+    details: { error?: string; [key: string]: unknown };
+    rollbackPossible: boolean;
+  }> {
     try {
       await execAsync('npx test-maintenance update-deps', {
         cwd: this.projectPath,
@@ -604,10 +638,12 @@ npx test-maintenance health --json > .test-metrics/latest.json
         details: { dependenciesUpdated: recommendation.estimatedImpact },
         rollbackPossible: true,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        details: { error: error.message },
+        details: {
+          error: error instanceof Error ? error.message : String(error),
+        },
         rollbackPossible: false,
       };
     }
@@ -693,7 +729,9 @@ npx test-maintenance health --json > .test-metrics/latest.json
     await fs.writeFile(latestPath, JSON.stringify(metric, null, 2));
   }
 
-  private async saveMonitoringConfig(config: any): Promise<void> {
+  private async saveMonitoringConfig(config: {
+    [key: string]: unknown;
+  }): Promise<void> {
     const configPath = path.join(
       this.projectPath,
       '.test-metrics',
@@ -702,14 +740,14 @@ npx test-maintenance health --json > .test-metrics/latest.json
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
   }
 
-  private async findTestFiles(): Promise<string[]> {
+  private findTestFiles(): Promise<string[]> {
     // Implementation to find test files
-    return [];
+    return Promise.resolve([]);
   }
 
-  private async findSourceFiles(): Promise<string[]> {
+  private findSourceFiles(): Promise<string[]> {
     // Implementation to find source files
-    return [];
+    return Promise.resolve([]);
   }
 
   private analyzeTestFileQuality(content: string): {
@@ -739,13 +777,14 @@ npx test-maintenance health --json > .test-metrics/latest.json
 class FeedbackLoop {
   private improvements: ImprovementResult[] = [];
 
-  async recordImprovement(result: ImprovementResult): Promise<void> {
+  recordImprovement(result: ImprovementResult): Promise<void> {
     this.improvements.push(result);
     // Save to persistent storage
+    return Promise.resolve();
   }
 
-  async getExecutedImprovements(): Promise<ImprovementResult[]> {
-    return this.improvements;
+  getExecutedImprovements(): Promise<ImprovementResult[]> {
+    return Promise.resolve(this.improvements);
   }
 }
 
@@ -893,7 +932,7 @@ export interface ImprovementResult {
   afterMetrics: TestMetric;
   impact: ImpactMeasurement;
   success: boolean;
-  details: any;
+  details: { error?: string; [key: string]: unknown };
   rollbackPossible: boolean;
 }
 

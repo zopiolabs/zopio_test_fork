@@ -11,6 +11,28 @@ import { Command } from 'commander';
 
 const execAsync = promisify(exec);
 
+// Regex constants for performance
+const INCOMPLETE_ASSERTION_REGEX = /expect\([^)]+\)\.toBe\($/;
+const TEST_NAMING_REGEX = /it\(['"](.*?)['"],/g;
+const TEST_FILE_REGEX = /\.(test|spec)\.(ts|tsx|js|jsx)$/;
+
+// Type definitions for test results
+interface TestResult {
+  name: string;
+  title: string;
+  duration: number;
+}
+
+interface FileResult {
+  name: string;
+  assertionResults?: TestResult[];
+}
+
+interface PerformanceResult {
+  testResults?: FileResult[];
+  numTotalTests?: number;
+}
+
 const program = new Command();
 
 program
@@ -110,9 +132,9 @@ program
   .option('--unused', 'Find unused test dependencies')
   .option('--circular', 'Detect circular dependencies')
   .option('--external', 'Analyze external dependencies')
-  .action(async (targetPath, options) => {
+  .action((targetPath, options) => {
     try {
-      const analysis = await analyzeDependencies(targetPath, {
+      const analysis = analyzeDependencies(targetPath, {
         findUnused: options.unused,
         detectCircular: options.circular,
         analyzeExternal: options.external,
@@ -217,6 +239,7 @@ program
       if (options.output) {
         await fs.writeFile(options.output, report);
       } else {
+        process.stdout.write(report);
       }
     } catch (_error) {
       process.exit(1);
@@ -304,7 +327,7 @@ async function analyzeCoverage(
         statements: Math.round(coverageData.total?.statements?.pct || 0),
       },
       files: Object.entries(coverageData.coverage || {}).map(
-        ([path, data]: [string, any]) => ({
+        ([path, data]: [string, unknown]) => ({
           path,
           coverage: {
             lines: Math.round(data.lines?.pct || 0),
@@ -338,12 +361,12 @@ async function analyzeTestQuality(
 
   for (const file of testFiles) {
     const content = await fs.readFile(file, 'utf8');
-    const fileIssues = await checkTestFileQuality(file, content, options.rules);
+    const fileIssues = checkTestFileQuality(file, content, options.rules);
     issues.push(...fileIssues);
 
-    fileIssues.forEach((issue) => {
+    for (const issue of fileIssues) {
       ruleBreakdown[issue.rule] = (ruleBreakdown[issue.rule] || 0) + 1;
-    });
+    }
   }
 
   // Filter by severity
@@ -368,122 +391,161 @@ async function analyzeTestQuality(
   };
 }
 
-async function checkTestFileQuality(
+// Helper functions to reduce complexity
+function checkNamingConventions(
+  filePath: string,
+  content: string
+): QualityAnalysis['issues'] {
+  const issues: QualityAnalysis['issues'] = [];
+  let match: RegExpExecArray | null;
+
+  // biome-ignore lint/suspicious/noAssignInExpressions: needed for regex exec loop
+  while ((match = TEST_NAMING_REGEX.exec(content)) !== null) {
+    const testName = match[1];
+    const lineNumber = content.substring(0, match.index).split('\n').length;
+
+    if (testName.length < 10) {
+      issues.push({
+        file: filePath,
+        line: lineNumber,
+        rule: 'naming',
+        severity: 'warning',
+        message: `Test name too short: "${testName}"`,
+        suggestion:
+          'Use descriptive test names that explain the behavior being tested',
+      });
+    }
+
+    if (
+      testName.includes('should work') ||
+      testName.includes('works correctly')
+    ) {
+      issues.push({
+        file: filePath,
+        line: lineNumber,
+        rule: 'naming',
+        severity: 'error',
+        message: `Generic test name: "${testName}"`,
+        suggestion: 'Describe the specific behavior being tested',
+      });
+    }
+  }
+
+  return issues;
+}
+
+function checkTestStructure(
+  filePath: string,
+  content: string
+): QualityAnalysis['issues'] {
+  const issues: QualityAnalysis['issues'] = [];
+
+  if (!content.includes('describe(')) {
+    issues.push({
+      file: filePath,
+      line: 1,
+      rule: 'structure',
+      severity: 'warning',
+      message: 'Missing describe blocks for test organization',
+      suggestion: 'Group related tests using describe blocks',
+    });
+  }
+
+  const testCount = (content.match(/it\(/g) || []).length;
+  if (
+    testCount > 3 &&
+    !content.includes('beforeEach') &&
+    !content.includes('afterEach')
+  ) {
+    issues.push({
+      file: filePath,
+      line: 1,
+      rule: 'structure',
+      severity: 'info',
+      message: 'Consider adding setup/cleanup for multiple tests',
+      suggestion: 'Use beforeEach/afterEach for common test setup and cleanup',
+    });
+  }
+
+  return issues;
+}
+
+function checkMockingPractices(
+  filePath: string,
+  content: string
+): QualityAnalysis['issues'] {
+  const issues: QualityAnalysis['issues'] = [];
+
+  if (content.includes('vi.mock') && !content.includes('vi.clearAllMocks')) {
+    issues.push({
+      file: filePath,
+      line: 1,
+      rule: 'mocking',
+      severity: 'warning',
+      message: 'Mocks used without proper cleanup',
+      suggestion: 'Add vi.clearAllMocks() in beforeEach or afterEach',
+    });
+  }
+
+  return issues;
+}
+
+function checkAssertionQuality(
+  filePath: string,
+  lines: string[]
+): QualityAnalysis['issues'] {
+  const issues: QualityAnalysis['issues'] = [];
+
+  for (const [index, line] of lines.entries()) {
+    if (line.includes('expect(') && line.includes('.toBe(true)')) {
+      issues.push({
+        file: filePath,
+        line: index + 1,
+        rule: 'assertions',
+        severity: 'info',
+        message: 'Generic boolean assertion found',
+        suggestion:
+          'Use more specific assertions like toBeInTheDocument(), toHaveClass(), etc.',
+      });
+    }
+
+    if (line.includes('expect(') && INCOMPLETE_ASSERTION_REGEX.test(line)) {
+      issues.push({
+        file: filePath,
+        line: index + 1,
+        rule: 'assertions',
+        severity: 'warning',
+        message: 'Incomplete assertion detected',
+        suggestion: 'Complete the assertion with expected value',
+      });
+    }
+  }
+
+  return issues;
+}
+
+function checkTestFileQuality(
   filePath: string,
   content: string,
   rules: string[]
-): Promise<QualityAnalysis['issues']> {
+): QualityAnalysis['issues'] {
   const issues: QualityAnalysis['issues'] = [];
   const lines = content.split('\n');
 
   if (rules.includes('naming')) {
-    // Check test naming conventions
-    const testRegex = /it\(['"](.*?)['"],/g;
-    let match;
-    while ((match = testRegex.exec(content)) !== null) {
-      const testName = match[1];
-      const lineNumber = content.substring(0, match.index).split('\n').length;
-
-      if (testName.length < 10) {
-        issues.push({
-          file: filePath,
-          line: lineNumber,
-          rule: 'naming',
-          severity: 'warning',
-          message: `Test name too short: "${testName}"`,
-          suggestion:
-            'Use descriptive test names that explain the behavior being tested',
-        });
-      }
-
-      if (
-        testName.includes('should work') ||
-        testName.includes('works correctly')
-      ) {
-        issues.push({
-          file: filePath,
-          line: lineNumber,
-          rule: 'naming',
-          severity: 'error',
-          message: `Generic test name: "${testName}"`,
-          suggestion: 'Describe the specific behavior being tested',
-        });
-      }
-    }
+    issues.push(...checkNamingConventions(filePath, content));
   }
 
   if (rules.includes('structure')) {
-    // Check for proper test structure
-    if (!content.includes('describe(')) {
-      issues.push({
-        file: filePath,
-        line: 1,
-        rule: 'structure',
-        severity: 'warning',
-        message: 'Missing describe blocks for test organization',
-        suggestion: 'Group related tests using describe blocks',
-      });
-    }
-
-    // Check for setup/cleanup
-    const testCount = (content.match(/it\(/g) || []).length;
-    if (
-      testCount > 3 &&
-      !content.includes('beforeEach') &&
-      !content.includes('afterEach')
-    ) {
-      issues.push({
-        file: filePath,
-        line: 1,
-        rule: 'structure',
-        severity: 'info',
-        message: 'Consider adding setup/cleanup for multiple tests',
-        suggestion:
-          'Use beforeEach/afterEach for common test setup and cleanup',
-      });
-    }
+    issues.push(...checkTestStructure(filePath, content));
   }
 
   if (rules.includes('mocking')) {
-    // Check mocking practices
-    if (content.includes('vi.mock') && !content.includes('vi.clearAllMocks')) {
-      issues.push({
-        file: filePath,
-        line: 1,
-        rule: 'mocking',
-        severity: 'warning',
-        message: 'Mocks used without proper cleanup',
-        suggestion: 'Add vi.clearAllMocks() in beforeEach or afterEach',
-      });
-    }
+    issues.push(...checkMockingPractices(filePath, content));
   }
 
   if (rules.includes('assertions')) {
-    // Check assertion quality
-    lines.forEach((line, index) => {
-      if (line.includes('expect(') && line.includes('.toBe(true)')) {
-        issues.push({
-          file: filePath,
-          line: index + 1,
-          rule: 'assertions',
-          severity: 'info',
-          message: 'Generic boolean assertion found',
-          suggestion:
-            'Use more specific assertions like toBeInTheDocument(), toHaveClass(), etc.',
-        });
-      }
-
-      if (line.includes('expect(').match(/expect\([^)]+\)\.toBe\($/)) {
-        issues.push({
-          file: filePath,
-          line: index + 1,
-          rule: 'assertions',
-          severity: 'warning',
-          message: 'Incomplete assertion detected',
-          suggestion: 'Complete the assertion with expected value',
-        });
-      }
-    });
+    issues.push(...checkAssertionQuality(filePath, lines));
   }
 
   return issues;
@@ -504,16 +566,16 @@ async function analyzePerformance(options: {
       const duration = Date.now() - start;
 
       const slowTests =
-        result.testResults
-          ?.flatMap((file: any) =>
-            file.assertionResults?.map((test: any) => ({
+        (result as PerformanceResult).testResults
+          ?.flatMap((file: FileResult) =>
+            file.assertionResults?.map((test: TestResult) => ({
               name: test.title,
               duration: test.duration || 0,
               file: file.name,
             }))
           )
-          .filter((test: any) => test.duration > 1000) // Tests slower than 1s
-          .sort((a: any, b: any) => b.duration - a.duration)
+          .filter((test) => test && test.duration > 1000) // Tests slower than 1s
+          .sort((a, b) => b.duration - a.duration)
           .slice(0, 10) || [];
 
       runs.push({
@@ -574,7 +636,7 @@ async function analyzePerformance(options: {
   };
 }
 
-async function analyzeDependencies(_targetPath: string, _options: any) {
+function analyzeDependencies(_targetPath: string, _options: unknown) {
   // Implementation would analyze test dependencies
   return {
     unused: [],
@@ -584,7 +646,7 @@ async function analyzeDependencies(_targetPath: string, _options: any) {
   };
 }
 
-async function analyzeTestPatterns(_targetPath: string, _options: any) {
+function analyzeTestPatterns(_targetPath: string, _options: unknown) {
   // Implementation would analyze test patterns
   return {
     goodPatterns: [],
@@ -593,7 +655,7 @@ async function analyzeTestPatterns(_targetPath: string, _options: any) {
   };
 }
 
-async function analyzeComplexity(_targetPath: string, _options: any) {
+function analyzeComplexity(_targetPath: string, _options: unknown) {
   // Implementation would analyze test complexity
   return {
     overall: 0,
@@ -602,7 +664,7 @@ async function analyzeComplexity(_targetPath: string, _options: any) {
   };
 }
 
-async function analyzeDuplication(_targetPath: string, _options: any) {
+function analyzeDuplication(_targetPath: string, _options: unknown) {
   // Implementation would analyze code duplication
   return {
     duplicates: [],
@@ -620,7 +682,7 @@ async function runComprehensiveAnalysis(targetPath: string) {
       minSeverity: 'info',
     }),
     analyzePerformance({ runs: 3, generateProfile: false }),
-    analyzeDependencies(targetPath, {}),
+    Promise.resolve(analyzeDependencies(targetPath, {})),
   ]);
 
   return {
@@ -664,10 +726,7 @@ async function findTestFiles(targetPath: string): Promise<string[]> {
           entry.name !== 'node_modules'
         ) {
           await walk(fullPath);
-        } else if (
-          entry.isFile() &&
-          /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(entry.name)
-        ) {
+        } else if (entry.isFile() && TEST_FILE_REGEX.test(entry.name)) {
           files.push(fullPath);
         }
       }
@@ -689,34 +748,45 @@ function printCoverageTable(
     (f) => f.coverage.lines < threshold
   );
   if (lowCoverageFiles.length > 0) {
-    lowCoverageFiles.forEach((_file) => {});
+    // Low coverage files would be logged here
+    for (const _file of lowCoverageFiles) {
+      // Display low coverage file info
+    }
   }
 }
 
-function printQualityReport(analysis: QualityAnalysis): void {
-  if (analysis.issues.length > 0) {
-    const bySeverity = analysis.issues.reduce(
-      (acc, issue) => {
-        acc[issue.severity] = (acc[issue.severity] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
+function getSeverityEmoji(severity: string): string {
+  if (severity === 'error') {
+    return '❌';
+  }
+  if (severity === 'warning') {
+    return '⚠️';
+  }
+  return 'ℹ️';
+}
 
-    Object.entries(bySeverity).forEach(([severity, _count]) => {
-      const _emoji =
-        severity === 'error' ? '❌' : severity === 'warning' ? '⚠️' : 'ℹ️';
-    });
-    analysis.issues.slice(0, 10).forEach((issue) => {
-      const _severityEmoji =
-        issue.severity === 'error'
-          ? '❌'
-          : issue.severity === 'warning'
-            ? '⚠️'
-            : 'ℹ️';
-      if (issue.suggestion) {
-      }
-    });
+function printQualityReport(analysis: QualityAnalysis): void {
+  if (analysis.issues.length === 0) {
+    return;
+  }
+
+  const bySeverity = analysis.issues.reduce(
+    (acc, issue) => {
+      acc[issue.severity] = (acc[issue.severity] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  for (const [severity, _count] of Object.entries(bySeverity)) {
+    const _emoji = getSeverityEmoji(severity);
+  }
+
+  for (const issue of analysis.issues.slice(0, 10)) {
+    const _severityEmoji = getSeverityEmoji(issue.severity);
+    if (issue.suggestion) {
+      // Issue suggestions would be displayed here
+    }
   }
 }
 
@@ -733,39 +803,41 @@ function printPerformanceReport(performance: PerformanceAnalysis): void {
       }, new Map())
       .values();
 
-    Array.from(uniqueSlowTests)
+    const topSlowTests = Array.from(uniqueSlowTests)
       .sort((a, b) => b.duration - a.duration)
-      .slice(0, 5)
-      .forEach((_test) => {});
+      .slice(0, 5);
+    // Top slow tests would be displayed here
+    for (const _test of topSlowTests) {
+      // Display test info
+    }
   }
 
   if (performance.recommendations.length > 0) {
-    performance.recommendations.forEach((_rec) => {});
+    for (const _rec of performance.recommendations) {
+      // Display recommendation
+    }
   }
 }
 
-function printDependencyReport(_analysis: any): void {
+function printDependencyReport(_analysis: unknown): void {
   // Implementation would print dependency analysis
 }
 
-function printPatternReport(_patterns: any): void {
+function printPatternReport(_patterns: unknown): void {
   // Implementation would print pattern analysis
 }
 
-function printComplexityReport(_complexity: any): void {
+function printComplexityReport(_complexity: unknown): void {
   // Implementation would print complexity analysis
 }
 
-function printDuplicationReport(_duplication: any): void {
+function printDuplicationReport(_duplication: unknown): void {
   // Implementation would print duplication analysis
 }
 
-function formatAsLCOV(_coverage: CoverageAnalysis): string {
-  // Implementation would format as LCOV
-  return '';
-}
+// Removed unused function formatAsLCOV
 
-function formatAsHTML(analysis: any): string {
+function formatAsHTML(analysis: unknown): string {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -787,7 +859,7 @@ function formatAsHTML(analysis: any): string {
 </html>`;
 }
 
-function formatAsMarkdown(analysis: any): string {
+function formatAsMarkdown(analysis: unknown): string {
   return `# Test Analysis Report
 
 Generated: ${analysis.timestamp}
@@ -816,7 +888,7 @@ ${
     ? analysis.quality.issues
         .slice(0, 10)
         .map(
-          (issue: any) =>
+          (issue: QualityAnalysis['issues'][0]) =>
             `- **${issue.severity}**: ${issue.message} (${path.basename(issue.file)}:${issue.line})`
         )
         .join('\n')

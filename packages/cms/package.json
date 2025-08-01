@@ -7,7 +7,7 @@
     "build": "basehub build",
     "analyze": "basehub",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "test": "vitest run --coverage",
+    "test": "vitest run",
     "test:watch": "vitest --coverage",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },

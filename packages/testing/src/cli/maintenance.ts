@@ -11,6 +11,10 @@ import { Command } from 'commander';
 
 const execAsync = promisify(exec);
 
+// Top-level regex constants to avoid performance issues
+const IMPORT_RENDER_SCREEN_REGEX = /import { render, screen/;
+const TEST_FILE_REGEX = /\.(test|spec)\.(ts|tsx|js|jsx)$/;
+
 const program = new Command();
 
 program
@@ -32,6 +36,7 @@ program
       });
 
       if (options.json) {
+        process.stdout.write(`${JSON.stringify(health, null, 2)}\n`);
       } else {
         printHealthReport(health);
       }
@@ -60,11 +65,17 @@ program
       if (flakyTests.length === 0) {
         return;
       }
-      flakyTests.forEach((_test) => {});
+      for (const _test of flakyTests) {
+        // Process flaky tests when needed
+      }
 
       if (options.fix) {
         await fixFlakyTests(flakyTests);
       } else {
+        // List flaky tests without fixing them
+        process.stdout.write(
+          `Found ${flakyTests.length} flaky tests. Use --fix to address them.\n`
+        );
       }
     } catch (_error) {
       process.exit(1);
@@ -92,15 +103,21 @@ program
       }
 
       if (options.dryRun) {
+        process.stdout.write('Dry run mode: No files will be deleted\n');
       } else {
+        process.stdout.write('Cleaning up test files...\n');
       }
 
       if (cleanup.obsoleteTests.length > 0) {
-        cleanup.obsoleteTests.forEach((_file) => {});
+        for (const _file of cleanup.obsoleteTests) {
+          // Process obsolete test files when needed
+        }
       }
 
       if (cleanup.unusedMocks.length > 0) {
-        cleanup.unusedMocks.forEach((_file) => {});
+        for (const _file of cleanup.unusedMocks) {
+          // Process unused mock files when needed
+        }
       }
 
       if (!options.dryRun) {
@@ -125,7 +142,9 @@ program
       }
 
       for (const update of updates) {
-        update.changes.forEach((_change) => {});
+        for (const _change of update.changes) {
+          // Process dependency changes when needed
+        }
 
         if (!options.dryRun) {
           await applyDependencyUpdates(update);
@@ -133,7 +152,9 @@ program
       }
 
       if (options.dryRun) {
+        process.stdout.write('Dry run mode: No changes will be made\n');
       } else {
+        process.stdout.write('Changes applied successfully\n');
       }
     } catch (_error) {
       process.exit(1);
@@ -151,10 +172,14 @@ program
         generateProfile: options.profile,
       });
 
-      performance.slowTests.forEach((_test, _index) => {});
+      for (const [_index, _test] of performance.slowTests.entries()) {
+        // Process slow tests when needed
+      }
 
       if (performance.recommendations.length > 0) {
-        performance.recommendations.forEach((_rec) => {});
+        for (const _rec of performance.recommendations) {
+          // Process recommendations when needed
+        }
       }
 
       if (options.profile) {
@@ -186,7 +211,9 @@ program
       }
 
       for (const issue of issues) {
-        issue.fixes.forEach((_fix) => {});
+        for (const _fix of issue.fixes) {
+          // Process fixes when needed
+        }
 
         if (!options.dryRun) {
           await applyFixes(issue);
@@ -194,7 +221,9 @@ program
       }
 
       if (options.dryRun) {
+        process.stdout.write('Dry run mode: No changes will be made\n');
       } else {
+        process.stdout.write('Changes applied successfully\n');
       }
     } catch (_error) {
       process.exit(1);
@@ -231,6 +260,7 @@ program
       if (options.output) {
         await fs.writeFile(options.output, formattedReport);
       } else {
+        process.stdout.write(formattedReport);
       }
     } catch (_error) {
       process.exit(1);
@@ -238,6 +268,22 @@ program
   });
 
 // Helper functions and interfaces
+
+/**
+ * Get score status based on numeric score
+ */
+function getScoreStatus(score: number): string {
+  if (score >= 8) {
+    return 'excellent';
+  }
+  if (score >= 6) {
+    return 'good';
+  }
+  if (score >= 4) {
+    return 'fair';
+  }
+  return 'poor';
+}
 
 interface HealthCheck {
   overall: {
@@ -311,14 +357,7 @@ async function performHealthCheck(
   return {
     overall: {
       score: overallScore,
-      status:
-        overallScore >= 8
-          ? 'excellent'
-          : overallScore >= 6
-            ? 'good'
-            : overallScore >= 4
-              ? 'fair'
-              : 'poor',
+      status: getScoreStatus(overallScore),
     },
     coverage: {
       percentage: coverage.percentage,
@@ -415,13 +454,12 @@ function analyzeTestFile(
   return Math.max(1, score);
 }
 
-async function detectFlakyTests(options: {
-  runs: number;
-  failureThreshold: number;
-}): Promise<FlakyTest[]> {
-  const results = [];
+async function runTestsMultipleTimes(
+  runs: number
+): Promise<Record<string, unknown>[]> {
+  const results: Record<string, unknown>[] = [];
 
-  for (let i = 0; i < options.runs; i++) {
+  for (let i = 0; i < runs; i++) {
     try {
       const { stdout } = await execAsync('pnpm test -- --reporter=json');
       const testResult = JSON.parse(stdout);
@@ -431,35 +469,64 @@ async function detectFlakyTests(options: {
     }
   }
 
-  const flakyTests: FlakyTest[] = [];
+  return results;
+}
+
+function collectTestStats(
+  results: Record<string, unknown>[]
+): Map<string, { total: number; failures: number; errors: string[] }> {
   const testStats = new Map();
 
-  // Analyze results to find flaky tests
-  results.forEach((result) => {
-    if (result.testResults) {
-      result.testResults.forEach((testFile: any) => {
-        testFile.assertionResults?.forEach((test: any) => {
-          const key = `${testFile.name}:${test.title}`;
-          if (!testStats.has(key)) {
-            testStats.set(key, { total: 0, failures: 0, errors: [] });
-          }
-
-          const stats = testStats.get(key);
-          stats.total++;
-
-          if (test.status === 'failed') {
-            stats.failures++;
-            stats.errors.push(test.failureMessages?.[0] || 'Unknown error');
-          }
-        });
-      });
+  for (const result of results) {
+    if (!result.testResults) {
+      continue;
     }
-  });
 
-  // Identify flaky tests
-  testStats.forEach((stats, key) => {
+    for (const testFile of result.testResults as Record<string, unknown>[]) {
+      processTestFile(testFile, testStats);
+    }
+  }
+
+  return testStats;
+}
+
+function processTestFile(
+  testFile: Record<string, unknown>,
+  testStats: Map<string, { total: number; failures: number; errors: string[] }>
+): void {
+  const assertionResults = testFile.assertionResults as
+    | Record<string, unknown>[]
+    | undefined;
+  if (!assertionResults) {
+    return;
+  }
+
+  for (const test of assertionResults) {
+    const key = `${testFile.name}:${test.title}`;
+    if (!testStats.has(key)) {
+      testStats.set(key, { total: 0, failures: 0, errors: [] });
+    }
+
+    const stats = testStats.get(key);
+    stats.total++;
+
+    if (test.status === 'failed') {
+      stats.failures++;
+      const failureMessages = test.failureMessages as string[] | undefined;
+      stats.errors.push(failureMessages?.[0] || 'Unknown error');
+    }
+  }
+}
+
+function identifyFlakyTests(
+  testStats: Map<string, { total: number; failures: number; errors: string[] }>,
+  failureThreshold: number
+): FlakyTest[] {
+  const flakyTests: FlakyTest[] = [];
+
+  for (const [key, stats] of testStats.entries()) {
     const failureRate = stats.failures / stats.total;
-    if (failureRate > options.failureThreshold && failureRate < 1) {
+    if (failureRate > failureThreshold && failureRate < 1) {
       const [file, testName] = key.split(':');
       flakyTests.push({
         file,
@@ -468,67 +535,89 @@ async function detectFlakyTests(options: {
         commonErrors: [...new Set(stats.errors)],
       });
     }
-  });
+  }
 
   return flakyTests;
 }
 
-async function fixFlakyTests(flakyTests: FlakyTest[]): Promise<void> {
-  for (const test of flakyTests) {
-    const content = await fs.readFile(test.file, 'utf8');
-    let fixedContent = content;
+async function detectFlakyTests(options: {
+  runs: number;
+  failureThreshold: number;
+}): Promise<FlakyTest[]> {
+  const results = await runTestsMultipleTimes(options.runs);
+  const testStats = collectTestStats(results);
+  return identifyFlakyTests(testStats, options.failureThreshold);
+}
 
-    // Common flaky test fixes
+function applyTimingFixes(content: string, errors: string[]): string {
+  let fixedContent = content;
 
-    // Fix timing issues - add waitFor
-    if (
-      test.commonErrors.some(
-        (err) => err.includes('timeout') || err.includes('not found')
-      )
-    ) {
+  if (
+    errors.some((err) => err.includes('timeout') || err.includes('not found'))
+  ) {
+    fixedContent = fixedContent.replace(
+      /expect\(screen\.get/g,
+      'await waitFor(() => expect(screen.get'
+    );
+
+    // Add import if not present
+    if (!fixedContent.includes('import { waitFor }')) {
       fixedContent = fixedContent.replace(
-        /expect\(screen\.get/g,
-        'await waitFor(() => expect(screen.get'
-      );
-
-      // Add import if not present
-      if (!fixedContent.includes('import { waitFor }')) {
-        fixedContent = fixedContent.replace(
-          /import { render, screen/,
-          'import { render, screen, waitFor'
-        );
-      }
-    }
-
-    // Fix race conditions - add proper async/await
-    if (test.commonErrors.some((err) => err.includes('Promise'))) {
-      fixedContent = fixedContent.replace(/it\('.*?', \(\) => {/g, (match) =>
-        match.replace('() => {', 'async () => {')
+        IMPORT_RENDER_SCREEN_REGEX,
+        'import { render, screen, waitFor'
       );
     }
+  }
 
-    // Add proper cleanup
-    if (!fixedContent.includes('afterEach')) {
-      const insertPoint = fixedContent.indexOf('describe(');
-      if (insertPoint !== -1) {
-        const describeEnd = fixedContent.indexOf('});', insertPoint);
-        const setupCode = `
+  return fixedContent;
+}
+
+function applyAsyncFixes(content: string, errors: string[]): string {
+  if (errors.some((err) => err.includes('Promise'))) {
+    return content.replace(/it\('.*?', \(\) => {/g, (match) =>
+      match.replace('() => {', 'async () => {')
+    );
+  }
+  return content;
+}
+
+function addTestCleanup(content: string): string {
+  if (content.includes('afterEach')) {
+    return content;
+  }
+
+  const insertPoint = content.indexOf('describe(');
+  if (insertPoint === -1) {
+    return content;
+  }
+
+  const describeEnd = content.indexOf('});', insertPoint);
+  const setupCode = `
   afterEach(() => {
     vi.clearAllMocks();
     cleanup();
   });
 `;
-        fixedContent =
-          fixedContent.slice(0, describeEnd) +
-          setupCode +
-          fixedContent.slice(describeEnd);
-      }
-    }
 
-    if (fixedContent !== content) {
-      await fs.writeFile(test.file, fixedContent);
-    } else {
-    }
+  return content.slice(0, describeEnd) + setupCode + content.slice(describeEnd);
+}
+
+async function fixSingleFlakyTest(test: FlakyTest): Promise<void> {
+  const content = await fs.readFile(test.file, 'utf8');
+  let fixedContent = content;
+
+  fixedContent = applyTimingFixes(fixedContent, test.commonErrors);
+  fixedContent = applyAsyncFixes(fixedContent, test.commonErrors);
+  fixedContent = addTestCleanup(fixedContent);
+
+  if (fixedContent !== content) {
+    await fs.writeFile(test.file, fixedContent);
+  }
+}
+
+async function fixFlakyTests(flakyTests: FlakyTest[]): Promise<void> {
+  for (const test of flakyTests) {
+    await fixSingleFlakyTest(test);
   }
 }
 
@@ -548,10 +637,7 @@ async function findTestFiles(targetPath: string): Promise<string[]> {
           entry.name !== 'node_modules'
         ) {
           await walk(fullPath);
-        } else if (
-          entry.isFile() &&
-          /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(entry.name)
-        ) {
+        } else if (entry.isFile() && TEST_FILE_REGEX.test(entry.name)) {
           files.push(fullPath);
         }
       }
@@ -564,10 +650,10 @@ async function findTestFiles(targetPath: string): Promise<string[]> {
   return files;
 }
 
-async function analyzeTestCleanup(_options: {
+function analyzeTestCleanup(_options: {
   dryRun: boolean;
   aggressive: boolean;
-}): Promise<TestCleanup> {
+}): TestCleanup {
   // Implementation would analyze for obsolete tests, unused mocks, etc.
   return {
     obsoleteTests: [],
@@ -580,16 +666,18 @@ async function performCleanup(_cleanup: TestCleanup): Promise<void> {
   // Implementation would perform the actual cleanup
 }
 
-async function analyzeTestDependencies() {
+function analyzeTestDependencies() {
   // Implementation would analyze test dependencies and suggest updates
   return [];
 }
 
-async function applyDependencyUpdates(_update: any): Promise<void> {
+async function applyDependencyUpdates(
+  _update: Record<string, unknown>
+): Promise<void> {
   // Implementation would apply dependency updates
 }
 
-async function analyzeTestPerformance(_options: { generateProfile: boolean }) {
+function analyzeTestPerformance(_options: { generateProfile: boolean }) {
   // Implementation would analyze test performance
   return {
     totalTime: 0,
@@ -600,20 +688,22 @@ async function analyzeTestPerformance(_options: { generateProfile: boolean }) {
   };
 }
 
-async function generatePerformanceProfile(_performance: any): Promise<void> {
+async function generatePerformanceProfile(
+  _performance: Record<string, unknown>
+): Promise<void> {
   // Implementation would generate performance profile
 }
 
-async function analyzeCommonIssues(_fixTypes: string[]) {
+function analyzeCommonIssues(_fixTypes: string[]) {
   // Implementation would analyze common test issues
   return [];
 }
 
-async function applyFixes(_issue: any): Promise<void> {
+async function applyFixes(_issue: Record<string, unknown>): Promise<void> {
   // Implementation would apply fixes
 }
 
-async function analyzeMaintenance(_targetPath: string) {
+function analyzeMaintenance(_targetPath: string) {
   // Implementation would analyze maintenance issues
   return {
     score: 8,
@@ -622,7 +712,7 @@ async function analyzeMaintenance(_targetPath: string) {
   };
 }
 
-async function generateMaintenanceReport() {
+function generateMaintenanceReport() {
   // Implementation would generate comprehensive report
   return {
     timestamp: new Date().toISOString(),
@@ -631,7 +721,7 @@ async function generateMaintenanceReport() {
   };
 }
 
-function formatReportAsMarkdown(report: any): string {
+function formatReportAsMarkdown(report: Record<string, unknown>): string {
   return `# Test Maintenance Report
 
 Generated: ${report.timestamp}
@@ -642,7 +732,7 @@ Generated: ${report.timestamp}
 `;
 }
 
-function formatReportAsHTML(report: any): string {
+function formatReportAsHTML(report: Record<string, unknown>): string {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -665,14 +755,17 @@ function printHealthReport(health: HealthCheck): void {
   };
 
   if (health.testQuality.issues.length > 0) {
-    health.testQuality.issues.forEach((_issue) => );
+    for (const _issue of health.testQuality.issues) {
+      // Process issues when needed
+    }
   }
 
   if (health.coverage.missing.length > 0) {
-    health.coverage.missing
-      .slice(0, 5)
-      .forEach((_file) => );
+    for (const _file of health.coverage.missing.slice(0, 5)) {
+      // Process missing coverage files when needed
+    }
     if (health.coverage.missing.length > 5) {
+      // Handle additional files
     }
   }
 }

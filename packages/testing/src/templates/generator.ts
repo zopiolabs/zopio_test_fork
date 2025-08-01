@@ -34,6 +34,7 @@ const TEMPLATES: Record<string, TestTemplate> = {
 /**
  * Code generator for creating standardized test files
  */
+// biome-ignore lint/complexity/noStaticOnlyClass: TestGenerator is designed as a utility class with namespaced static methods
 export class TestGenerator {
   /**
    * Generate a test file from a template
@@ -158,10 +159,11 @@ export class TestGenerator {
       (r) => r.status === 'fulfilled' && !r.value.success
     ).length;
     if (failed > 0) {
-      results.forEach((result) => {
+      for (const result of results) {
         if (result.status === 'fulfilled' && !result.value.success) {
+          // Handle failed test generation (implementation pending)
         }
-      });
+      }
     }
   }
 
@@ -171,7 +173,7 @@ export class TestGenerator {
   static createCustomTemplate(
     name: string,
     description: string,
-    generateFn: (options: any) => string
+    generateFn: (options: Record<string, unknown>) => string
   ): TestTemplate {
     return {
       name,
@@ -201,10 +203,10 @@ export class TestGenerator {
    * Private helper methods
    */
 
-  private static async analyzeSourceFile(
+  private static analyzeSourceFile(
     filePath: string,
     content: string
-  ): Promise<TestAnalysisResult> {
+  ): TestAnalysisResult {
     const lines = content.split('\n');
 
     return {
@@ -367,7 +369,7 @@ export class TestGenerator {
   private static inferTestConfiguration(
     analysis: TestAnalysisResult,
     relativePath: string
-  ): { testType: string; templateOptions: any } {
+  ): { testType: string; templateOptions: Record<string, unknown> } {
     const testType = analysis.testType;
     const fileName = path.basename(relativePath, path.extname(relativePath));
     const isAsync = analysis.patterns.includes('async');
@@ -528,7 +530,7 @@ export default createVitestConfig('${packageName}', {
 export async function generateTestFile(
   templateType: string,
   outputPath: string,
-  options: any,
+  options: Record<string, unknown>,
   overwrite = false
 ): Promise<void> {
   const template = TEMPLATES[templateType];
@@ -570,34 +572,37 @@ async function findSourceFiles(
 ): Promise<string[]> {
   const files: string[] = [];
 
+  function isDirectoryExcluded(dirName: string): boolean {
+    return exclude.some((pattern) =>
+      dirName.includes(pattern.replace('*', ''))
+    );
+  }
+
+  function hasValidExtension(fileName: string): boolean {
+    return extensions.some((ext) => fileName.endsWith(ext));
+  }
+
+  function isFileExcluded(fileName: string): boolean {
+    return exclude.some((pattern) => {
+      const regex = new RegExp(pattern.replace('*', '.*'));
+      return regex.test(fileName);
+    });
+  }
+
   async function walk(currentDir: string): Promise<void> {
     const entries = await fs.readdir(currentDir, { withFileTypes: true });
 
     for (const entry of entries) {
       const fullPath = path.join(currentDir, entry.name);
 
-      if (entry.isDirectory()) {
-        // Skip excluded directories
-        if (
-          !exclude.some((pattern) =>
-            entry.name.includes(pattern.replace('*', ''))
-          )
-        ) {
-          await walk(fullPath);
-        }
-      } else if (entry.isFile()) {
-        // Include files with correct extensions, excluding test files
-        const hasValidExtension = extensions.some((ext) =>
-          entry.name.endsWith(ext)
-        );
-        const isExcluded = exclude.some((pattern) => {
-          const regex = new RegExp(pattern.replace('*', '.*'));
-          return regex.test(entry.name);
-        });
-
-        if (hasValidExtension && !isExcluded) {
-          files.push(fullPath);
-        }
+      if (entry.isDirectory() && !isDirectoryExcluded(entry.name)) {
+        await walk(fullPath);
+      } else if (
+        entry.isFile() &&
+        hasValidExtension(entry.name) &&
+        !isFileExcluded(entry.name)
+      ) {
+        files.push(fullPath);
       }
     }
   }

@@ -113,7 +113,7 @@ export const prismaMocks = {
   /**
    * Mock successful database operations
    */
-  mockSuccessfulOperations: (mockClient: any) => {
+  mockSuccessfulOperations: (mockClient: Record<string, unknown>) => {
     mockClient.user.findUnique.mockResolvedValue(userFactory.create());
     mockClient.user.findMany.mockResolvedValue(userFactory.createMany(3));
     mockClient.user.create.mockResolvedValue(userFactory.create());
@@ -138,8 +138,8 @@ export const prismaMocks = {
     );
     mockClient.organization.count.mockResolvedValue(5);
 
-    mockClient.$transaction.mockImplementation((callback: any) =>
-      callback(mockClient)
+    mockClient.$transaction.mockImplementation(
+      (callback: (client: typeof mockClient) => unknown) => callback(mockClient)
     );
     mockClient.$connect.mockResolvedValue(undefined);
     mockClient.$disconnect.mockResolvedValue(undefined);
@@ -397,7 +397,9 @@ export const browserMocks = {
         delete store[key];
       }),
       clear: vi.fn(() => {
-        Object.keys(store).forEach((key) => delete store[key]);
+        for (const key of Object.keys(store)) {
+          delete store[key];
+        }
       }),
       length: 0,
       key: vi.fn(),
@@ -426,7 +428,9 @@ export const browserMocks = {
         delete store[key];
       }),
       clear: vi.fn(() => {
-        Object.keys(store).forEach((key) => delete store[key]);
+        for (const key of Object.keys(store)) {
+          delete store[key];
+        }
       }),
       length: 0,
       key: vi.fn(),

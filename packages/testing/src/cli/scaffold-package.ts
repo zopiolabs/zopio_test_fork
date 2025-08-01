@@ -8,6 +8,9 @@ import * as path from 'node:path';
 import { Command } from 'commander';
 import { TestGenerator } from '../templates/generator.js';
 
+// Top-level regex for performance
+const SOURCE_FILE_REGEX = /\.(ts|tsx|js|jsx)$/;
+
 const program = new Command();
 
 program
@@ -90,7 +93,7 @@ program
       if (missing.length === 0) {
         return;
       }
-      missing.forEach((_file) => );
+      // Files to be generated are passed to batchGenerate below
 
       if (options.dryRun) {
         return;
@@ -247,7 +250,9 @@ async function generateInitialTests(packagePath: string): Promise<void> {
       return;
     }
     await TestGenerator.batchGenerate(sourceFiles);
-  } catch {}
+  } catch {
+    // Ignore errors when no source files are found
+  }
 }
 
 async function findSourceFiles(dir: string): Promise<string[]> {
@@ -267,7 +272,7 @@ async function findSourceFiles(dir: string): Promise<string[]> {
         await walk(fullPath);
       } else if (
         entry.isFile() &&
-        /\.(ts|tsx|js|jsx)$/.test(entry.name) &&
+        SOURCE_FILE_REGEX.test(entry.name) &&
         !entry.name.includes('.test.') &&
         !entry.name.includes('.spec.')
       ) {
@@ -312,7 +317,7 @@ async function analyzePackageTests(
 
   const missing = sourceFiles.filter((src) => !testedFiles.includes(src));
 
-  const suggestions = [];
+  const suggestions: string[] = [];
   if (missing.length > 0) {
     suggestions.push(`Generate tests for ${missing.length} uncovered files`);
   }
@@ -362,31 +367,48 @@ async function createTestBackup(packagePath: string): Promise<void> {
 
   try {
     await fs.cp(testDir, backupDir, { recursive: true });
-  } catch {}
+  } catch {
+    // Ignore errors when no source files are found
+  }
 }
 
 async function updateExistingTests(
   _packagePath: string,
   _template?: string
-): Promise<void> {}
+): Promise<void> {
+  // TODO: Implement test update logic
+  // This function will be implemented when test update functionality is needed
+}
 
 function printTableReport(analysis: PackageAnalysis): void {
   if (analysis.missing.length > 0) {
-    analysis.missing.forEach((_file) => {});
+    process.stdout.write('\nMissing test files:\n');
+    for (const file of analysis.missing) {
+      process.stdout.write(`  - ${file}\n`);
+    }
   }
 
   if (analysis.suggestions.length > 0) {
-    analysis.suggestions.forEach((_suggestion) => {});
+    process.stdout.write('\nSuggestions:\n');
+    for (const suggestion of analysis.suggestions) {
+      process.stdout.write(`  - ${suggestion}\n`);
+    }
   }
 }
 
 function printMarkdownReport(analysis: PackageAnalysis): void {
   if (analysis.missing.length > 0) {
-    analysis.missing.forEach((_file) => {});
+    process.stdout.write('\n## Missing Test Files\n\n');
+    for (const file of analysis.missing) {
+      process.stdout.write(`- [ ] ${file}\n`);
+    }
   }
 
   if (analysis.suggestions.length > 0) {
-    analysis.suggestions.forEach((_suggestion) => {});
+    process.stdout.write('\n## Suggestions\n\n');
+    for (const suggestion of analysis.suggestions) {
+      process.stdout.write(`- ${suggestion}\n`);
+    }
   }
 }
 

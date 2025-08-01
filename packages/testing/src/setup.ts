@@ -4,6 +4,7 @@
 
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
+import type React from 'react';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { browserMocks } from './mocks.js';
 
@@ -32,8 +33,12 @@ export function setupTests() {
     browserMocks.mockResizeObserver();
 
     // Mock console methods to avoid noise in tests
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {
+      // Suppress console warnings in tests
+    });
+    vi.spyOn(console, 'error').mockImplementation(() => {
+      // Suppress console errors in tests
+    });
   });
 
   // Mock window.matchMedia which is not available in JSDOM
@@ -103,7 +108,9 @@ export interface TestProviders {
  * Setup test providers wrapper
  */
 export function createProvidersWrapper(_providers: TestProviders = {}) {
-  return function ProvidersWrapper({ children }: { children: any }) {
+  return function ProvidersWrapper({
+    children,
+  }: { children: React.ReactNode }) {
     // Here you would wrap with your actual app providers
     // For example: ThemeProvider, AuthProvider, etc.
     return {
@@ -220,7 +227,7 @@ export const timingHelpers = {
 export function createErrorBoundary() {
   const onError = vi.fn();
 
-  function ErrorBoundary({ children }: { children: any }) {
+  function ErrorBoundary({ children }: { children: React.ReactNode }) {
     try {
       return children;
     } catch (error) {
@@ -261,8 +268,10 @@ export const a11yHelpers = {
   /**
    * Check keyboard navigation
    */
-  checkKeyboardNavigation: async (element: HTMLElement) => {
+  checkKeyboardNavigation: (element: HTMLElement) => {
     element.focus();
+    // This is a test utility function that will be called from within test blocks
+    // biome-ignore lint/suspicious/noMisplacedAssertion: This is a test helper function
     expect(element).toHaveFocus();
 
     // Test Tab navigation

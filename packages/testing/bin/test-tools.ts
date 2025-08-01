@@ -31,7 +31,24 @@ program
 program
   .command('quick-start')
   .description('Quick start guide for testing framework')
-  .action(() => {});
+  .action(() => {
+    process.stdout.write(
+      '\n🚀 Quick Start Guide for Zopio Testing Framework\n\n'
+    );
+    process.stdout.write(
+      '1. Install dependencies: pnpm add -D @repo/testing vitest @testing-library/react\n'
+    );
+    process.stdout.write(
+      '2. Create vitest.config.ts: pnpm test-tools doctor --fix\n'
+    );
+    process.stdout.write(
+      '3. Generate test files: pnpm test-tools generate <type>\n'
+    );
+    process.stdout.write('4. Run tests: pnpm test\n\n');
+    process.stdout.write(
+      'For detailed documentation, visit: https://zopio.dev/docs/testing\n'
+    );
+  });
 
 program
   .command('doctor')
@@ -63,6 +80,9 @@ program
     }
 
     if (issues.length === 0) {
+      process.stdout.write(
+        '✅ Testing setup is healthy! No issues detected.\n'
+      );
     } else if (options.fix) {
       if (issues.includes('missing-test-directory')) {
         await fs.mkdir('__tests__', { recursive: true });
@@ -88,6 +108,28 @@ export default createVitestConfig('${packageName}', {
         await fs.writeFile('vitest.config.ts', config);
       }
     } else {
+      process.stdout.write('\n❌ Testing setup issues detected:\n\n');
+      for (const issue of issues) {
+        switch (issue) {
+          case 'missing-vitest-config':
+            process.stdout.write('  - Missing vitest.config.ts file\n');
+            break;
+          case 'missing-test-directory':
+            process.stdout.write('  - Missing __tests__ directory\n');
+            break;
+          case 'missing-testing-package':
+            process.stdout.write(
+              '  - Missing @repo/testing package dependency\n'
+            );
+            break;
+          default:
+            process.stdout.write(`  - Unknown issue: ${issue}\n`);
+            break;
+        }
+      }
+      process.stdout.write(
+        '\nRun with --fix flag to automatically resolve these issues.\n'
+      );
     }
   });
 

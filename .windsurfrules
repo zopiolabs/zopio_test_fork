@@ -29,7 +29,7 @@ null_checks = true
 
 [design]
 components = "shadcn-ui"
-component_files = "PascalCase"
+component_files = "kebab-case"
 icons = "lucide"
 design_system_ui_folder = "packages/design-system/ui"
 design_system_blocks_folder = "packages/design-system/blocks"
@@ -78,7 +78,7 @@ extends = ["ultracite"]
 autofix_on_commit = true
 
 [naming]
-component_files = "PascalCase"
+component_files = "kebab-case"
 utility_files = "kebab-case"
 directory_names = "kebab-case"
 ignore_directory_names = [

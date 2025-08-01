@@ -118,6 +118,9 @@ const STATIC_EXCLUDES = [
   'build',
   '.cache',
   '.bin',
+  'coverage',
+  'out',
+  'worktrees',
 ];
 
 const BIOME_IGNORES = getBiomeIgnores();
@@ -200,7 +203,7 @@ function findFiles(dir, pattern, ignorePatterns) {
   return results;
 }
 
-function checkFiles(globPattern, format, _label, ignorePatterns) {
+function checkFiles(globPattern, format, label, ignorePatterns) {
   const regexPattern = convertGlobToRegex(globPattern);
   const files = findFiles('.', regexPattern, ignorePatterns);
   let hasError = false;
@@ -208,6 +211,7 @@ function checkFiles(globPattern, format, _label, ignorePatterns) {
   for (const file of files) {
     const base = path.basename(file, path.extname(file));
     if (!isValidName(base, format)) {
+      console.error(`❌ ${label} file "${file}" does not match ${format} naming convention`);
       hasError = true;
     }
   }
@@ -231,6 +235,7 @@ function checkDirectories(root, format, ignorePatterns) {
       }
 
       if (!isValidName(entry.name, format)) {
+        console.error(`❌ Directory "${fullPath}" does not match ${format} naming convention`);
         hasError = true;
       }
 

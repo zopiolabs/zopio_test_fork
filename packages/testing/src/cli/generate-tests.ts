@@ -11,6 +11,9 @@ import {
   generateTestFile,
 } from '../templates/generator.js';
 
+// Top-level regex for performance
+const FILE_EXTENSION_REGEX = /\.(ts|tsx|js|jsx)$/;
+
 const program = new Command();
 
 program
@@ -118,7 +121,15 @@ program
   .action(() => {
     const templates = TestGenerator.listTemplates();
 
-    templates.forEach(({ key }) => {});
+    process.stdout.write('\\nAvailable test templates:\\n\\n');
+
+    for (const { key, template } of templates) {
+      process.stdout.write(`  ${key.padEnd(15)} - ${template.description}\\n`);
+    }
+
+    process.stdout.write(
+      '\\nUsage: generate-tests <type> <name> <path> [output]\\n'
+    );
   });
 
 // Interactive template command
@@ -254,7 +265,7 @@ program
         // Generate with specific type for all files
         for (const file of resolvedFiles) {
           const name = path.basename(file, path.extname(file));
-          const testPath = file.replace(/\.(ts|tsx|js|jsx)$/, '.test.$1');
+          const testPath = file.replace(FILE_EXTENSION_REGEX, '.test.$1');
 
           await generateTestFile(options.type, testPath, {
             componentName: name,

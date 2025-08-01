@@ -227,25 +227,40 @@ export class TestMetricsTracker {
       older.length;
     const flakinessDiff = recentFlakiness - olderFlakiness;
 
+    // Determine coverage trend
+    let coverageTrend: 'improving' | 'declining' | 'stable';
+    if (coverageDiff > 2) {
+      coverageTrend = 'improving';
+    } else if (coverageDiff < -2) {
+      coverageTrend = 'declining';
+    } else {
+      coverageTrend = 'stable';
+    }
+
+    // Determine performance trend
+    let performanceTrend: 'improving' | 'declining' | 'stable';
+    if (durationDiff < -1000) {
+      performanceTrend = 'improving';
+    } else if (durationDiff > 1000) {
+      performanceTrend = 'declining';
+    } else {
+      performanceTrend = 'stable';
+    }
+
+    // Determine flakiness trend
+    let flakinessTrend: 'improving' | 'declining' | 'stable';
+    if (flakinessDiff < -0.1) {
+      flakinessTrend = 'improving';
+    } else if (flakinessDiff > 0.1) {
+      flakinessTrend = 'declining';
+    } else {
+      flakinessTrend = 'stable';
+    }
+
     return {
-      coverageTrend:
-        coverageDiff > 2
-          ? 'improving'
-          : coverageDiff < -2
-            ? 'declining'
-            : 'stable',
-      performanceTrend:
-        durationDiff < -1000
-          ? 'improving'
-          : durationDiff > 1000
-            ? 'declining'
-            : 'stable',
-      flakinessTrend:
-        flakinessDiff < -0.1
-          ? 'improving'
-          : flakinessDiff > 0.1
-            ? 'declining'
-            : 'stable',
+      coverageTrend,
+      performanceTrend,
+      flakinessTrend,
     };
   }
 }

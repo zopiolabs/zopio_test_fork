@@ -8,7 +8,7 @@
 export interface TestTemplate {
   name: string;
   description: string;
-  generate: (options: any) => string;
+  generate: (options: Record<string, unknown>) => string;
 }
 
 /**
@@ -98,7 +98,7 @@ export interface SecurityTestOptions {
 export interface GeneratorConfig {
   outputPath: string;
   template: TestTemplate;
-  options: any;
+  options: Record<string, unknown>;
   overwrite?: boolean;
 }
 
@@ -114,7 +114,7 @@ export interface ScaffoldOptions {
     | 'hook'
     | 'integration'
     | 'security';
-  templateOptions: any;
+  templateOptions: Record<string, unknown>;
   createDirectory?: boolean;
 }
 

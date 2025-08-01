@@ -4,6 +4,331 @@
 
 import type { HookTestOptions, TestTemplate } from './types.js';
 
+// Helper functions to reduce complexity
+function generateMockImports(options: HookTestOptions): string {
+  const imports: string[] = [];
+
+  if (options.hasAsyncBehavior) {
+    imports.push(`// Mock external async dependencies
+const mockAsyncService = vi.fn();
+vi.mock('../lib/async-service.js', () => ({
+  asyncService: mockAsyncService,
+}));`);
+  }
+
+  if (options.hasEffects) {
+    imports.push(`// Mock external effects
+const mockExternalEffect = vi.fn();
+vi.mock('../lib/external-effect.js', () => ({
+  externalEffect: mockExternalEffect,
+}));`);
+  }
+
+  return imports.join('\n\n');
+}
+
+function generateStateManagementTests(hookName: string): string {
+  return `describe('State Management', () => {
+    it('should initialize with default state', () => {
+      const { result } = renderHook(() => ${hookName}());
+      
+      expect(result.current.state).toBeDefined();
+      expect(result.current.setState).toBeInstanceOf(Function);
+    });
+
+    it('should update state correctly', () => {
+      const { result } = renderHook(() => ${hookName}());
+      
+      act(() => {
+        result.current.setState('new value');
+      });
+      
+      expect(result.current.state).toBe('new value');
+    });
+
+    it('should handle multiple state updates', () => {
+      const { result } = renderHook(() => ${hookName}());
+      
+      act(() => {
+        result.current.setState('first');
+        result.current.setState('second');
+        result.current.setState('third');
+      });
+      
+      expect(result.current.state).toBe('third');
+    });
+  });`;
+}
+
+function generateAsyncBehaviorTests(hookName: string): string {
+  return `describe('Async Behavior', () => {
+    it('should handle async operations', async () => {
+      mockAsyncService.mockResolvedValue({ data: 'async result' });
+      
+      const { result } = renderHook(() => ${hookName}());
+      
+      expect(result.current.loading).toBe(false);
+      
+      act(() => {
+        result.current.fetchData();
+      });
+      
+      expect(result.current.loading).toBe(true);
+      
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+        expect(result.current.data).toEqual({ data: 'async result' });
+      });
+    });
+
+    it('should handle async errors', async () => {
+      const error = new Error('Async operation failed');
+      mockAsyncService.mockRejectedValue(error);
+      
+      const { result } = renderHook(() => ${hookName}());
+      
+      act(() => {
+        result.current.fetchData();
+      });
+      
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+        expect(result.current.error).toBe(error);
+      });
+    });
+
+    it('should abort pending operations on unmount', async () => {
+      mockAsyncService.mockImplementation(() => 
+        new Promise(resolve => setTimeout(resolve, 1000))
+      );
+      
+      const { result, unmount } = renderHook(() => ${hookName}());
+      
+      act(() => {
+        result.current.fetchData();
+      });
+      
+      expect(result.current.loading).toBe(true);
+      
+      unmount();
+      
+      // Should not throw or cause warnings
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+    });
+  });`;
+}
+
+function generateEffectsTests(hookName: string): string {
+  return `describe('Side Effects', () => {
+    it('should run effects on mount', () => {
+      renderHook(() => ${hookName}());
+      
+      expect(mockExternalEffect).toHaveBeenCalledTimes(1);
+    });
+
+    it('should run effects when dependencies change', () => {
+      const { rerender } = renderHook(
+        ({ prop }) => ${hookName}(prop),
+        { initialProps: { prop: 'initial' } }
+      );
+      
+      expect(mockExternalEffect).toHaveBeenCalledTimes(1);
+      
+      rerender({ prop: 'updated' });
+      
+      expect(mockExternalEffect).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not run effects when dependencies are unchanged', () => {
+      const { rerender } = renderHook(
+        ({ prop }) => ${hookName}(prop),
+        { initialProps: { prop: 'initial' } }
+      );
+      
+      expect(mockExternalEffect).toHaveBeenCalledTimes(1);
+      
+      rerender({ prop: 'initial' });
+      
+      expect(mockExternalEffect).toHaveBeenCalledTimes(1);
+    });
+  });`;
+}
+
+function generateCleanupTests(hookName: string): string {
+  return `describe('Cleanup', () => {
+    it('should cleanup on unmount', () => {
+      const cleanupFn = vi.fn();
+      mockExternalEffect.mockReturnValue(cleanupFn);
+      
+      const { unmount } = renderHook(() => ${hookName}());
+      
+      expect(cleanupFn).not.toHaveBeenCalled();
+      
+      unmount();
+      
+      expect(cleanupFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should cleanup before running new effects', () => {
+      const cleanupFn = vi.fn();
+      mockExternalEffect.mockReturnValue(cleanupFn);
+      
+      const { rerender } = renderHook(
+        ({ prop }) => ${hookName}(prop),
+        { initialProps: { prop: 'initial' } }
+      );
+      
+      rerender({ prop: 'updated' });
+      
+      expect(cleanupFn).toHaveBeenCalledTimes(1);
+      expect(mockExternalEffect).toHaveBeenCalledTimes(2);
+    });
+  });`;
+}
+
+function generateErrorStateTests(
+  hookName: string,
+  hasStateManagement: boolean
+): string {
+  return `describe('Error States', () => {
+    it('should handle errors gracefully', () => {
+      const { result } = renderHook(() => ${hookName}());
+      
+      act(() => {
+        ${hasStateManagement ? 'result.current.setState(null);' : 'result.current.triggerError();'}
+      });
+      
+      expect(result.current.error).toBeDefined();
+    });
+
+    it('should recover from errors', () => {
+      const { result } = renderHook(() => ${hookName}());
+      
+      act(() => {
+        ${hasStateManagement ? 'result.current.setState(null);' : 'result.current.triggerError();'}
+      });
+      
+      expect(result.current.error).toBeDefined();
+      
+      act(() => {
+        result.current.reset();
+      });
+      
+      expect(result.current.error).toBeNull();
+    });
+
+    it('should provide error boundaries', () => {
+      const onError = vi.fn();
+      
+      const { result } = renderHook(() => ${hookName}({ onError }));
+      
+      act(() => {
+        ${hasStateManagement ? 'result.current.setState(null);' : 'result.current.triggerError();'}
+      });
+      
+      expect(onError).toHaveBeenCalled();
+    });
+  });`;
+}
+
+function generateEdgeCasesTests(
+  hookName: string,
+  hasStateManagement: boolean
+): string {
+  return `describe('Edge Cases', () => {
+    it('should handle rapid consecutive calls', () => {
+      const { result } = renderHook(() => ${hookName}());
+      
+      act(() => {
+        for (let i = 0; i < 100; i++) {
+          ${hasStateManagement ? 'result.current.setState(`value-$\\{i}`);' : 'result.current.execute();'}
+        }
+      });
+      
+      // Should handle all calls without crashing
+      expect(result.current).toBeDefined();
+    });
+
+    it('should handle null/undefined parameters', () => {
+      const { result } = renderHook(() => ${hookName}(null));
+      
+      expect(result.current).toBeDefined();
+      expect(() => {
+        act(() => {
+          ${hasStateManagement ? 'result.current.setState(undefined);' : 'result.current.execute();'}
+        });
+      }).not.toThrow();
+    });
+
+    it('should handle component re-renders efficiently', () => {
+      const { result, rerender } = renderHook(() => ${hookName}());
+      
+      const initialReference = result.current;
+      
+      rerender();
+      
+      // Stable references should be maintained
+      expect(result.current.setState).toBe(initialReference.setState);
+    });
+  });`;
+}
+
+function generatePerformanceTests(hookName: string): string {
+  return `describe('Performance', () => {
+    it('should memoize expensive computations', () => {
+      const expensiveComputation = vi.fn();
+      
+      const { result, rerender } = renderHook(
+        ({ value }) => ${hookName}({ value, compute: expensiveComputation }),
+        { initialProps: { value: 1 } }
+      );
+      
+      expect(expensiveComputation).toHaveBeenCalledTimes(1);
+      
+      // Same value, should not recompute
+      rerender({ value: 1 });
+      expect(expensiveComputation).toHaveBeenCalledTimes(1);
+      
+      // Different value, should recompute
+      rerender({ value: 2 });
+      expect(expensiveComputation).toHaveBeenCalledTimes(2);
+    });
+
+    it('should batch state updates', () => {
+      const { result } = renderHook(() => ${hookName}());
+      
+      let renderCount = 0;
+      result.current.onRender = () => renderCount++;
+      
+      act(() => {
+        // Multiple updates should be batched
+        result.current.setState('first');
+        result.current.setState('second');
+        result.current.setState('third');
+      });
+      
+      // Should only render once despite multiple updates
+      expect(renderCount).toBe(1);
+    });
+  });`;
+}
+
+function generateBeforeEach(options: HookTestOptions): string {
+  const setup: string[] = ['vi.clearAllMocks();'];
+
+  if (options.hasAsyncBehavior) {
+    setup.push('mockAsyncService.mockReset();');
+  }
+
+  if (options.hasEffects) {
+    setup.push('mockExternalEffect.mockReset();');
+  }
+
+  return setup.join('\n    ');
+}
+
 /**
  * Template for React hook tests
  */
@@ -23,6 +348,31 @@ export const hookTestTemplate: TestTemplate = {
       testErrorStates = true,
     } = options;
 
+    const testSections: string[] = [];
+
+    if (hasStateManagement) {
+      testSections.push(generateStateManagementTests(hookName));
+    }
+
+    if (hasAsyncBehavior) {
+      testSections.push(generateAsyncBehaviorTests(hookName));
+    }
+
+    if (hasEffects) {
+      testSections.push(generateEffectsTests(hookName));
+    }
+
+    if (hasCleanup) {
+      testSections.push(generateCleanupTests(hookName));
+    }
+
+    if (testErrorStates) {
+      testSections.push(generateErrorStateTests(hookName, hasStateManagement));
+    }
+
+    testSections.push(generateEdgeCasesTests(hookName, hasStateManagement));
+    testSections.push(generatePerformanceTests(hookName));
+
     return `/**
  * SPDX-License-Identifier: MIT
  */
@@ -31,367 +381,33 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { ${hookName} } from '${hookPath}';
 
-${
-  hasAsyncBehavior
-    ? `// Mock external async dependencies
-const mockAsyncService = vi.fn();
-vi.mock('../lib/async-service.js', () => ({
-  asyncService: mockAsyncService,
-}));`
-    : ''
-}
-
-${
-  hasEffects
-    ? `// Mock external effects
-const mockExternalEffect = vi.fn();
-vi.mock('../lib/external-effect.js', () => ({
-  externalEffect: mockExternalEffect,
-}));`
-    : ''
-}
+${generateMockImports(options)}
 
 describe('${hookName}', () => {
-  ${
-    hasAsyncBehavior
-      ? `beforeEach(() => {
-    vi.clearAllMocks();
-    mockAsyncService.mockResolvedValue({ success: true, data: 'mock data' });
-  });`
-      : ''
-  }
+  beforeEach(() => {
+    ${generateBeforeEach(options)}
+  });
 
   ${
     hasCleanup
       ? `afterEach(() => {
-    // Cleanup any side effects
-    vi.clearAllTimers();
-    vi.useRealTimers();
+    vi.restoreAllMocks();
   });`
       : ''
   }
 
-  describe('Initialization', () => {
-    it('should initialize with default values', () => {
+  ${testSections.join('\n\n  ')}
+
+  describe('TypeScript Support', () => {
+    it('should have proper TypeScript types', () => {
       const { result } = renderHook(() => ${hookName}());
       
-      expect(result.current).toBeDefined();
-      ${hasStateManagement ? 'expect(result.current.state).toBeDefined();' : ''}
-    });
-
-    it('should accept initial parameters', () => {
-      const initialValue = 'initial';
-      const { result } = renderHook(() => ${hookName}(initialValue));
-      
-      expect(result.current).toBeDefined();
-      ${hasStateManagement ? 'expect(result.current.state).toBe(initialValue);' : ''}
-    });
-
-    it('should handle undefined initial parameters', () => {
-      const { result } = renderHook(() => ${hookName}(undefined));
-      
+      // This test ensures TypeScript compilation works correctly
+      // The actual type checking happens at compile time
       expect(result.current).toBeDefined();
     });
   });
-
-  ${
-    hasStateManagement
-      ? `describe('State Management', () => {
-    it('should update state correctly', () => {
-      const { result } = renderHook(() => ${hookName}());
-      
-      act(() => {
-        result.current.setState('new value');
-      });
-      
-      expect(result.current.state).toBe('new value');
-    });
-
-    it('should handle multiple state updates', () => {
-      const { result } = renderHook(() => ${hookName}());
-      
-      act(() => {
-        result.current.setState('value 1');
-        result.current.setState('value 2');
-        result.current.setState('value 3');
-      });
-      
-      expect(result.current.state).toBe('value 3');
-    });
-
-    it('should handle functional state updates', () => {
-      const { result } = renderHook(() => ${hookName}('initial'));
-      
-      act(() => {
-        result.current.setState((prev: string) => prev + ' updated');
-      });
-      
-      expect(result.current.state).toBe('initial updated');
-    });
-
-    it('should prevent unnecessary re-renders with same state', () => {
-      const { result } = renderHook(() => ${hookName}('same'));
-      const initialRenderCount = result.current.renderCount || 1;
-      
-      act(() => {
-        result.current.setState('same');
-      });
-      
-      expect(result.current.renderCount || 1).toBe(initialRenderCount);
-    });
-  });`
-      : ''
-  }
-
-  ${
-    hasAsyncBehavior
-      ? `describe('Async Behavior', () => {
-    it('should handle async operations', async () => {
-      const { result } = renderHook(() => ${hookName}());
-      
-      act(() => {
-        result.current.executeAsync();
-      });
-      
-      expect(result.current.loading).toBe(true);
-      
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-      
-      expect(result.current.data).toBe('mock data');
-      expect(mockAsyncService).toHaveBeenCalled();
-    });
-
-    it('should handle concurrent async operations', async () => {
-      const { result } = renderHook(() => ${hookName}());
-      
-      // Start multiple async operations
-      act(() => {
-        result.current.executeAsync();
-        result.current.executeAsync();
-        result.current.executeAsync();
-      });
-      
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-      
-      // Should only execute the latest operation
-      expect(mockAsyncService).toHaveBeenCalledTimes(1);
-    });
-
-    ${
-      testErrorStates
-        ? `it('should handle async errors', async () => {
-      mockAsyncService.mockRejectedValue(new Error('Async error'));
-      
-      const { result } = renderHook(() => ${hookName}());
-      
-      act(() => {
-        result.current.executeAsync();
-      });
-      
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
-      });
-      
-      expect(result.current.error).toBe('Async error');
-      expect(result.current.data).toBeNull();
-    });
-
-    it('should handle network timeouts', async () => {
-      mockAsyncService.mockImplementation(() => 
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Network timeout')), 1000)
-        )
-      );
-      
-      const { result } = renderHook(() => ${hookName}());
-      
-      act(() => {
-        result.current.executeAsync();
-      });
-      
-      await waitFor(() => {
-        expect(result.current.error).toBe('Network timeout');
-      }, { timeout: 2000 });
-    });`
-        : ''
-    }
-
-    it('should cancel pending requests on unmount', async () => {
-      const { result, unmount } = renderHook(() => ${hookName}());
-      
-      act(() => {
-        result.current.executeAsync();
-      });
-      
-      unmount();
-      
-      // Should not update state after unmount
-      await new Promise(resolve => setTimeout(resolve, 100));
-      // No assertions needed - should not throw or cause memory leaks
-    });
-  });`
-      : ''
-  }
-
-  ${
-    hasEffects
-      ? `describe('Effects', () => {
-    it('should run effects on mount', () => {
-      renderHook(() => ${hookName}());
-      
-      expect(mockExternalEffect).toHaveBeenCalled();
-    });
-
-    it('should run effects on dependency changes', () => {
-      const { rerender } = renderHook(
-        ({ dependency }) => ${hookName}(dependency),
-        { initialProps: { dependency: 'initial' } }
-      );
-      
-      expect(mockExternalEffect).toHaveBeenCalledTimes(1);
-      
-      rerender({ dependency: 'changed' });
-      
-      expect(mockExternalEffect).toHaveBeenCalledTimes(2);
-    });
-
-    it('should not run effects when dependencies are the same', () => {
-      const { rerender } = renderHook(
-        ({ dependency }) => ${hookName}(dependency),
-        { initialProps: { dependency: 'same' } }
-      );
-      
-      expect(mockExternalEffect).toHaveBeenCalledTimes(1);
-      
-      rerender({ dependency: 'same' });
-      
-      expect(mockExternalEffect).toHaveBeenCalledTimes(1);
-    });
-
-    ${
-      hasCleanup
-        ? `it('should cleanup effects on unmount', () => {
-      const mockCleanup = vi.fn();
-      mockExternalEffect.mockReturnValue(mockCleanup);
-      
-      const { unmount } = renderHook(() => ${hookName}());
-      
-      unmount();
-      
-      expect(mockCleanup).toHaveBeenCalled();
-    });
-
-    it('should cleanup effects on dependency changes', () => {
-      const mockCleanup = vi.fn();
-      mockExternalEffect.mockReturnValue(mockCleanup);
-      
-      const { rerender } = renderHook(
-        ({ dependency }) => ${hookName}(dependency),
-        { initialProps: { dependency: 'initial' } }
-      );
-      
-      rerender({ dependency: 'changed' });
-      
-      expect(mockCleanup).toHaveBeenCalled();
-    });`
-        : ''
-    }
-  });`
-      : ''
-  }
-
-  describe('Edge Cases', () => {
-    it('should handle rapid consecutive calls', () => {
-      const { result } = renderHook(() => ${hookName}());
-      
-      act(() => {
-        for (let i = 0; i < 100; i++) {
-          ${hasStateManagement ? 'result.current.setState(`value-${i}`);' : 'result.current.execute();'}
-        }
-      });
-      
-      // Should handle all calls without crashing
-      expect(result.current).toBeDefined();
-    });
-
-    it('should handle null/undefined parameters', () => {
-      const { result } = renderHook(() => ${hookName}(null));
-      
-      expect(result.current).toBeDefined();
-      expect(() => {
-        act(() => {
-          ${hasStateManagement ? 'result.current.setState(undefined);' : 'result.current.execute(null);'}
-        });
-      }).not.toThrow();
-    });
-
-    it('should be stable across re-renders', () => {
-      const { result, rerender } = renderHook(() => ${hookName}());
-      const firstReference = result.current;
-      
-      rerender();
-      
-      expect(result.current).toBe(firstReference);
-    });
-  });
-
-  describe('Memory Management', () => {
-    it('should not cause memory leaks', () => {
-      const hooks = Array.from({ length: 100 }, () => 
-        renderHook(() => ${hookName}())
-      );
-      
-      hooks.forEach(({ unmount }) => unmount());
-      
-      // Should not retain references or cause memory leaks
-      expect(true).toBe(true); // Placeholder - actual memory leak detection would require more sophisticated tools
-    });
-
-    it('should cleanup timers and subscriptions', () => {
-      vi.useFakeTimers();
-      
-      const { unmount } = renderHook(() => ${hookName}());
-      
-      // Simulate pending timers
-      act(() => {
-        setTimeout(() => {}, 1000);
-      });
-      
-      unmount();
-      
-      expect(vi.getTimerCount()).toBe(0);
-      vi.useRealTimers();
-    });
-  });
-
-  describe('Performance', () => {
-    it('should not cause excessive re-renders', () => {
-      let renderCount = 0;
-      
-      const { result } = renderHook(() => {
-        renderCount++;
-        return ${hookName}();
-      });
-      
-      const initialRenderCount = renderCount;
-      
-      act(() => {
-        ${
-          hasStateManagement
-            ? `result.current.setState('same value');
-        result.current.setState('same value');
-        result.current.setState('same value');`
-            : 'result.current.execute();'
-        }
-      });
-      
-      expect(renderCount).toBeLessThanOrEqual(initialRenderCount + 2); // Allow for reasonable re-renders
-    });
-  });
-});`;
+});
+`;
   },
 };

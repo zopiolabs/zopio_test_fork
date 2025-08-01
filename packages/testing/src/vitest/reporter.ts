@@ -99,7 +99,9 @@ export class QualityMetricsReporter implements Reporter {
       task.tasks?.forEach(countTests);
     };
 
-    files.forEach((file) => countTests(file));
+    for (const file of files) {
+      countTests(file);
+    }
 
     return { total, passed, failed, skipped };
   }
@@ -109,7 +111,11 @@ export class QualityMetricsReporter implements Reporter {
       if (task.result?.retryCount && task.result.retryCount > 0) {
         this.retryCount += task.result.retryCount;
       }
-      task.tasks?.forEach(countRetries);
+      if (task.tasks) {
+        for (const subtask of task.tasks) {
+          countRetries(subtask);
+        }
+      }
     };
 
     countRetries(file);
@@ -129,14 +135,18 @@ export class QualityMetricsReporter implements Reporter {
           duration: task.result.duration,
         });
       }
-      task.tasks?.forEach((t) => collectSlowTests(t, filePath));
+      if (task.tasks) {
+        for (const t of task.tasks) {
+          collectSlowTests(t, filePath);
+        }
+      }
     };
 
-    files.forEach((file) => {
+    for (const file of files) {
       if (file.filepath) {
         collectSlowTests(file, file.filepath);
       }
-    });
+    }
 
     // Sort by duration (slowest first)
     this.slowTests.sort((a, b) => b.duration - a.duration);
@@ -149,27 +159,30 @@ export class QualityMetricsReporter implements Reporter {
     const suspicious: string[] = [];
 
     const checkSuspicious = (task: Task, filePath: string) => {
-      if (task.type === 'test') {
-        // Check for tests that failed after retries
-        if (
-          task.result?.retryCount &&
-          task.result.retryCount > 0 &&
-          task.result.state === 'fail'
-        ) {
-          suspicious.push(`${filePath} > ${task.name}`);
-        }
-
-        // Check for tests with highly variable durations (if we had historical data)
-        // This would require storing previous run data
+      if (
+        task.type === 'test' &&
+        task.result?.retryCount &&
+        task.result.retryCount > 0 &&
+        task.result.state === 'fail'
+      ) {
+        suspicious.push(`${filePath} > ${task.name}`);
       }
-      task.tasks?.forEach((t) => checkSuspicious(t, filePath));
+
+      // Check for tests with highly variable durations (if we had historical data)
+      // This would require storing previous run data
+
+      if (task.tasks) {
+        for (const t of task.tasks) {
+          checkSuspicious(t, filePath);
+        }
+      }
     };
 
-    files.forEach((file) => {
+    for (const file of files) {
       if (file.filepath) {
         checkSuspicious(file, file.filepath);
       }
-    });
+    }
 
     return suspicious;
   }
@@ -179,14 +192,22 @@ export class QualityMetricsReporter implements Reporter {
       const insights = this.metricsTracker.generateInsights();
 
       if (insights.recommendations.length > 0) {
-        insights.recommendations.forEach((_rec) => {});
+        // Log recommendations (implementation pending)
+        // for (const rec of insights.recommendations) {
+        //   console.log(rec);
+        // }
       }
 
       if (this.slowTests.length > 0) {
-        this.slowTests.slice(0, 5).forEach((_test) => {});
+        // Log slow tests (implementation pending)
+        // for (const test of this.slowTests.slice(0, 5)) {
+        //   console.log(`Slow test: ${test.name} - ${test.duration}ms`);
+        // }
       }
 
       if (this.retryCount > 0) {
+        // Log retry information (implementation pending)
+        // console.log(`Tests with retries: ${this.retryCount}`);
       }
     } catch (_error) {
       // Silently continue if insights generation fails

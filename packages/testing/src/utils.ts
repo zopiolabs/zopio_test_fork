@@ -4,11 +4,12 @@
 
 import { type RenderOptions, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type React from 'react';
 import { vi } from 'vitest';
 
 // Import React types conditionally to avoid build errors when React is not available
-type ReactElement = any;
-type ReactNode = any;
+type ReactElement = React.ReactElement;
+type ReactNode = React.ReactNode;
 
 /**
  * Test utilities for React components and DOM testing
@@ -20,7 +21,7 @@ type ReactNode = any;
 export function renderWithUserEvents(
   ui: ReactElement,
   options?: RenderOptions
-): any {
+): ReturnType<typeof render> & { user: ReturnType<typeof userEvent.setup> } {
   const user = userEvent.setup();
   const renderResult = render(ui, options);
 
@@ -37,10 +38,15 @@ export interface TestWrapperProps {
   children: ReactNode;
 }
 
-export function createTestWrapper(providers: any[] = []) {
+export function createTestWrapper(
+  providers: React.ComponentType<{ children: ReactNode }>[] = []
+) {
   return function TestWrapper({ children }: TestWrapperProps) {
     return providers.reduce(
-      (acc: any, Provider: any) => ({
+      (
+        acc: ReactElement,
+        Provider: React.ComponentType<{ children: ReactNode }>
+      ) => ({
         type: Provider,
         props: { children: acc },
       }),
@@ -55,9 +61,9 @@ export function createTestWrapper(providers: any[] = []) {
 export function renderWithProviders(
   ui: ReactElement,
   options?: RenderOptions & {
-    providers?: any[];
+    providers?: React.ComponentType<{ children: ReactNode }>[];
   }
-): any {
+): ReturnType<typeof render> & { user: ReturnType<typeof userEvent.setup> } {
   const { providers = [], ...renderOptions } = options || {};
   const Wrapper = createTestWrapper(providers);
   const user = userEvent.setup();
@@ -154,7 +160,7 @@ export function createSpy<T extends object, K extends keyof T>(
   object: T,
   method: K
 ) {
-  return vi.spyOn(object as any, method as any);
+  return vi.spyOn(object as T, method as K);
 }
 
 /**
@@ -245,7 +251,7 @@ export function createDeferred<T>() {
 
   return {
     promise,
-    resolve: resolve!,
-    reject: reject!,
+    resolve: resolve as (value: T | PromiseLike<T>) => void,
+    reject: reject as (reason?: unknown) => void,
   };
 }

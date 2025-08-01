@@ -4,25 +4,13 @@
 
 import type { TestTemplate, UtilityTestOptions } from './types.js';
 
-/**
- * Template for utility function tests
- */
-export const utilityTestTemplate: TestTemplate = {
-  name: 'Utility Function Test',
-  description:
-    'Template for testing utility functions with comprehensive edge cases',
-
-  generate: (options: UtilityTestOptions) => {
-    const {
-      functionName,
-      functionPath,
-      isAsync = false,
-      hasValidation = true,
-      hasErrorHandling = true,
-      testPerformance = false,
-    } = options;
-
-    return `/**
+// Helper functions to generate test sections
+function generateImports(
+  functionName: string,
+  functionPath: string,
+  isAsync: boolean
+): string {
+  return `/**
  * SPDX-License-Identifier: MIT
  */
 
@@ -37,19 +25,21 @@ vi.mock('../lib/external-service.js', () => ({
   externalService: mockExternalService,
 }));`
     : ''
+}`;
 }
 
-describe('${functionName}', () => {
-  ${
-    isAsync
-      ? `beforeEach(() => {
+function generateSetup(isAsync: boolean): string {
+  if (!isAsync) {
+    return '';
+  }
+  return `beforeEach(() => {
     vi.clearAllMocks();
     mockExternalService.mockResolvedValue({ success: true });
-  });`
-      : ''
-  }
+  });`;
+}
 
-  describe('Basic Functionality', () => {
+function generateBasicTests(functionName: string, isAsync: boolean): string {
+  return `describe('Basic Functionality', () => {
     it('should return expected result for valid input', ${isAsync ? 'async ' : ''}() => {
       const input = 'valid input';
       const expectedOutput = 'expected output';
@@ -71,11 +61,18 @@ describe('${functionName}', () => {
         expect(result).toBe(testCase.expected);
       }
     });
-  });
+  });`;
+}
 
-  ${
-    hasValidation
-      ? `describe('Input Validation', () => {
+function generateValidationTests(
+  functionName: string,
+  isAsync: boolean,
+  hasValidation: boolean
+): string {
+  if (!hasValidation) {
+    return '';
+  }
+  return `describe('Input Validation', () => {
     it('should validate required parameters', ${isAsync ? 'async ' : ''}() => {
       ${isAsync ? 'await expect(' : 'expect('}${functionName}${isAsync ? '(null)' : '(null)'}${isAsync ? ')' : ''}.toThrow('Input is required');
     });
@@ -87,16 +84,21 @@ describe('${functionName}', () => {
     it('should validate parameter ranges/constraints', ${isAsync ? 'async ' : ''}() => {
       ${isAsync ? 'await expect(' : 'expect('}${functionName}${isAsync ? '("")' : '("")'}${isAsync ? ')' : ''}.toThrow('Input cannot be empty');
     });
-  });`
-      : ''
+  });`;
+}
+
+function generateErrorHandlingTests(
+  functionName: string,
+  isAsync: boolean,
+  hasErrorHandling: boolean
+): string {
+  if (!hasErrorHandling) {
+    return '';
   }
 
-  ${
-    hasErrorHandling
-      ? `describe('Error Handling', () => {
-    ${
-      isAsync
-        ? `it('should handle external service failures', async () => {
+  if (isAsync) {
+    return `describe('Error Handling', () => {
+    it('should handle external service failures', async () => {
       mockExternalService.mockRejectedValue(new Error('Service unavailable'));
       
       await expect(${functionName}('input')).rejects.toThrow('Service unavailable');
@@ -110,8 +112,12 @@ describe('${functionName}', () => {
       );
       
       await expect(${functionName}('input')).rejects.toThrow('Timeout');
-    });`
-        : `it('should handle invalid input gracefully', () => {
+    });
+  });`;
+  }
+
+  return `describe('Error Handling', () => {
+    it('should handle invalid input gracefully', () => {
       expect(() => ${functionName}(null as any)).toThrow();
     });
 
@@ -121,13 +127,12 @@ describe('${functionName}', () => {
       } catch (error) {
         expect(error.message).toContain('meaningful error description');
       }
-    });`
-    }
-  });`
-      : ''
-  }
+    });
+  });`;
+}
 
-  describe('Edge Cases', () => {
+function generateEdgeCaseTests(functionName: string, isAsync: boolean): string {
+  return `describe('Edge Cases', () => {
     it('should handle empty input', ${isAsync ? 'async ' : ''}() => {
       ${isAsync ? 'const result = await ' : 'const result = '}${functionName}('');
       expect(result).toBeDefined();
@@ -150,11 +155,18 @@ describe('${functionName}', () => {
       ${isAsync ? 'const result = await ' : 'const result = '}${functionName}(unicodeInput);
       expect(result).toBeDefined();
     });
-  });
+  });`;
+}
 
-  ${
-    testPerformance
-      ? `describe('Performance', () => {
+function generatePerformanceTests(
+  functionName: string,
+  isAsync: boolean,
+  testPerformance: boolean
+): string {
+  if (!testPerformance) {
+    return '';
+  }
+  return `describe('Performance', () => {
     it('should execute within acceptable time limits', ${isAsync ? 'async ' : ''}() => {
       const start = performance.now();
       ${isAsync ? 'await ' : ''}${functionName}('performance test input');
@@ -172,22 +184,28 @@ describe('${functionName}', () => {
       expect(results).toHaveLength(10);
       expect(results.every(result => result !== null)).toBe(true);
     });
-  });`
-      : ''
-  }
+  });`;
+}
 
-  describe('Type Safety', () => {
+function generateTypeSafetyTests(
+  functionName: string,
+  isAsync: boolean
+): string {
+  return `describe('Type Safety', () => {
     it('should maintain type safety', ${isAsync ? 'async ' : ''}() => {
       ${isAsync ? 'const result = await ' : 'const result = '}${functionName}('typed input');
       
       // TypeScript should enforce correct return type
       expect(typeof result).toBe('string'); // Adjust based on actual return type
     });
-  });
+  });`;
+}
 
-  ${
-    isAsync
-      ? `describe('Async Behavior', () => {
+function generateAsyncTests(functionName: string, isAsync: boolean): string {
+  if (!isAsync) {
+    return '';
+  }
+  return `describe('Async Behavior', () => {
     it('should resolve promises correctly', async () => {
       const result = await ${functionName}('async input');
       expect(result).toBeDefined();
@@ -207,9 +225,66 @@ describe('${functionName}', () => {
       // Should timeout or handle long-running operations appropriately
       await expect(${functionName}('slow input')).resolves.toBeDefined();
     }, 6000);
-  });`
-      : ''
-  }
-});`;
+  });`;
+}
+
+/**
+ * Template for utility function tests
+ */
+export const utilityTestTemplate: TestTemplate = {
+  name: 'Utility Function Test',
+  description:
+    'Template for testing utility functions with comprehensive edge cases',
+
+  generate: (options: UtilityTestOptions) => {
+    const {
+      functionName,
+      functionPath,
+      isAsync = false,
+      hasValidation = true,
+      hasErrorHandling = true,
+      testPerformance = false,
+    } = options;
+
+    // Generate test sections
+    const imports = generateImports(functionName, functionPath, isAsync);
+    const setup = generateSetup(isAsync);
+    const basicTests = generateBasicTests(functionName, isAsync);
+    const validationTests = generateValidationTests(
+      functionName,
+      isAsync,
+      hasValidation
+    );
+    const errorHandlingTests = generateErrorHandlingTests(
+      functionName,
+      isAsync,
+      hasErrorHandling
+    );
+    const edgeCaseTests = generateEdgeCaseTests(functionName, isAsync);
+    const performanceTests = generatePerformanceTests(
+      functionName,
+      isAsync,
+      testPerformance
+    );
+    const typeSafetyTests = generateTypeSafetyTests(functionName, isAsync);
+    const asyncTests = generateAsyncTests(functionName, isAsync);
+
+    // Combine all sections
+    const sections = [
+      imports,
+      '',
+      `describe('${functionName}', () => {`,
+      setup ? `  ${setup}\n` : '',
+      `  ${basicTests}`,
+      validationTests ? `\n\n  ${validationTests}` : '',
+      errorHandlingTests ? `\n\n  ${errorHandlingTests}` : '',
+      `\n\n  ${edgeCaseTests}`,
+      performanceTests ? `\n\n  ${performanceTests}` : '',
+      `\n\n  ${typeSafetyTests}`,
+      asyncTests ? `\n\n  ${asyncTests}` : '',
+      '});',
+    ];
+
+    return sections.filter((section) => section !== '').join('\n');
   },
 };

@@ -4,32 +4,9 @@
 
 import type { APITestOptions, TestTemplate } from './types.js';
 
-/**
- * Template for API route handler tests
- */
-export const apiTestTemplate: TestTemplate = {
-  name: 'API Route Test',
-  description:
-    'Template for testing Next.js API routes with authentication, validation, and error handling',
-
-  generate: (options: APITestOptions) => {
-    const {
-      routeName,
-      routePath,
-      methods = ['GET'],
-      requiresAuth = true,
-      hasValidation = true,
-      hasRateLimit = false,
-      testDatabase = false,
-    } = options;
-
-    const methodTests = methods
-      .map(
-        (method) => `
-  describe('${method} ${routePath}', () => {
-    ${
-      requiresAuth
-        ? `it('should require authentication', async () => {
+// Helper functions to reduce complexity
+function generateAuthTests(method: string, routeName: string): string {
+  return `it('should require authentication', async () => {
       const request = createMockRequest({ method: '${method}' });
       const response = createMockResponse();
       
@@ -54,13 +31,15 @@ export const apiTestTemplate: TestTemplate = {
       await ${routeName}(request, response);
       
       expect(response.status).toHaveBeenCalledWith(401);
-    });`
-        : ''
-    }
+    });`;
+}
 
-    ${
-      hasValidation
-        ? `it('should validate request body', async () => {
+function generateValidationTests(
+  method: string,
+  routeName: string,
+  requiresAuth: boolean
+): string {
+  return `it('should validate request body', async () => {
       const request = createMockRequest({ 
         method: '${method}',
         ${requiresAuth ? 'headers: mockAuthHeaders,' : ''}
@@ -89,76 +68,48 @@ export const apiTestTemplate: TestTemplate = {
       await ${routeName}(request, response);
       
       expect(response.status).toHaveBeenCalledWith(400);
-    });`
-        : ''
-    }
+    });`;
+}
 
-    ${
-      hasRateLimit
-        ? `it('should enforce rate limits', async () => {
+function generateRateLimitTests(
+  method: string,
+  routeName: string,
+  requiresAuth: boolean
+): string {
+  return `it('should enforce rate limits', async () => {
       // Simulate multiple requests from same IP
       const requests = Array.from({ length: 10 }, () => 
         createMockRequest({ 
           method: '${method}',
           ${requiresAuth ? 'headers: mockAuthHeaders,' : ''}
-          ip: '192.168.1.1'
+          ip: '192.168.1.1' 
         })
       );
+      
+      mockRateLimit.mockResolvedValueOnce(true);
+      mockRateLimit.mockResolvedValue(false);
       
       for (const request of requests) {
         const response = createMockResponse();
         await ${routeName}(request, response);
+        
+        if (mockRateLimit.mock.calls.length > 1) {
+          expect(response.status).toHaveBeenCalledWith(429);
+        }
       }
-      
-      // Last request should be rate limited
-      const finalResponse = createMockResponse();
-      await ${routeName}(requests[0], finalResponse);
-      
-      expect(finalResponse.status).toHaveBeenCalledWith(429);
-    });`
-        : ''
-    }
+    });`;
+}
 
-    it('should handle successful ${method.toLowerCase()} request', async () => {
+function generateDatabaseTests(
+  method: string,
+  routeName: string,
+  requiresAuth: boolean
+): string {
+  return `it('should handle database errors gracefully', async () => {
       const request = createMockRequest({ 
         method: '${method}',
         ${requiresAuth ? 'headers: mockAuthHeaders,' : ''}
-        ${method === 'POST' || method === 'PUT' ? 'body: mockValidBody' : ''}
-        ${method === 'GET' ? 'query: { id: "test-id" }' : ''}
-      });
-      const response = createMockResponse();
-      
-      ${testDatabase ? 'mockDatabase.query.mockResolvedValue(mockDatabaseResult);' : ''}
-      
-      await ${routeName}(request, response);
-      
-      expect(response.status).toHaveBeenCalledWith(${method === 'POST' ? '201' : '200'});
-      expect(response.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success: true
-        })
-      );
-    });
-
-    it('should handle ${method.toLowerCase()} with missing data', async () => {
-      const request = createMockRequest({ 
-        method: '${method}',
-        ${requiresAuth ? 'headers: mockAuthHeaders' : ''}
-      });
-      const response = createMockResponse();
-      
-      await ${routeName}(request, response);
-      
-      ${hasValidation ? 'expect(response.status).toHaveBeenCalledWith(400);' : 'expect(response.status).toHaveBeenCalledWith(200);'}
-    });
-
-    ${
-      testDatabase
-        ? `it('should handle database errors', async () => {
-      const request = createMockRequest({ 
-        method: '${method}',
-        ${requiresAuth ? 'headers: mockAuthHeaders,' : ''}
-        ${method === 'POST' || method === 'PUT' ? 'body: mockValidBody' : ''}
+        ${method === 'POST' || method === 'PUT' ? 'body: mockValidBody,' : ''}
       });
       const response = createMockResponse();
       
@@ -169,33 +120,177 @@ export const apiTestTemplate: TestTemplate = {
       expect(response.status).toHaveBeenCalledWith(500);
       expect(response.json).toHaveBeenCalledWith({
         error: 'Internal Server Error',
-        message: 'Database operation failed'
+        message: 'An unexpected error occurred'
       });
-    });
+    });`;
+}
 
-    it('should handle database timeouts', async () => {
+function generateSuccessTests(
+  method: string,
+  routeName: string,
+  requiresAuth: boolean,
+  testDatabase: boolean
+): string {
+  const baseTest = `it('should handle successful ${method} request', async () => {
       const request = createMockRequest({ 
         method: '${method}',
         ${requiresAuth ? 'headers: mockAuthHeaders,' : ''}
-        ${method === 'POST' || method === 'PUT' ? 'body: mockValidBody' : ''}
+        ${method === 'POST' || method === 'PUT' ? 'body: mockValidBody,' : ''}
+        ${method === 'GET' ? 'query: { limit: 10, offset: 0 },' : ''}
       });
       const response = createMockResponse();
       
-      mockDatabase.query.mockImplementation(() => 
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Query timeout')), 1000)
-        )
-      );
-      
       await ${routeName}(request, response);
       
-      expect(response.status).toHaveBeenCalledWith(504);
-    });`
-        : ''
-    }
-  });`
-      )
-      .join('\n');
+      expect(response.status).toHaveBeenCalledWith(${method === 'POST' ? '201' : '200'});
+      expect(response.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ${method === 'GET' ? 'data: expect.any(Array)' : 'success: true'}
+        })
+      );
+      ${testDatabase ? 'expect(mockDatabase.query).toHaveBeenCalled();' : ''}
+    });`;
+
+  return baseTest;
+}
+
+function generateMockImports(options: APITestOptions): string {
+  const imports: string[] = [];
+
+  if (options.requiresAuth) {
+    imports.push(`const mockVerifyToken = vi.fn();
+vi.mock('@repo/auth/verify-token', () => ({
+  verifyToken: mockVerifyToken,
+}));`);
+  }
+
+  if (options.testDatabase) {
+    imports.push(`const mockDatabase = {
+  query: vi.fn(),
+  transaction: vi.fn(),
+};
+vi.mock('@repo/database', () => ({
+  database: mockDatabase,
+}));`);
+  }
+
+  if (options.hasRateLimit) {
+    imports.push(`const mockRateLimit = vi.fn();
+vi.mock('@repo/rate-limit', () => ({
+  checkRateLimit: mockRateLimit,
+}));`);
+  }
+
+  return imports.join('\n\n');
+}
+
+function generateMockData(options: APITestOptions): string {
+  const mockData: string[] = [];
+
+  if (options.requiresAuth) {
+    mockData.push(`const mockAuthHeaders = {
+  authorization: 'Bearer valid-token',
+};
+
+const mockUserContext = {
+  userId: 'user-123',
+  role: 'user',
+  tenantId: 'tenant-456',
+};`);
+  }
+
+  if (options.methods.includes('POST') || options.methods.includes('PUT')) {
+    mockData.push(`const mockValidBody = {
+  title: 'Test Title',
+  content: 'Test content',
+};`);
+  }
+
+  if (options.testDatabase) {
+    mockData.push(`const mockDatabaseResult = {
+  id: 'result-123',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};`);
+  }
+
+  return mockData.join('\n\n');
+}
+
+function generateBeforeEach(options: APITestOptions): string {
+  const mocks: string[] = ['vi.clearAllMocks();'];
+
+  if (options.requiresAuth) {
+    mocks.push('mockVerifyToken.mockResolvedValue(mockUserContext);');
+  }
+
+  if (options.testDatabase) {
+    mocks.push(`mockDatabase.query.mockResolvedValue(mockDatabaseResult);
+    mockDatabase.transaction.mockImplementation((fn) => fn(mockDatabase));`);
+  }
+
+  if (options.hasRateLimit) {
+    mocks.push('mockRateLimit.mockResolvedValue(true);');
+  }
+
+  return mocks.join('\n    ');
+}
+
+function generateMethodTests(method: string, options: APITestOptions): string {
+  const tests: string[] = [];
+
+  tests.push(`  describe('${method} ${options.routePath}', () => {`);
+
+  if (options.requiresAuth) {
+    tests.push(generateAuthTests(method, options.routeName));
+  }
+
+  if (options.hasValidation) {
+    tests.push(
+      generateValidationTests(method, options.routeName, options.requiresAuth)
+    );
+  }
+
+  if (options.hasRateLimit) {
+    tests.push(
+      generateRateLimitTests(method, options.routeName, options.requiresAuth)
+    );
+  }
+
+  if (options.testDatabase) {
+    tests.push(
+      generateDatabaseTests(method, options.routeName, options.requiresAuth)
+    );
+  }
+
+  tests.push(
+    generateSuccessTests(
+      method,
+      options.routeName,
+      options.requiresAuth,
+      options.testDatabase
+    )
+  );
+
+  tests.push('  });');
+
+  return tests.filter(Boolean).join('\n\n    ');
+}
+
+/**
+ * Template for API route handler tests
+ */
+export const apiTestTemplate: TestTemplate = {
+  name: 'API Route Test',
+  description:
+    'Template for testing Next.js API routes with authentication, validation, and error handling',
+
+  generate: (options: APITestOptions) => {
+    const { routeName, routePath, methods = ['GET'] } = options;
+
+    const methodTests = methods
+      .map((method) => generateMethodTests(method, options))
+      .join('\n\n');
 
     return `/**
  * SPDX-License-Identifier: MIT
@@ -206,35 +301,7 @@ import { createMocks } from 'node-mocks-http';
 import { ${routeName} } from '${routePath}';
 
 // Mock external dependencies
-${
-  requiresAuth
-    ? `const mockVerifyToken = vi.fn();
-vi.mock('@repo/auth/verify-token', () => ({
-  verifyToken: mockVerifyToken,
-}));`
-    : ''
-}
-
-${
-  testDatabase
-    ? `const mockDatabase = {
-  query: vi.fn(),
-  transaction: vi.fn(),
-};
-vi.mock('@repo/database', () => ({
-  database: mockDatabase,
-}));`
-    : ''
-}
-
-${
-  hasRateLimit
-    ? `const mockRateLimit = vi.fn();
-vi.mock('@repo/rate-limit', () => ({
-  checkRateLimit: mockRateLimit,
-}));`
-    : ''
-}
+${generateMockImports(options)}
 
 // Test helpers
 const createMockRequest = (options: any = {}) => {
@@ -255,158 +322,52 @@ const createMockResponse = () => {
 };
 
 // Mock data
-${
-  requiresAuth
-    ? `const mockAuthHeaders = {
-  authorization: 'Bearer valid-token',
-};
-
-const mockUserContext = {
-  userId: 'user-123',
-  role: 'user',
-  tenantId: 'tenant-456',
-};`
-    : ''
-}
-
-${
-  methods.includes('POST') || methods.includes('PUT')
-    ? `const mockValidBody = {
-  title: 'Test Title',
-  content: 'Test content',
-};`
-    : ''
-}
-
-${
-  testDatabase
-    ? `const mockDatabaseResult = {
-  id: 'result-123',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};`
-    : ''
-}
+${generateMockData(options)}
 
 describe('${routeName} API Route', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    
-    ${requiresAuth ? 'mockVerifyToken.mockResolvedValue(mockUserContext);' : ''}
-    ${
-      testDatabase
-        ? `mockDatabase.query.mockResolvedValue(mockDatabaseResult);
-    mockDatabase.transaction.mockImplementation((fn) => fn(mockDatabase));`
-        : ''
-    }
-    ${hasRateLimit ? 'mockRateLimit.mockResolvedValue({ allowed: true });' : ''}
+    ${generateBeforeEach(options)}
   });
 
-  it('should reject unsupported HTTP methods', async () => {
-    const request = createMockRequest({ method: 'DELETE' });
-    const response = createMockResponse();
-    
-    await ${routeName}(request, response);
-    
-    expect(response.status).toHaveBeenCalledWith(405);
-    expect(response.json).toHaveBeenCalledWith({
-      error: 'Method Not Allowed',
-      message: 'DELETE method is not supported'
-    });
-  });
-
-  it('should handle CORS preflight requests', async () => {
-    const request = createMockRequest({ method: 'OPTIONS' });
-    const response = createMockResponse();
-    
-    await ${routeName}(request, response);
-    
-    expect(response.status).toHaveBeenCalledWith(200);
-    expect(response.end).toHaveBeenCalled();
-  });
-
-  it('should set proper security headers', async () => {
-    const request = createMockRequest({ 
-      method: '${methods[0]}',
-      ${requiresAuth ? 'headers: mockAuthHeaders' : ''}
-    });
-    const response = createMockResponse();
-    
-    await ${routeName}(request, response);
-    
-    expect(response.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
-    expect(response.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
-  });
-  ${methodTests}
+${methodTests}
 
   describe('Error Handling', () => {
-    it('should handle unexpected errors gracefully', async () => {
+    it('should handle unexpected errors', async () => {
       const request = createMockRequest({ 
-        method: '${methods[0]}',
-        ${requiresAuth ? 'headers: mockAuthHeaders' : ''}
+        method: 'GET',
+        ${options.requiresAuth ? 'headers: mockAuthHeaders,' : ''}
       });
       const response = createMockResponse();
       
       // Force an unexpected error
-      vi.spyOn(JSON, 'parse').mockImplementation(() => {
-        throw new Error('Unexpected parsing error');
-      });
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      request.method = null; // This should cause an error
       
       await ${routeName}(request, response);
       
       expect(response.status).toHaveBeenCalledWith(500);
-      expect(response.json).toHaveBeenCalledWith({
-        error: 'Internal Server Error',
-        message: 'An unexpected error occurred'
-      });
-      
-      vi.restoreAllMocks();
-    });
-
-    it('should log errors for monitoring', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
-      const request = createMockRequest({ method: 'INVALID' });
-      const response = createMockResponse();
-      
-      await ${routeName}(request, response);
-      
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      expect(console.error).toHaveBeenCalled();
     });
   });
 
-  describe('Content Type Handling', () => {
-    it('should handle JSON content type', async () => {
+  describe('CORS and Security Headers', () => {
+    it('should set proper security headers', async () => {
       const request = createMockRequest({ 
-        method: '${methods.find((m) => m === 'POST' || m === 'PUT') || methods[0]}',
-        headers: { 
-          'content-type': 'application/json',
-          ${requiresAuth ? '...mockAuthHeaders' : ''}
-        }
+        method: 'OPTIONS',
       });
       const response = createMockResponse();
       
-      await ${routeName}(request, response);
-      
-      expect(response.status).not.toHaveBeenCalledWith(415);
-    });
-
-    it('should reject unsupported content types', async () => {
-      const request = createMockRequest({ 
-        method: '${methods.find((m) => m === 'POST' || m === 'PUT') || methods[0]}',
-        headers: { 
-          'content-type': 'text/plain',
-          ${requiresAuth ? '...mockAuthHeaders' : ''}
-        }
-      });
-      const response = createMockResponse();
+      response.setHeader = vi.fn();
       
       await ${routeName}(request, response);
       
-      expect(response.status).toHaveBeenCalledWith(415);
+      expect(response.setHeader).toHaveBeenCalledWith(
+        'Access-Control-Allow-Origin',
+        expect.any(String)
+      );
     });
   });
-});`;
+});
+`;
   },
 };

@@ -6,6 +6,66 @@ import { vi } from 'vitest';
 import { organizationFactory, userFactory } from './factories.js';
 import { clerkMocks } from './mocks.js';
 
+// Type definitions
+interface PermissionContext {
+  userId: string;
+  role: string;
+  tenantId: string;
+  [key: string]: unknown;
+}
+
+interface PermissionRecord {
+  id?: string;
+  [key: string]: unknown;
+}
+
+interface PermissionRule {
+  resource: string;
+  action: string;
+  condition?: (
+    context: PermissionContext,
+    record?: PermissionRecord
+  ) => boolean;
+  dsl?: Record<string, unknown>;
+  fieldPermissions?: Record<string, 'read' | 'write' | 'none'>;
+}
+
+interface User {
+  id: string;
+  [key: string]: unknown;
+}
+
+interface Organization {
+  id: string;
+  slug?: string;
+  [key: string]: unknown;
+}
+
+interface Session {
+  userId: string;
+  sessionId: string;
+  isActive: boolean;
+  expiresAt: Date;
+  createdAt: Date;
+}
+
+interface AuthRequest {
+  headers: {
+    authorization?: string;
+  };
+  user?: {
+    role?: string;
+    permissions?: string[];
+  };
+}
+
+interface AuthResponse {
+  status: (code: number) => AuthResponse;
+  json: (data: Record<string, unknown>) => void;
+}
+
+type NextFunction = () => void;
+
 /**
  * Authentication-specific test helpers and utilities
  */
@@ -35,8 +95,11 @@ export function createMockPermissionRule(
   overrides: Partial<{
     resource: string;
     action: string;
-    condition?: (context: any, record?: any) => boolean;
-    dsl?: any;
+    condition?: (
+      context: PermissionContext,
+      record?: PermissionRecord
+    ) => boolean;
+    dsl?: Record<string, unknown>;
     fieldPermissions?: Record<string, 'read' | 'write' | 'none'>;
   }> = {}
 ) {
@@ -72,8 +135,8 @@ export function mockClerkAuth(
     sessionId: string;
     orgId: string;
     orgRole: string;
-    user: any;
-    organization: any;
+    user: User;
+    organization: Organization;
   }> = {}
 ) {
   const mockUser = userFactory.createWithProfile();
@@ -148,11 +211,11 @@ export function mockJwtVerify(shouldSucceed = true, userIdOverride?: string) {
  */
 export function createMockAccessEvaluationInput(
   overrides: Partial<{
-    rules: any[];
-    context: any;
+    rules: PermissionRule[];
+    context: PermissionContext;
     action: string;
     resource: string;
-    record?: any;
+    record?: PermissionRecord;
     field?: string;
   }> = {}
 ) {
@@ -174,17 +237,24 @@ export const permissionTestUtils = {
   /**
    * Test that a set of permissions work correctly
    */
-  async testPermissions<T>(
+  testPermissions<T>(
     permissions: Array<{
       resource: string;
       action: string;
-      context?: any;
-      record?: any;
+      context?: PermissionContext;
+      record?: PermissionRecord;
       field?: string;
       expectedResult: boolean;
       expectedReason?: string;
     }>,
-    evaluateFunction: (input: any) => T
+    evaluateFunction: (input: {
+      rules: PermissionRule[];
+      context: PermissionContext;
+      action: string;
+      resource: string;
+      record?: PermissionRecord;
+      field?: string;
+    }) => T
   ) {
     for (const permission of permissions) {
       const input = createMockAccessEvaluationInput({
@@ -204,9 +274,15 @@ export const permissionTestUtils = {
       const result = evaluateFunction(input);
 
       if (typeof result === 'object' && result !== null && 'can' in result) {
-        expect((result as any).can).toBe(permission.expectedResult);
+        // biome-ignore lint/suspicious/noMisplacedAssertion: This is a test utility function that will be called from within test blocks
+        expect((result as { can: boolean }).can).toBe(
+          permission.expectedResult
+        );
         if (permission.expectedReason) {
-          expect((result as any).reason).toBe(permission.expectedReason);
+          // biome-ignore lint/suspicious/noMisplacedAssertion: This is a test utility function that will be called from within test blocks
+          expect((result as { can: boolean; reason?: string }).reason).toBe(
+            permission.expectedReason
+          );
         }
       }
     }
@@ -277,7 +353,7 @@ export const sessionTestUtils = {
   /**
    * Mock session validation
    */
-  mockSessionValidation(isValid = true, session?: any) {
+  mockSessionValidation(isValid = true, session?: Session) {
     const mockValidate = vi.fn();
 
     if (isValid) {
@@ -322,7 +398,7 @@ export const organizationTestUtils = {
    * Create mock organization hierarchy
    */
   createMockOrgHierarchy(levels = 3) {
-    const hierarchy = [];
+    const hierarchy: ReturnType<typeof organizationFactory.create>[] = [];
 
     for (let i = 0; i < levels; i++) {
       hierarchy.push(
@@ -349,12 +425,17 @@ export const authFlowTestUtils = {
   async simulateAuthFlow(
     steps: Array<{
       name: string;
-      action: () => Promise<any> | any;
-      expectedResult?: any;
+      action: () => Promise<unknown> | unknown;
+      expectedResult?: unknown;
       shouldSucceed?: boolean;
     }>
   ) {
-    const results = [];
+    const results: Array<{
+      step: string;
+      result?: unknown;
+      error?: unknown;
+      success: boolean;
+    }> = [];
 
     for (const step of steps) {
       try {
@@ -362,6 +443,7 @@ export const authFlowTestUtils = {
 
         if (step.shouldSucceed !== false) {
           if (step.expectedResult !== undefined) {
+            // biome-ignore lint/suspicious/noMisplacedAssertion: This is a test utility function that will be called from within test blocks
             expect(result).toEqual(step.expectedResult);
           }
         } else {
@@ -391,29 +473,36 @@ export const authFlowTestUtils = {
       requirePermission?: string;
     } = {}
   ) {
-    return vi.fn().mockImplementation((req: any, res: any, next: any) => {
-      // Mock authentication logic
-      const isAuthenticated = req.headers.authorization?.startsWith('Bearer ');
+    return vi
+      .fn()
+      .mockImplementation(
+        (req: AuthRequest, res: AuthResponse, next: NextFunction) => {
+          // Mock authentication logic
+          const isAuthenticated =
+            req.headers.authorization?.startsWith('Bearer ');
 
-      if (options.requireAuth && !isAuthenticated) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
+          if (options.requireAuth && !isAuthenticated) {
+            return res.status(401).json({ error: 'Unauthorized' });
+          }
 
-      if (options.requireRole) {
-        const userRole = req.user?.role || 'user';
-        if (userRole !== options.requireRole) {
-          return res.status(403).json({ error: 'Forbidden' });
+          if (options.requireRole) {
+            const userRole = req.user?.role || 'user';
+            if (userRole !== options.requireRole) {
+              return res.status(403).json({ error: 'Forbidden' });
+            }
+          }
+
+          if (options.requirePermission) {
+            const userPermissions = req.user?.permissions || [];
+            if (!userPermissions.includes(options.requirePermission)) {
+              return res
+                .status(403)
+                .json({ error: 'Insufficient permissions' });
+            }
+          }
+
+          next();
         }
-      }
-
-      if (options.requirePermission) {
-        const userPermissions = req.user?.permissions || [];
-        if (!userPermissions.includes(options.requirePermission)) {
-          return res.status(403).json({ error: 'Insufficient permissions' });
-        }
-      }
-
-      next();
-    });
+      );
   },
 };

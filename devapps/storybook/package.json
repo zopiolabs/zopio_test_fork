@@ -7,6 +7,7 @@
     "build": "storybook build",
     "chromatic": "chromatic --exit-zero-on-changes",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "test": "vitest",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
@@ -37,12 +38,18 @@
     "@storybook/addon-themes": "^9.0.16",
     "@storybook/nextjs": "^9.0.16",
     "@tailwindcss/postcss": "^4.1.11",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.5.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "autoprefixer": "^10.4.21",
     "chromatic": "^12.0.0",
     "css-loader": "^7.1.2",
+    "jsdom": "^26",
     "postcss": "^8",
     "postcss-import": "^16.1.1",
     "postcss-loader": "^8.1.1",
@@ -52,6 +59,7 @@
     "tailwindcss": "^4.1.7",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5",
+    "vitest": "^3.1.4",
     "webpack": "^5.100.1"
   }
 }

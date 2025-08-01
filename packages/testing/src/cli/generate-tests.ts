@@ -118,7 +118,7 @@ program
   .action(() => {
     const templates = TestGenerator.listTemplates();
 
-    templates.forEach(({ key, template }) => {});
+    templates.forEach(({ key }) => {});
   });
 
 // Interactive template command
@@ -160,14 +160,15 @@ program
           type: 'input',
           name: 'output',
           message: 'Where should the test file be created?',
-          default: (answers: any) => `__tests__/${answers.name}.test.ts`,
+          default: (answers: { name: string }) =>
+            `__tests__/${answers.name}.test.ts`,
         },
         {
           type: 'confirm',
           name: 'async',
           message: 'Does this involve async operations?',
           default: false,
-          when: (answers: any) =>
+          when: (answers: { type: string }) =>
             ['utility', 'api', 'hook'].includes(answers.type),
         },
         {
@@ -175,7 +176,7 @@ program
           name: 'database',
           message: 'Does this involve database operations?',
           default: false,
-          when: (answers: any) =>
+          when: (answers: { type: string }) =>
             ['api', 'integration', 'security'].includes(answers.type),
         },
         {
@@ -184,7 +185,7 @@ program
           message: 'Which HTTP methods should be tested?',
           choices: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
           default: ['GET', 'POST'],
-          when: (answers: any) => answers.type === 'api',
+          when: (answers: { type: string }) => answers.type === 'api',
         },
         {
           type: 'confirm',

@@ -38,7 +38,7 @@ program
   .description('Diagnose testing setup issues')
   .option('--fix', 'Automatically fix detected issues')
   .action(async (options) => {
-    const issues = [];
+    const issues: string[] = [];
 
     // Check for vitest config
     try {

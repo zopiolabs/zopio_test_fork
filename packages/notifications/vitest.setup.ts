@@ -32,7 +32,7 @@ vi.mock('@knocklabs/react', () => {
         'Notifications'
       )
     ),
-    NotificationFeedPopover: ({ isVisible, onClose, buttonRef }) =>
+    NotificationFeedPopover: ({ isVisible, onClose }) =>
       isVisible
         ? React.createElement(
             'div',

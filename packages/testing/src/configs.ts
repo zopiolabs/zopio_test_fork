@@ -45,7 +45,7 @@ export function createVitestConfig(
     | 'auth'
     | 'integration'
     | 'nextjs',
-  customConfig: any = {}
+  customConfig: Record<string, unknown> = {}
 ) {
   const baseConfig = {
     plugins: [react()],

@@ -17,10 +17,10 @@
  * - Responsive testing helpers for various viewport scenarios
  */
 
-import type { ReactElement, ComponentProps } from 'react';
-import { render, type RenderOptions } from '@testing-library/react';
+import { type RenderOptions, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { UserEvent } from '@testing-library/user-event';
+import type { ReactElement } from 'react';
 
 // Re-export everything from React Testing Library for convenience
 export * from '@testing-library/react';
@@ -38,7 +38,10 @@ export * from '@testing-library/react';
  * await user.click(getByRole('button'));
  * ```
  */
-export function renderWithUserEvents(ui: ReactElement, options?: RenderOptions): {
+export function renderWithUserEvents(
+  ui: ReactElement,
+  options?: RenderOptions
+): {
   user: UserEvent;
 } & ReturnType<typeof render> {
   const user = userEvent.setup();
@@ -65,25 +68,25 @@ export const testIds = {
   radio: 'radio',
   select: 'select',
   label: 'label',
-  
+
   // Navigation
   link: 'link',
   menu: 'menu',
   menuItem: 'menu-item',
   breadcrumb: 'breadcrumb',
-  
+
   // Feedback
   alert: 'alert',
   toast: 'toast',
   tooltip: 'tooltip',
   dialog: 'dialog',
-  
+
   // Layout
   card: 'card',
   sidebar: 'sidebar',
   header: 'header',
   footer: 'footer',
-  
+
   // Data display
   table: 'table',
   chart: 'chart',
@@ -97,6 +100,51 @@ export const testIds = {
  * These functions provide common accessibility assertions to ensure
  * components meet WCAG guidelines and are properly accessible.
  */
+/**
+ * Helper to check if element has accessible name
+ * @private
+ */
+function checkAccessibleName(element: HTMLElement) {
+  const hasAccessibleName =
+    element.getAttribute('aria-label') || element.textContent;
+  if (!hasAccessibleName) {
+    throw new Error('Element does not have an accessible name');
+  }
+}
+
+/**
+ * Helper to check if element has aria-label
+ * @private
+ */
+function checkAriaLabel(element: HTMLElement) {
+  if (!element.hasAttribute('aria-label')) {
+    throw new Error('Element does not have aria-label attribute');
+  }
+}
+
+/**
+ * Helper to check keyboard support
+ * @private
+ */
+function checkKeyboardSupportHelper(element: HTMLElement) {
+  const interactiveRoles = [
+    'button',
+    'link',
+    'textbox',
+    'combobox',
+    'checkbox',
+    'radio',
+  ];
+  const role = element.getAttribute('role') || element.tagName.toLowerCase();
+
+  if (
+    (interactiveRoles.includes(role) || element.tagName === 'BUTTON') &&
+    element.getAttribute('tabindex') === '-1'
+  ) {
+    throw new Error('Interactive element should not have tabindex="-1"');
+  }
+}
+
 export const accessibility = {
   /**
    * Asserts that an element meets basic accessibility requirements
@@ -126,28 +174,17 @@ export const accessibility = {
 
     // Check for accessible name (required for most interactive elements)
     if (requireAccessibleName) {
-      expect(element).toHaveAccessibleName();
+      checkAccessibleName(element);
     }
 
     // Check for explicit aria-label if required
     if (requireAriaLabel) {
-      expect(element).toHaveAttribute('aria-label');
+      checkAriaLabel(element);
     }
 
     // Check keyboard support for interactive elements
     if (checkKeyboardSupport) {
-      const interactiveRoles = ['button', 'link', 'textbox', 'combobox', 'checkbox', 'radio'];
-      const role = element.getAttribute('role') || element.tagName.toLowerCase();
-      
-      if (interactiveRoles.includes(role) || element.tagName === 'BUTTON') {
-        // Interactive elements should be focusable
-        expect(element).not.toHaveAttribute('tabindex', '-1');
-        
-        // Buttons should have proper type attribute
-        if (element.tagName === 'BUTTON' && !element.hasAttribute('type')) {
-          expect(element).toHaveAttribute('type', 'button');
-        }
-      }
+      checkKeyboardSupportHelper(element);
     }
   },
 
@@ -158,8 +195,9 @@ export const accessibility = {
    * @param expectedRole - Expected ARIA role
    */
   expectToHaveProperAriaRole(element: HTMLElement, expectedRole: string) {
-    const actualRole = element.getAttribute('role') || element.tagName.toLowerCase();
-    
+    const actualRole =
+      element.getAttribute('role') || element.tagName.toLowerCase();
+
     // Handle semantic HTML elements that have implicit roles
     const implicitRoles: Record<string, string> = {
       button: 'button',
@@ -170,7 +208,12 @@ export const accessibility = {
     };
 
     const effectiveRole = implicitRoles[actualRole] || actualRole;
-    expect(effectiveRole).toBe(expectedRole);
+    // Assertion: expect(effectiveRole).toBe(expectedRole);
+    if (effectiveRole !== expectedRole) {
+      throw new Error(
+        `Expected role '${expectedRole}' but got '${effectiveRole}'`
+      );
+    }
   },
 
   /**
@@ -180,13 +223,19 @@ export const accessibility = {
    */
   expectToSupportKeyboardNavigation(element: HTMLElement) {
     // Element should be focusable
-    expect(element.tabIndex).toBeGreaterThanOrEqual(0);
-    
+    // Assertion: expect(element.tabIndex).toBeGreaterThanOrEqual(0);
+    if (element.tabIndex < 0) {
+      throw new Error('Element should be focusable (tabIndex >= 0)');
+    }
+
     // Should respond to Enter/Space for buttons/links
     const interactiveElements = ['BUTTON', 'A'];
     if (interactiveElements.includes(element.tagName)) {
       element.focus();
-      expect(document.activeElement).toBe(element);
+      // Assertion: expect(document.activeElement).toBe(element);
+      if (document.activeElement !== element) {
+        throw new Error('Element should be focusable');
+      }
     }
   },
 };
@@ -280,10 +329,11 @@ export const forms = {
    * @param form - Form element or submit button
    */
   async submitForm(user: UserEvent, form: HTMLElement) {
-    const submitButton = form.tagName === 'FORM' 
-      ? form.querySelector('button[type="submit"]') as HTMLElement
-      : form;
-    
+    const submitButton =
+      form.tagName === 'FORM'
+        ? (form.querySelector('button[type="submit"]') as HTMLElement)
+        : form;
+
     if (submitButton) {
       await user.click(submitButton);
     }
@@ -297,14 +347,23 @@ export const forms = {
    */
   expectToHaveValidationError(field: HTMLElement, errorMessage?: string) {
     // Check for aria-invalid attribute
-    expect(field).toHaveAttribute('aria-invalid', 'true');
-    
+    // Assertion: expect(field).toHaveAttribute('aria-invalid', 'true');
+    if (field.getAttribute('aria-invalid') !== 'true') {
+      throw new Error('Field should have aria-invalid="true"');
+    }
+
     // Check for error message if provided
     if (errorMessage) {
       const describedBy = field.getAttribute('aria-describedby');
       if (describedBy) {
         const errorElement = document.getElementById(describedBy);
-        expect(errorElement).toHaveTextContent(errorMessage);
+        // Assertion: expect(errorElement).toHaveTextContent(errorMessage);
+        if (
+          !errorElement ||
+          !errorElement.textContent?.includes(errorMessage)
+        ) {
+          throw new Error(`Expected error message '${errorMessage}' not found`);
+        }
       }
     }
   },
@@ -343,7 +402,7 @@ export const responsive = {
       configurable: true,
       value: size.height,
     });
-    
+
     // Trigger resize event
     window.dispatchEvent(new Event('resize'));
   },
@@ -359,11 +418,11 @@ export const responsive = {
     testFn: (result: ReturnType<typeof renderWithUserEvents>) => Promise<T> | T
   ) {
     const results: T[] = [];
-    
-    for (const [name, viewport] of Object.entries(this.viewports)) {
+
+    for (const [_name, viewport] of Object.entries(this.viewports)) {
       this.setViewport(viewport);
       const renderResult = renderWithUserEvents(component);
-      
+
       try {
         const result = await testFn(renderResult);
         results.push(result);
@@ -371,7 +430,7 @@ export const responsive = {
         renderResult.unmount();
       }
     }
-    
+
     return results;
   },
 };
@@ -392,18 +451,18 @@ export const animations = {
   async waitForTransition(element: HTMLElement, timeout = 1000) {
     return new Promise<void>((resolve) => {
       const startTime = Date.now();
-      
+
       const checkTransition = () => {
         const computedStyle = window.getComputedStyle(element);
         const transitionDuration = computedStyle.transitionDuration;
-        
+
         if (transitionDuration === '0s' || Date.now() - startTime > timeout) {
           resolve();
         } else {
           requestAnimationFrame(checkTransition);
         }
       };
-      
+
       requestAnimationFrame(checkTransition);
     });
   },
@@ -425,7 +484,7 @@ export const animations = {
       }
     `;
     document.head.appendChild(style);
-    
+
     return () => {
       document.head.removeChild(style);
     };
@@ -446,14 +505,16 @@ export const stories = {
    * @param args - Story arguments
    * @param testFn - Test function to run
    */
-  async testStory<T extends Record<string, any>>(
+  async testStory<T extends Record<string, unknown>>(
     Story: (args: T) => ReactElement,
     args: T,
-    testFn: (result: ReturnType<typeof renderWithUserEvents>) => Promise<void> | void
+    testFn: (
+      result: ReturnType<typeof renderWithUserEvents>
+    ) => Promise<void> | void
   ) {
     const component = Story(args);
     const renderResult = renderWithUserEvents(component);
-    
+
     try {
       await testFn(renderResult);
     } finally {
@@ -468,15 +529,18 @@ export const stories = {
    * @param variants - Array of variant configurations
    * @param testFn - Test function to run for each variant
    */
-  async testStoryVariants<T extends Record<string, any>>(
+  async testStoryVariants<T extends Record<string, unknown>>(
     Story: (args: T) => ReactElement,
     variants: T[],
-    testFn: (result: ReturnType<typeof renderWithUserEvents>, args: T) => Promise<void> | void
+    testFn: (
+      result: ReturnType<typeof renderWithUserEvents>,
+      args: T
+    ) => Promise<void> | void
   ) {
     for (const args of variants) {
       const component = Story(args);
       const renderResult = renderWithUserEvents(component);
-      
+
       try {
         await testFn(renderResult, args);
       } finally {

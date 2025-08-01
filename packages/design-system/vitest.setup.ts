@@ -20,8 +20,12 @@ afterEach(() => {
 // Setup common browser APIs
 beforeEach(() => {
   // Mock console methods to avoid noise in tests
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
-  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(console, 'warn').mockImplementation(() => {
+    // Intentionally empty to suppress console warnings in tests
+  });
+  vi.spyOn(console, 'error').mockImplementation(() => {
+    // Intentionally empty to suppress console errors in tests
+  });
 });
 
 // Mock window.matchMedia which is not available in JSDOM

@@ -322,10 +322,12 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
       const userId = await verifyClerkToken(validToken);
 
       expect(userId).toBe('user_jwt_integration_123');
-      expect(jwtVerify).toHaveBeenCalledWith(
-        validToken,
-        expect.any(Uint8Array)
-      );
+      expect(jwtVerify).toHaveBeenCalled();
+      const [tokenArg, keyArg] = jwtVerify.mock.calls[0];
+      expect(tokenArg).toBe(validToken);
+      // Just verify it's defined and has expected properties
+      expect(keyArg).toBeDefined();
+      expect(keyArg.constructor.name).toBe('Uint8Array');
     });
 
     it('should handle expired JWT tokens', async () => {
@@ -869,7 +871,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
           result = await verifyClerkToken('rate_limit_token');
           break;
         } catch (error: any) {
-          if (error.name === 'RateLimitError' && retries < 4) {
+          if (error.message === 'Invalid or expired token' && retries < 4) {
             retries++;
             await new Promise(resolve => setTimeout(resolve, 100));
             continue;

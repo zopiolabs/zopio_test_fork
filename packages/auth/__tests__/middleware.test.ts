@@ -3,13 +3,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { authMiddleware } from '../middleware.js';
 
-// Mock the Clerk NextJS middleware
-const mockClerkMiddleware = vi.fn();
+// Mock the Clerk NextJS middleware first
 vi.mock('@clerk/nextjs/server', () => ({
-  clerkMiddleware: mockClerkMiddleware,
+  clerkMiddleware: vi.fn(),
 }));
+
+import { authMiddleware } from '../middleware.js';
+import { clerkMiddleware as mockClerkMiddleware } from '@clerk/nextjs/server';
 
 describe('authMiddleware', () => {
   beforeEach(() => {
@@ -77,12 +78,12 @@ describe('authMiddleware', () => {
 
   it('should preserve function properties and context', () => {
     const mockFunction = vi.fn();
-    mockFunction.someProperty = 'test';
+    (mockFunction as any).someProperty = 'test';
     mockClerkMiddleware.mockReturnValue(mockFunction);
 
     const result = authMiddleware();
 
     expect(result).toBe(mockFunction);
-    expect(result.someProperty).toBe('test');
+    expect((result as any).someProperty).toBe('test');
   });
 });

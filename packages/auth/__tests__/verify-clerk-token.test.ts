@@ -4,13 +4,24 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { verifyClerkToken } from '../lib/verify-clerk-token.js';
-import { mockEnv } from '@repo/testing';
+
+// Mock utilities directly to avoid testing package issues
+const mockEnv = (envVars: Record<string, string>) => {
+  const originalEnv = process.env;
+  process.env = { ...originalEnv, ...envVars };
+  return {
+    restore: () => {
+      process.env = originalEnv;
+    },
+  };
+};
 
 // Mock the jose library
-const mockJwtVerify = vi.fn();
 vi.mock('jose', () => ({
-  jwtVerify: mockJwtVerify,
+  jwtVerify: vi.fn(),
 }));
+
+import { jwtVerify as mockJwtVerify } from 'jose';
 
 describe('verifyClerkToken', () => {
   let envMock: ReturnType<typeof mockEnv>;

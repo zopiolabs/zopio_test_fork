@@ -4,7 +4,35 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { logger } from '../index.js';
-import { mockConsole, mockEnv } from '@repo/testing';
+// import { mockConsole, mockEnv } from '@repo/testing';
+
+// Temporary mocks until testing package is fixed
+const mockConsole = () => {
+  const originalConsole = { ...console };
+  const mocks = {
+    info: vi.spyOn(console, 'info').mockImplementation(() => {}),
+    error: vi.spyOn(console, 'error').mockImplementation(() => {}),
+    warn: vi.spyOn(console, 'warn').mockImplementation(() => {}),
+    debug: vi.spyOn(console, 'debug').mockImplementation(() => {}),
+  };
+  
+  return {
+    mocks,
+    restore: () => {
+      Object.values(mocks).forEach(mock => mock.mockRestore());
+    }
+  };
+};
+
+const mockEnv = (env: Record<string, string>) => {
+  const original = process.env;
+  process.env = { ...original, ...env };
+  return {
+    restore: () => {
+      process.env = original;
+    }
+  };
+};
 
 describe('logger', () => {
   let consoleMock: ReturnType<typeof mockConsole>;

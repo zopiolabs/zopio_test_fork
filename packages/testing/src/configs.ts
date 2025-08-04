@@ -18,7 +18,7 @@ function getCoverageThresholds(packageType: string) {
     react: { lines: 85, branches: 80, functions: 85, statements: 85 },
     api: { lines: 80, branches: 75, functions: 80, statements: 80 },
     database: { lines: 75, branches: 70, functions: 75, statements: 75 },
-    auth: { lines: 85, branches: 80, functions: 85, statements: 85 },
+    auth: { lines: 90, branches: 90, functions: 90, statements: 90 },
     integration: { lines: 70, branches: 65, functions: 70, statements: 70 },
     nextjs: { lines: 80, branches: 75, functions: 80, statements: 80 },
   };
@@ -55,8 +55,8 @@ export function createVitestConfig(
         packageType === 'api' ||
         packageType === 'database' ||
         packageType === 'integration'
-          ? 'node'
-          : 'jsdom',
+          ? ('node' as const)
+          : ('jsdom' as const),
       setupFiles: ['@repo/testing/setup'],
       globals: true,
       clearMocks: true,
@@ -64,7 +64,7 @@ export function createVitestConfig(
       unstubGlobals: true,
       unstubEnvs: true,
       coverage: {
-        provider: 'v8',
+        provider: 'v8' as const,
         reporter: [
           'text',
           'json',
@@ -89,10 +89,10 @@ export function createVitestConfig(
         // Package-specific coverage thresholds
         thresholds: getCoverageThresholds(packageType),
         watermarks: {
-          statements: [60, 80],
-          functions: [60, 80],
-          branches: [60, 75],
-          lines: [60, 80],
+          statements: [60, 80] as [number, number],
+          functions: [60, 80] as [number, number],
+          branches: [60, 75] as [number, number],
+          lines: [60, 80] as [number, number],
         },
         all: true,
         skipFull: false,
@@ -128,7 +128,11 @@ export function createVitestConfig(
     ...customConfig,
     test: {
       ...baseConfig.test,
-      ...customConfig.test,
+      ...(customConfig.test &&
+      typeof customConfig.test === 'object' &&
+      !Array.isArray(customConfig.test)
+        ? (customConfig.test as Record<string, unknown>)
+        : {}),
     },
   });
 }

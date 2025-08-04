@@ -210,6 +210,12 @@ function checkFiles(globPattern, format, label, ignorePatterns) {
 
   for (const file of files) {
     const base = path.basename(file, path.extname(file));
+    
+    // Skip config files that have standard names
+    if (base === 'vitest.config' || base === 'jest.config' || base === 'webpack.config' || base === 'rollup.config') {
+      continue;
+    }
+    
     if (!isValidName(base, format)) {
       console.error(`❌ ${label} file "${file}" does not match ${format} naming convention`);
       hasError = true;

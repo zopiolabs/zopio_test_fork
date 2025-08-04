@@ -31,10 +31,10 @@ export default defineConfig({
         '**/vitest.config.{ts,js}',
       ],
       thresholds: {
-        lines: 85,
-        branches: 80,
-        functions: 85,
-        statements: 85,
+        lines: 90,
+        branches: 90,
+        functions: 90,
+        statements: 90,
       },
     },
     typecheck: {

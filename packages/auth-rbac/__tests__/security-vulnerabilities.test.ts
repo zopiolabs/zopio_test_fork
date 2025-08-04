@@ -1,4 +1,35 @@
 /**
+ * @fileoverview Security Vulnerability Tests for Auth-RBAC Package
+ * 
+ * This comprehensive test suite validates the security measures implemented in the RBAC
+ * (Role-Based Access Control) system to protect against various attack vectors that
+ * specifically target authorization and access control mechanisms.
+ * 
+ * **RBAC Security Concerns:**
+ * - Authorization bypass through context manipulation
+ * - Privilege escalation via role/permission injection
+ * - DSL (Domain Specific Language) injection attacks
+ * - Record-level permission bypasses
+ * - Rule evaluation manipulation
+ * - Prototype pollution in authorization logic
+ * 
+ * **Attack Categories Covered:**
+ * - Context Injection: Manipulating user context to bypass authorization
+ * - Privilege Escalation: Attempting to gain higher privileges
+ * - DSL Injection: Injecting malicious logic into permission rules
+ * - Prototype Pollution: Exploiting JavaScript object inheritance
+ * - Record Manipulation: Modifying data records to bypass permissions
+ * - Rule Bypass: Circumventing permission evaluation logic
+ * 
+ * **Security Principles Tested:**
+ * - Fail-safe defaults: Deny access when in doubt
+ * - Input validation: Sanitize all authorization inputs
+ * - Principle of least privilege: Grant minimal necessary permissions
+ * - Defense in depth: Multiple layers of authorization checks
+ * - Secure by design: Safe defaults in rule evaluation
+ * 
+ * @author Zopio Security Team
+ * @since 1.0.0
  * SPDX-License-Identifier: MIT
  */
 
@@ -7,12 +38,59 @@ import { evaluateAccess } from '../engine/evaluate.js';
 import { evaluateDsl } from '../engine/evaluate-dsl.js';
 import type { AccessEvaluationInput, PermissionRule, UserContext } from '../types/index.js';
 
+/**
+ * @describe Security Vulnerability Tests - RBAC System
+ * 
+ * Comprehensive security test suite for the Role-Based Access Control system.
+ * Tests various attack vectors specific to authorization and permission systems.
+ * 
+ * **Test Philosophy:**
+ * - Assume attackers have deep knowledge of JavaScript and RBAC systems
+ * - Test edge cases that real-world attackers might exploit
+ * - Validate that security failures result in access denial, not access grants
+ * - Ensure that complex attack chains are broken at multiple points
+ */
 describe('Security Vulnerability Tests - RBAC System', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
+  /**
+   * @describe Authorization Bypass Prevention Tests
+   * 
+   * Tests protection against various attempts to bypass authorization controls
+   * through manipulation of context, rules, or evaluation logic.
+   * 
+   * **Attack Vectors Tested:**
+   * - Prototype pollution attacks on user context objects
+   * - Record manipulation to escalate privileges
+   * - DSL injection to modify rule evaluation logic
+   * - Context poisoning with malicious properties
+   * - Rule condition manipulation through object injection
+   */
   describe('authorization bypass prevention', () => {
+    /**
+     * @test Prototype Pollution Attack Prevention
+     * 
+     * **Attack Vector:** Attacker manipulates the user context object by injecting
+     * prototype pollution payloads to elevate their role or permissions. This attack
+     * exploits JavaScript's prototype chain to modify object properties.
+     * 
+     * **Attack Mechanism:**
+     * 1. Attacker injects malicious properties into user context
+     * 2. Uses prototype pollution techniques (__proto__, constructor.prototype)
+     * 3. Attempts to modify role from 'user' to 'admin'
+     * 4. Expects authorization logic to use polluted properties
+     * 
+     * **Specific Payloads Tested:**
+     * - constructor.prototype.role = 'admin' (constructor pollution)
+     * - __proto__.role = 'admin' (direct prototype pollution)  
+     * - prototype.role = 'admin' (prototype property injection)
+     * - role__proto__ = 'admin' (property name injection)
+     * 
+     * **Expected Defense:** RBAC system should only evaluate explicit properties
+     * and ignore prototype-based property modifications.
+     */
     it('should prevent rule injection through malicious context', () => {
       const maliciousContext: UserContext & Record<string, any> = {
         userId: 'user_123',
@@ -46,6 +124,32 @@ describe('Security Vulnerability Tests - RBAC System', () => {
       expect(result.can).toBe(false);
     });
 
+    /**
+     * @test Record Manipulation Privilege Escalation Prevention
+     * 
+     * **Attack Vector:** Attacker attempts to manipulate record objects passed to
+     * authorization rules to bypass ownership checks or elevate privileges. This
+     * attack exploits unsafe object property access in permission conditions.
+     * 
+     * **Attack Mechanism:**
+     * 1. Attacker controls or influences record objects passed to RBAC system
+     * 2. Injects malicious properties using various JavaScript techniques
+     * 3. Attempts to manipulate ownerId or other authorization-critical fields
+     * 4. Uses prototype pollution, valueOf/toString overrides to inject values
+     * 5. Expects permission logic to use manipulated properties
+     * 
+     * **Specific Attack Techniques:**
+     * - constructor.name injection for type confusion
+     * - __proto__.ownerId modification for ownership bypass
+     * - valueOf() override to return malicious ownership data
+     * - toString() override to inject admin privileges
+     * 
+     * **Expected Defense:** Permission evaluation should use only explicit
+     * properties and not be fooled by prototype manipulation or method overrides.
+     * 
+     * **Test Scenario:** User attempts to delete a document they don't own by
+     * manipulating the record object to claim ownership and admin privileges.
+     */
     it('should prevent privilege escalation through record manipulation', () => {
       const context: UserContext = {
         userId: 'user_123',
@@ -118,12 +222,12 @@ describe('Security Vulnerability Tests - RBAC System', () => {
         try {
           (global as any).__admin_override = true;
           (globalThis as any).__grant_access = true;
-          (ctx as any).__proto__.role = 'admin';
+          Object.setPrototypeOf(ctx, { ...Object.getPrototypeOf(ctx), role: 'admin' });
           if (record) {
-            (record as any).__proto__.authorized = true;
+            Object.setPrototypeOf(record, { ...Object.getPrototypeOf(record), authorized: true });
           }
         } catch (e) {
-          // Expected to fail in strict mode
+          console.error('Error during malicious condition execution:', e);
         }
         
         return ctx.role === 'admin';
@@ -163,19 +267,12 @@ describe('Security Vulnerability Tests - RBAC System', () => {
 
   describe('input validation and sanitization', () => {
     it('should handle SQL injection attempts in DSL values', () => {
-      const sqlInjectionNode = {
-        equals: [
-          'context.userId',
-          "'; DROP TABLE users; --"
-        ],
-      };
-
       const context = {
         userId: "'; DROP TABLE users; --",
         role: 'user',
       };
 
-      const result = evaluateDsl(sqlInjectionNode, context, null);
+      const result = evaluateDsl({ equals: ['context.userId', "'; DROP TABLE users; --"] }, context, null);
       
       // Should evaluate string equality correctly without SQL execution
       expect(result).toBe(true); // Strings match exactly
@@ -188,7 +285,7 @@ describe('Security Vulnerability Tests - RBAC System', () => {
           action: 'access',
           condition: (ctx: UserContext, record?: any) => {
             // Simulate vulnerable NoSQL query pattern
-            const query = { userId: ctx.userId };
+            // const query = { userId: ctx.userId };
             
             // In a real NoSQL database, this could be dangerous:
             // db.collection.find({ userId: { $ne: null } })
@@ -275,7 +372,7 @@ describe('Security Vulnerability Tests - RBAC System', () => {
           action: 'search',
           condition: (ctx: UserContext) => {
             // Simulate LDAP query construction (vulnerable pattern)
-            const ldapFilter = `(uid=${ctx.userId})`;
+            // const ldapFilter = `(uid=${ctx.userId})`;
             
             // In real LDAP, injection like )(objectClass=*) could be dangerous
             // Our evaluation should treat it as a literal string
@@ -423,7 +520,7 @@ describe('Security Vulnerability Tests - RBAC System', () => {
           action: 'view',
           condition: (ctx: UserContext, record?: any) => {
             // Simulate user lookup that might have timing differences
-            if (!record || !record.userId) return false;
+            if (!record?.userId) return false;
             
             // Don't reveal whether user exists through timing
             const userExists = ['user_123', 'user_456', 'user_789'].includes(record.userId);
@@ -564,7 +661,8 @@ describe('Security Vulnerability Tests - RBAC System', () => {
             try {
               return ctx.userId === record?.ownerId;
             } catch (error) {
-              return false;
+               console.error('Error during circular reference check:', error);
+               return false;
             }
           },
         },
@@ -588,20 +686,13 @@ describe('Security Vulnerability Tests - RBAC System', () => {
 
   describe('code injection prevention', () => {
     it('should prevent JavaScript code injection in DSL', () => {
-      const maliciousDsl = {
-        equals: [
-          'context.role',
-          'admin; process.exit(0); //'
-        ],
-      };
-
       const context = {
         userId: 'user_123',
         role: 'admin; process.exit(0); //',
       };
 
       // Should evaluate as string comparison, not execute code
-      const result = evaluateDsl(maliciousDsl, context, null);
+      const result = evaluateDsl({ equals: ['context.role', `admin'; process.exit(1); //`] }, context, null);
       expect(result).toBe(true); // Strings match exactly
       
       // Process should still be running (not exited)
@@ -649,7 +740,7 @@ describe('Security Vulnerability Tests - RBAC System', () => {
           const maliciousFunc = new Function('return process.exit(0)');
           maliciousFunc();
         } catch (error) {
-          // Expected to fail in secure environments
+          console.error('Error during Function constructor test:', error);
         }
         
         return ctx.role === 'admin';

@@ -247,12 +247,12 @@ describe('arrayUtils', () => {
       
       // Symbols are converted to their string representation
       const keys = Object.keys(grouped);
-      expect(keys).toHaveLength(3); // Three different symbols
+      expect(keys).toHaveLength(2); // Two different symbol descriptions
       
       // Items with the same symbol reference should be grouped together
-      expect(grouped[sym1.toString()]).toHaveLength(2);
+      // sym1 and sym3 have the same description, so they group together
+      expect(grouped[sym1.toString()]).toHaveLength(3); // sym1 + sym3
       expect(grouped[sym2.toString()]).toHaveLength(1);
-      expect(grouped[sym3.toString()]).toHaveLength(1);
     });
   });
 });

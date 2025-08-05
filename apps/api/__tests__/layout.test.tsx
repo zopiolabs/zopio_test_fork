@@ -971,7 +971,7 @@ describe('RootLayout Component - Comprehensive Test Suite', () => {
      */
 
     const validateDynamicLayout = async (lang: string, dir: 'ltr' | 'rtl') => {
-      // Create a custom layout with different language
+      // Create a custom layout with different language and direction
       const CustomLayout = ({ children }: { children: ReactNode }) => {
         return (
           <html lang={lang} dir={dir}>
@@ -980,16 +980,25 @@ describe('RootLayout Component - Comprehensive Test Suite', () => {
         );
       };
 
+      const startTime = performance.now();
       const { unmount } = render(
         <CustomLayout>
           <div data-testid="i18n-content">Content in {lang}</div>
         </CustomLayout>
       );
+      const duration = performance.now() - startTime;
 
+      // Performance check for i18n rendering
+      expect(duration).toBeLessThan(100);
+      
       const htmlElement = document.querySelector('html');
       expect(htmlElement).toBeInTheDocument();
       expect(htmlElement).toHaveAttribute('lang', lang);
       expect(htmlElement).toHaveAttribute('dir', dir);
+      
+      // Verify content is properly rendered
+      expect(screen.getByTestId('i18n-content')).toBeInTheDocument();
+      expect(screen.getByText(`Content in ${lang}`)).toBeInTheDocument();
 
       unmount();
     };

@@ -228,26 +228,129 @@ describe('Header', () => {
     });
   });
 
-  test('renders complex children structure', () => {
-    const ComplexChildren = () => (
-      <div className="flex gap-2">
-        <button className="btn-primary">Save</button>
-        <button className="btn-secondary">Cancel</button>
-        <div className="user-menu">
-          <span>User Name</span>
+  /**
+   * Props validation tests to ensure proper prop handling.
+   */
+  describe('Props Validation', () => {
+    /**
+     * Tests that all required props are handled correctly.
+     * Verifies prop types and required prop enforcement.
+     */
+    test('should handle all required props correctly', () => {
+      const props = {
+        pages: ['Home', 'Settings'],
+        page: 'Profile'
+      };
+
+      render(<Header {...props} />);
+
+      // Verify pages array is rendered
+      const breadcrumbLinks = screen.getAllByTestId('breadcrumb-link');
+      expect(breadcrumbLinks).toHaveLength(2);
+      expect(breadcrumbLinks[0]).toHaveTextContent('Home');
+      expect(breadcrumbLinks[1]).toHaveTextContent('Settings');
+
+      // Verify current page is rendered
+      const breadcrumbPage = screen.getByTestId('breadcrumb-page');
+      expect(breadcrumbPage).toHaveTextContent('Profile');
+    });
+
+    /**
+     * Tests handling of various page array lengths.
+     * Verifies component scales properly with different navigation depths.
+     */
+    test('should handle various page array lengths', () => {
+      // Test with long navigation path
+      const longPages = ['Root', 'Category', 'Subcategory', 'Item', 'Details'];
+      render(<Header pages={longPages} page="Edit" />);
+
+      const breadcrumbLinks = screen.getAllByTestId('breadcrumb-link');
+      expect(breadcrumbLinks).toHaveLength(5);
+      
+      // Verify all pages are rendered in order
+      longPages.forEach((page, index) => {
+        expect(breadcrumbLinks[index]).toHaveTextContent(page);
+      });
+    });
+
+    /**
+     * Tests breadcrumb links configuration.
+     * Verifies that all links point to hash anchors as expected.
+     */
+    test('should configure breadcrumb links correctly', () => {
+      render(<Header pages={['Home', 'Settings']} page="Profile" />);
+
+      const breadcrumbLinks = screen.getAllByTestId('breadcrumb-link');
+      breadcrumbLinks.forEach(link => {
+        expect(link).toHaveAttribute('href', '#');
+      });
+    });
+  });
+
+  /**
+   * Layout integration tests to verify component positioning and structure.
+   */
+  describe('Layout Integration', () => {
+    /**
+     * Tests header layout classes for proper flex positioning.
+     * Verifies the component maintains consistent layout structure.
+     */
+    test('should apply correct layout classes to header', () => {
+      render(<Header pages={['Home']} page="Dashboard" />);
+
+      const header = screen.getByRole('banner');
+      
+      // Verify flex layout classes
+      expect(header).toHaveClass('flex'); // Flexbox layout
+      expect(header).toHaveClass('h-16'); // Fixed height
+      expect(header).toHaveClass('shrink-0'); // Prevent shrinking
+      expect(header).toHaveClass('items-center'); // Vertical alignment
+      expect(header).toHaveClass('justify-between'); // Space between left and right content
+      expect(header).toHaveClass('gap-2'); // Gap between items
+    });
+
+    /**
+     * Tests left section layout structure.
+     * Verifies navigation elements are properly positioned.
+     */
+    test('should structure left section layout correctly', () => {
+      render(<Header pages={['Home']} page="Dashboard" />);
+
+      const header = screen.getByRole('banner');
+      const leftSection = header.firstElementChild;
+      
+      expect(leftSection).toHaveClass('flex', 'items-center', 'gap-2', 'px-4');
+      
+      // Verify element order and presence
+      expect(leftSection?.children).toHaveLength(3); // trigger, separator, breadcrumb
+    });
+
+    /**
+     * Tests header component integration with different layouts.
+     * Verifies compatibility with various page structures.
+     */
+    test('should integrate properly with page layouts', () => {
+      render(
+        <div className="app-layout">
+          <Header pages={['Dashboard']} page="Analytics">
+            <div className="header-actions">
+              <button>Export</button>
+              <button>Settings</button>
+            </div>
+          </Header>
+          <main>Page Content</main>
         </div>
-      </div>
-    );
+      );
 
-    render(
-      <Header pages={['Admin', 'Users']} page="Edit User">
-        <ComplexChildren />
-      </Header>
-    );
-
-    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-    expect(screen.getByText('User Name')).toBeInTheDocument();
+      // Header should maintain its structure within parent layout
+      const header = screen.getByRole('banner');
+      expect(header).toBeInTheDocument();
+      expect(header).toHaveClass('flex', 'h-16', 'shrink-0');
+      
+      // Children should be positioned correctly
+      expect(screen.getByText('Export')).toBeInTheDocument();
+      expect(screen.getByText('Settings')).toBeInTheDocument();
+    });
   });
 });
 

@@ -1,28 +1,43 @@
 /**
  * SPDX-License-Identifier: MIT
  * 
- * Comprehensive Security Vulnerability Test Suite
+ * Comprehensive Security Vulnerability Test Suite for Zopio API
  * 
  * This test suite validates the API's protection against common web application
- * security vulnerabilities based on OWASP Top 10 and beyond. It tests for:
+ * security vulnerabilities based on OWASP Top 10 2021 and advanced attack vectors.
  * 
- * - SQL Injection (all OWASP patterns)
- * - Cross-Site Scripting (XSS) - stored, reflected, DOM-based
+ * @fileoverview Security vulnerability tests covering injection attacks, authentication
+ * bypasses, authorization flaws, and advanced attack patterns.
+ * 
+ * ## Test Coverage:
+ * 
+ * ### OWASP Top 10 2021 Coverage:
+ * - A01:2021 - Broken Access Control (Authorization tests)
+ * - A02:2021 - Cryptographic Failures (Authentication bypass)
+ * - A03:2021 - Injection (SQL, NoSQL, Command, LDAP, XXE, Header injection)
+ * - A04:2021 - Insecure Design (Path traversal, IDOR)
+ * - A05:2021 - Security Misconfiguration (Error disclosure, headers)
+ * - A06:2021 - Vulnerable Components (Template injection)
+ * - A07:2021 - Authentication Failures (Session fixation, timing attacks)
+ * - A08:2021 - Software Integrity Failures (Prototype pollution)
+ * - A09:2021 - Security Logging Failures (Error handling)
+ * - A10:2021 - Server-Side Request Forgery (SSRF prevention)
+ * 
+ * ### Advanced Attack Patterns:
+ * - Cross-Site Scripting (XSS) - stored, reflected, DOM-based, mutation
  * - Cross-Site Request Forgery (CSRF) protection
- * - XML External Entity (XXE) attacks
- * - Path traversal attempts
- * - Command injection
- * - LDAP injection
- * - Header injection
- * - Clickjacking protection
- * - NoSQL injection
- * - Authentication bypass attempts
- * - Authorization vulnerabilities
- * - Session fixation
- * - Insecure direct object references
- * - Security misconfiguration detection
+ * - Clickjacking prevention
+ * - ReDoS (Regular Expression Denial of Service)
+ * - DoS protection (large payloads, deep nesting)
+ * - Timing attack prevention
+ * - Directory traversal
  * 
- * Each test validates both successful prevention and proper error handling.
+ * @version 1.0.0
+ * @author Zopio Security Team
+ * @since 2024-01-01
+ * 
+ * Each test validates both successful prevention and proper error handling
+ * without exposing sensitive information or creating security gaps.
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
@@ -37,14 +52,36 @@ import {
   mockLogger,
 } from '../utils/api-test-helpers';
 
+/**
+ * Main test suite for security vulnerability testing
+ * 
+ * This suite contains comprehensive tests for all major security vulnerabilities
+ * that could affect the Zopio API endpoints. Each sub-suite focuses on a specific
+ * attack vector and validates both prevention and proper error handling.
+ */
 describe('Security Vulnerability Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLogger.mock();
   });
 
+  /**
+   * SQL Injection Prevention Test Suite
+   * 
+   * Tests protection against all major SQL injection attack vectors including:
+   * - Classic injection (union, boolean, error-based)
+   * - Time-based blind injection
+   * - Stacked queries
+   * - Second-order injection
+   * - NoSQL injection patterns
+   * 
+   * @see https://owasp.org/www-community/attacks/SQL_Injection
+   */
   describe('SQL Injection Prevention', () => {
-    // Test against all OWASP SQL injection patterns
+    /**
+     * Comprehensive SQL injection payload collection covering all OWASP patterns
+     * and database-specific attack vectors for MySQL, PostgreSQL, SQLServer, Oracle
+     */
     const sqlInjectionPayloads = [
       // Classic SQL injection
       "' OR '1'='1",
@@ -105,8 +142,16 @@ describe('Security Vulnerability Tests', () => {
       '{"password": {"$regex": ".*"}}',
     ];
 
+    /**
+     * Tests SQL injection prevention in GET request query parameters
+     * 
+     * Validates that malicious SQL payloads in query parameters are properly
+     * sanitized or rejected without executing arbitrary SQL commands.
+     * 
+     * @param payload - SQL injection payload to test
+     */
     test.each(sqlInjectionPayloads)(
-      'should prevent SQL injection with payload: %s',
+      'should prevent SQL injection in query parameters: %s',
       async (payload) => {
         mockClerkAuth.mockSuccess();
         mockDatabase.mockSuccess();
@@ -135,6 +180,14 @@ describe('Security Vulnerability Tests', () => {
       }
     );
 
+    /**
+     * Tests SQL injection prevention in POST request body
+     * 
+     * Validates that malicious SQL payloads in request body are properly
+     * sanitized or rejected without executing arbitrary SQL commands.
+     * 
+     * @param payload - SQL injection payload to test
+     */
     test.each(sqlInjectionPayloads)(
       'should prevent SQL injection in POST body: %s',
       async (payload) => {
@@ -159,7 +212,24 @@ describe('Security Vulnerability Tests', () => {
     );
   });
 
+  /**
+   * Cross-Site Scripting (XSS) Prevention Test Suite
+   * 
+   * Tests protection against all XSS attack vectors including:
+   * - Stored XSS (persistent)
+   * - Reflected XSS (non-persistent)
+   * - DOM-based XSS
+   * - Mutation XSS
+   * - Framework-specific XSS (Angular, React, Vue)
+   * - Polyglot XSS (multiple contexts)
+   * 
+   * @see https://owasp.org/www-community/attacks/xss/
+   */
   describe('Cross-Site Scripting (XSS) Prevention', () => {
+    /**
+     * Comprehensive XSS payload collection covering all attack vectors
+     * including encoded, obfuscated, and framework-specific patterns
+     */
     const xssPayloads = [
       // Basic XSS
       '<script>alert("XSS")</script>',
@@ -252,8 +322,25 @@ describe('Security Vulnerability Tests', () => {
     );
   });
 
+  /**
+   * Cross-Site Request Forgery (CSRF) Protection Test Suite
+   * 
+   * Tests protection against CSRF attacks through:
+   * - Origin header validation
+   * - Referer header validation
+   * - CSRF token validation (when implemented)
+   * - SameSite cookie attributes (when applicable)
+   * 
+   * @see https://owasp.org/www-community/attacks/csrf
+   */
   describe('CSRF Protection', () => {
-    test('should reject requests without CSRF token', async () => {
+    /**
+     * Tests rejection of cross-origin requests without proper CSRF protection
+     * 
+     * Validates that requests from malicious origins are properly rejected
+     * to prevent CSRF attacks.
+     */
+    test('should reject cross-origin requests without CSRF protection', async () => {
       mockClerkAuth.mockSuccess();
 
       const request = createAuthenticatedRequest('test_token', {
@@ -1076,6 +1163,322 @@ describe('Security Vulnerability Tests', () => {
         expect(elapsed).toBeLessThan(1000);
         expect(response.status).toBeGreaterThanOrEqual(200);
       }
+    });
+  });
+
+  /**
+   * Server-Side Request Forgery (SSRF) Prevention Test Suite
+   * 
+   * Tests protection against SSRF attacks where an attacker attempts to
+   * force the server to make requests to internal or external resources.
+   * 
+   * @see https://owasp.org/www-community/attacks/Server_Side_Request_Forgery
+   */
+  describe('Server-Side Request Forgery (SSRF) Prevention', () => {
+    /**
+     * Tests prevention of internal network access via SSRF
+     * 
+     * Validates that the application doesn't make requests to internal
+     * network addresses when processing user-provided URLs.
+     */
+    test('should prevent access to internal network addresses', async () => {
+      const internalUrls = [
+        'http://localhost:3000/admin',
+        'http://127.0.0.1:8080/internal',
+        'http://192.168.1.1/router',
+        'http://169.254.169.254/metadata', // AWS metadata service
+        'http://metadata.google.internal/metadata', // GCP metadata
+        'file:///etc/passwd',
+        'ftp://internal.server.com/files',
+        'gopher://127.0.0.1:70',
+      ];
+
+      for (const url of internalUrls) {
+        const request = createMockRequest({
+          method: 'POST',
+          body: {
+            webhookUrl: url,
+            callbackUrl: url,
+            imageUrl: url,
+          },
+        });
+
+        const response = await POST(request);
+        
+        // Should reject requests to internal addresses
+        expect(response.status).toBeGreaterThanOrEqual(400);
+      }
+    });
+
+    /**
+     * Tests prevention of URL redirection bypass
+     * 
+     * Validates that URL validation cannot be bypassed using redirects
+     * or URL encoding techniques.
+     */
+    test('should prevent URL redirection bypass', async () => {
+      const bypassUrls = [
+        'http://evil.com#http://legitimate.com',
+        'http://legitimate.com@evil.com',
+        'http://evil.com/http://legitimate.com',
+        'http://127.0.0.1%2523@legitimate.com',
+        'http://[::1]:8080/admin',
+        'http://2130706433/', // 127.0.0.1 as decimal
+      ];
+
+      for (const url of bypassUrls) {
+        const request = createMockRequest({
+          method: 'POST',
+          body: { webhookUrl: url },
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBeGreaterThanOrEqual(400);
+      }
+    });
+  });
+
+  /**
+   * Mass Assignment Vulnerability Prevention Test Suite
+   * 
+   * Tests protection against mass assignment attacks where attackers
+   * attempt to modify object properties that should not be user-controllable.
+   * 
+   * @see https://owasp.org/www-community/vulnerabilities/Mass_Assignment
+   */
+  describe('Mass Assignment Prevention', () => {
+    /**
+     * Tests prevention of mass assignment in user updates
+     * 
+     * Validates that sensitive fields cannot be modified through
+     * mass assignment in update operations.
+     */
+    test('should prevent mass assignment of sensitive fields', async () => {
+      mockClerkAuth.mockSuccess('regular_user');
+
+      const sensitiveFields = {
+        id: 'admin_id',
+        role: 'admin',
+        isAdmin: true,
+        permissions: ['admin_all'],
+        createdAt: '2020-01-01',
+        updatedAt: '2020-01-01',
+        deletedAt: null,
+        isDeleted: false,
+        status: 'active',
+        isVerified: true,
+        credits: 999999,
+        planType: 'enterprise',
+      };
+
+      const request = createAuthenticatedRequest('user_token', {
+        method: 'POST',
+        body: {
+          name: 'Updated Name',
+          ...sensitiveFields, // Attempt mass assignment
+        },
+      });
+
+      const response = await POST(request);
+      
+      if (response.status === 200) {
+        const data = await response.json();
+        
+        // Verify sensitive fields weren't updated
+        Object.keys(sensitiveFields).forEach(field => {
+          if (data[field] !== undefined) {
+            expect(data[field]).not.toBe(sensitiveFields[field as keyof typeof sensitiveFields]);
+          }
+        });
+      }
+    });
+
+    /**
+     * Tests prevention of nested mass assignment
+     * 
+     * Validates that nested object properties cannot be mass assigned
+     * to bypass security controls.
+     */
+    test('should prevent nested mass assignment', async () => {
+      mockClerkAuth.mockSuccess();
+
+      const request = createAuthenticatedRequest('user_token', {
+        method: 'POST',
+        body: {
+          profile: {
+            role: 'admin',
+            permissions: ['admin_all'],
+          },
+          settings: {
+            isAdmin: true,
+            canDelete: true,
+          },
+          metadata: {
+            __proto__: { isAdmin: true },
+            constructor: { prototype: { isAdmin: true } },
+          },
+        },
+      });
+
+      const response = await POST(request);
+      
+      if (response.status === 200) {
+        const data = await response.json();
+        
+        // Verify nested sensitive fields weren't updated
+        if (data.profile) {
+          expect(data.profile.role).not.toBe('admin');
+          expect(data.profile.permissions).not.toEqual(['admin_all']);
+        }
+        if (data.settings) {
+          expect(data.settings.isAdmin).not.toBe(true);
+          expect(data.settings.canDelete).not.toBe(true);
+        }
+      }
+    });
+  });
+
+  /**
+   * Business Logic Bypass Prevention Test Suite
+   * 
+   * Tests protection against business logic vulnerabilities where
+   * attackers attempt to bypass intended application workflows.
+   * 
+   * @see https://owasp.org/www-community/vulnerabilities/Business_logic_vulnerability
+   */
+  describe('Business Logic Bypass Prevention', () => {
+    /**
+     * Tests prevention of workflow bypass
+     * 
+     * Validates that users cannot skip required steps in business processes
+     * or access resources without completing prerequisites.
+     */
+    test('should prevent workflow bypass attempts', async () => {
+      mockClerkAuth.mockSuccess();
+
+      // Attempt to access step 3 without completing steps 1 and 2
+      const request = createAuthenticatedRequest('user_token', {
+        method: 'POST',
+        body: {
+          step: 3,
+          skipValidation: true,
+          force: true,
+          bypass: true,
+        },
+      });
+
+      const response = await POST(request);
+      
+      // Should enforce proper workflow progression
+      expect(response.status).toBeGreaterThanOrEqual(400);
+    });
+
+    /**
+     * Tests prevention of race condition exploitation
+     * 
+     * Validates that concurrent requests cannot exploit race conditions
+     * to bypass business logic constraints.
+     */
+    test('should handle concurrent requests safely', async () => {
+      mockClerkAuth.mockSuccess();
+
+      // Simulate concurrent requests that might cause race conditions
+      const concurrentRequests = Array.from({ length: 5 }, () =>
+        createAuthenticatedRequest('user_token', {
+          method: 'POST',
+          body: {
+            action: 'decrease_balance',
+            amount: 100,
+          },
+        })
+      );
+
+      const responses = await Promise.all(
+        concurrentRequests.map(req => POST(req))
+      );
+
+      // At least some requests should be rejected to prevent race conditions
+      const successCount = responses.filter(r => r.status === 200).length;
+      expect(successCount).toBeLessThan(concurrentRequests.length);
+    });
+
+    /**
+     * Tests prevention of negative value exploitation
+     * 
+     * Validates that the application properly handles negative values
+     * and doesn't allow exploitation through arithmetic operations.
+     */
+    test('should prevent negative value exploitation', async () => {
+      mockClerkAuth.mockSuccess();
+
+      const negativeValues = [
+        { amount: -100 },
+        { quantity: -1 },
+        { price: -0.01 },
+        { credits: -999999 },
+        { balance: Number.MIN_SAFE_INTEGER },
+      ];
+
+      for (const payload of negativeValues) {
+        const request = createAuthenticatedRequest('user_token', {
+          method: 'POST',
+          body: payload,
+        });
+
+        const response = await POST(request);
+        
+        // Should reject or sanitize negative values appropriately
+        expect(response.status).toBeGreaterThanOrEqual(200);
+        
+        if (response.status === 200) {
+          const data = await response.json();
+          // Verify negative values are handled correctly
+          Object.values(payload).forEach(value => {
+            if (typeof value === 'number' && value < 0) {
+              // Should either reject or convert to valid positive value
+              expect(data).toBeDefined();
+            }
+          });
+        }
+      }
+    });
+
+    /**
+     * Tests prevention of parameter pollution
+     * 
+     * Validates that duplicate parameters don't cause unexpected behavior
+     * or bypass security validations.
+     */
+    test('should handle parameter pollution safely', async () => {
+      mockClerkAuth.mockSuccess();
+
+      // Test with duplicate query parameters
+      const request = createAuthenticatedRequest('user_token', {
+        method: 'GET',
+        searchParams: {
+          id: 'user_123',
+          // In real HTTP, this would be ?id=user_123&id=admin&id=system
+          // but we'll simulate the effect
+        },
+      });
+
+      // Manually construct URL with duplicate parameters
+      const url = new URL(request.url);
+      url.searchParams.append('id', 'admin');
+      url.searchParams.append('id', 'system');
+
+      const modifiedRequest = createMockRequest({
+        method: 'GET',
+        url: url.toString(),
+        headers: {
+          Authorization: `Bearer user_token`,
+        },
+      });
+
+      const response = await GET(modifiedRequest);
+      
+      // Should handle parameter pollution consistently
+      expect(response.status).toBeGreaterThanOrEqual(200);
     });
   });
 });

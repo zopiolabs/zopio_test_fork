@@ -2,6 +2,34 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @fileoverview ABAC Engine Tests - Attribute Matching Logic
+ * 
+ * Comprehensive test suite for the Attribute-Based Access Control (ABAC) attribute matching system.
+ * Validates complex attribute comparison, pattern matching, and condition evaluation mechanisms.
+ * 
+ * **Test Scope:**
+ * - Attribute value comparison with various data types and operators
+ * - Complex nested attribute access and evaluation patterns
+ * - Pattern matching with wildcards, regex, and dynamic value resolution
+ * 
+ * **Test Categories:**
+ * 1. **Basic Attribute Matching**: Simple equality, inequality, and type-based comparisons
+ * 2. **Complex Pattern Matching**: Regex patterns, wildcards, and advanced string matching
+ * 3. **Nested Attribute Access**: Deep object traversal and dot-notation attribute resolution
+ * 4. **Dynamic Value Resolution**: Context-based attribute evaluation and computed values
+ * 
+ * **Mock Strategy:**
+ * - Synthetic attribute contexts with various data types and structures
+ * - Mock attribute matching engine for controlled testing scenarios
+ * - Edge case generation for comprehensive pattern validation
+ * 
+ * **Quality Standards:**
+ * - 100% accuracy in attribute type matching and comparison
+ * - Robust handling of undefined/null attribute values
+ * - Performance optimization for nested attribute access patterns
+ */
+
 import { describe, it, expect } from 'vitest';
 import type { PermissionRule } from '@repo/auth-rbac';
 

@@ -1,11 +1,32 @@
 /**
  * SPDX-License-Identifier: MIT
+ */
+
+/**
+ * @fileoverview ABAC Engine Tests - Performance Benchmarks
  * 
- * ABAC Engine Performance Benchmarks
+ * Comprehensive performance benchmarking suite for the Attribute-Based Access Control (ABAC) engine.
+ * Tests evaluate system performance under various load conditions and complexity scenarios with complex attribute evaluation.
  * 
- * These benchmarks test the Attribute-Based Access Control (ABAC) engine performance 
- * for complex attribute-based authorization operations. ABAC handles more computationally 
- * intensive operations than RBAC due to complex attribute evaluation and rule matching.
+ * **Test Scope:**
+ * - Engine evaluation performance with varying rule complexity and attribute matching
+ * - Memory usage patterns during high-frequency ABAC evaluations
+ * - Scalability benchmarks with large rule sets and complex context objects
+ * 
+ * **Test Categories:**
+ * 1. **Performance Benchmarks**: Core ABAC engine evaluation speed measurements
+ * 2. **Memory Profiling**: Resource consumption analysis during complex attribute operations
+ * 3. **Scalability Tests**: Performance characteristics with increasing rule complexity and load
+ * 
+ * **Mock Strategy:**
+ * - Direct ABAC engine testing without external dependencies
+ * - Synthetic rule generation with complex attribute matching patterns
+ * - Memory-intensive scenarios with large context objects and nested attributes
+ * 
+ * **Quality Standards:**
+ * - Sub-millisecond evaluation times for simple attribute rules
+ * - Linear scaling with rule complexity and attribute count increases
+ * - Memory-stable performance across extended benchmark runs
  * 
  * Performance Targets:
  * - Simple attribute rule evaluation: < 2ms

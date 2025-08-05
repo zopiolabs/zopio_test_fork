@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Auth Package Tests - Authentication Provider Component
+ * 
+ * Comprehensive test suite for the AuthProvider React component that wraps
+ * Clerk's ClerkProvider with theme integration and prop forwarding. Tests
+ * theme handling, component rendering, and client-side behavior.
+ * 
+ * **Test Scope:**
+ * - AuthProvider component rendering and prop forwarding
+ * - Theme integration with next-themes and Clerk dark theme
+ * - Client-side only behavior and hydration handling
+ * - ClerkProvider integration and configuration passing
+ * - Children rendering and component composition
+ * 
+ * **Test Categories:**
+ * 1. **Component Rendering**: Basic rendering, children handling, prop forwarding
+ * 2. **Theme Integration**: Light/dark theme detection, Clerk theme application
+ * 3. **Client-Side Behavior**: Hydration handling, browser environment checks
+ * 4. **Error Handling**: Invalid props, missing themes, component failures
+ * 5. **Integration**: ClerkProvider configuration, theme provider coordination
+ * 
+ * **Mock Strategy:**
+ * - Mock next-themes for controlled theme behavior testing
+ * - Mock @clerk/themes for dark theme configuration testing
+ * - Mock @clerk/nextjs ClerkProvider for prop validation
+ * - Test component behavior without external service dependencies
+ * 
+ * **Quality Standards:**
+ * - Proper theme detection and application to Clerk configuration
+ * - All props correctly forwarded to underlying ClerkProvider
+ * - Children components rendered without modification
+ * - Client-side only behavior properly implemented
+ * - Error conditions handled gracefully without breaking rendering
+ * 
  * SPDX-License-Identifier: MIT
  */
 
@@ -32,10 +65,6 @@ vi.mock('@clerk/nextjs', () => ({
   },
 }));
 
-/**
- * Comprehensive test suite for the AuthProvider component.
- * Tests theme integration, prop forwarding, and client-side only behavior.
- */
 describe('AuthProvider Component Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -372,7 +401,7 @@ describe('AuthProvider Component Tests', () => {
       };
 
       render(
-        <AuthProvider {...additionalProps}>
+        <AuthProvider {...(additionalProps as any)}>
           <div>Props Test</div>
         </AuthProvider>
       );

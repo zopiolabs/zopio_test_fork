@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Payments Package Tests - Webhook Event Handling
+ * 
+ * Test suite for Stripe webhook event processing including signature validation,
+ * event parsing, error handling, and idempotency management.
+ * 
+ * **Test Scope:**
+ * - Webhook signature validation and security
+ * - Event parsing and type-specific handling
+ * - Idempotency and duplicate event prevention
+ * - Error handling and retry mechanisms
+ * - Event processing performance and reliability
+ * 
+ * **Test Categories:**
+ * 1. **Signature Validation**: Webhook security and signature verification
+ * 2. **Event Processing**: Type-specific event handling and parsing
+ * 3. **Idempotency**: Duplicate event detection and prevention
+ * 4. **Error Handling**: Processing failures and retry logic
+ * 5. **Performance**: High-volume event processing optimization
+ * 
+ * **Mock Strategy:**
+ * - Webhook signature simulation and validation
+ * - Various event type generation and testing
+ * - Error injection for processing failures
+ * - Performance monitoring for high-volume scenarios
+ * 
+ * **Quality Standards:**
+ * - 100% signature validation accuracy
+ * - Complete idempotency for all event types
+ * - Sub-100ms event processing time
+ * - Zero duplicate event processing
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

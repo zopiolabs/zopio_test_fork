@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Payments Package Tests - End-to-End Integration
+ * 
+ * Comprehensive integration test suite covering complete payment workflows from
+ * client setup through webhook processing with Stripe service integration.
+ * 
+ * **Test Scope:**
+ * - Complete payment workflows (setup → processing → confirmation → webhook)
+ * - Stripe client and webhook integration coordination
+ * - Multi-step payment operations with state management
+ * - Error recovery and retry mechanisms across payment flows
+ * - Real-world payment scenarios and edge case handling
+ * 
+ * **Test Categories:**
+ * 1. **Full Workflow**: Complete payment processing from start to finish
+ * 2. **Service Integration**: Stripe client and webhook coordination
+ * 3. **Error Recovery**: Payment failures, retries, and fallback mechanisms
+ * 4. **State Management**: Payment state tracking and consistency
+ * 5. **Real-World Scenarios**: E-commerce, subscriptions, and refund workflows
+ * 
+ * **Mock Strategy:**
+ * - Complete Stripe SDK mocking to prevent actual payment processing
+ * - Webhook event simulation for comprehensive testing
+ * - Error injection for failure scenario validation
+ * - State tracking for consistency verification
+ * 
+ * **Quality Standards:**
+ * - Zero actual payment processing to prevent costs and charges
+ * - 95%+ success rate for error recovery scenarios
+ * - Complete state consistency throughout payment workflows
+ * - Sub-500ms average response time for payment operations
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

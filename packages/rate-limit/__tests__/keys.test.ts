@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Rate-Limit Package Tests - Redis-Based Rate Limiting
+ * 
+ * Test suite for rate limiting functionality using Upstash Redis with
+ * comprehensive validation, security, and performance optimization.
+ * 
+ * **Test Scope:**
+ * - Rate limiting implementation with Redis backend
+ * - Client configuration and connection management
+ * - Security validation and abuse prevention
+ * - Performance optimization for high-volume scenarios
+ * - Error handling and fallback mechanisms
+ * 
+ * **Test Categories:**
+ * 1. **Rate Limiting**: Request throttling and limit enforcement
+ * 2. **Redis Integration**: Connection management and data operations
+ * 3. **Security**: Abuse prevention and attack mitigation
+ * 4. **Performance**: High-volume processing and optimization
+ * 5. **Error Handling**: Service failures and recovery mechanisms
+ * 
+ * **Mock Strategy:**
+ * - Complete Redis SDK mocking to prevent actual connections
+ * - Rate limit scenario simulation and validation
+ * - Error injection for comprehensive failure testing
+ * - Performance monitoring for optimization validation
+ * 
+ * **Quality Standards:**
+ * - Zero actual Redis connections to prevent costs
+ * - Sub-10ms rate limit check response time
+ * - 100% accuracy in limit enforcement
+ * - Complete security validation for abuse prevention
  */
 
 import { describe, expect, it } from 'vitest';

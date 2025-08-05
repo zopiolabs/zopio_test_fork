@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Database Tests - Integration Tests
+ * 
+ * Cross-functional integration tests for database operations combining multiple
+ * components including client initialization, query execution, transaction management,
+ * and error handling in realistic usage scenarios.
+ * 
+ * **Test Scope:**
+ * - End-to-end database operation workflows
+ * - Client initialization and configuration integration
+ * - Query execution with transaction management
+ * - Error handling across multiple operation layers
+ * - Performance characteristics of combined operations
+ * - Real-world usage pattern validation
+ * 
+ * **Test Categories:**
+ * 1. **End-to-End Workflows**: Complete database operation sequences
+ * 2. **Client Integration**: Initialization, configuration, lifecycle management
+ * 3. **Query Integration**: CRUD operations with proper error handling
+ * 4. **Transaction Integration**: Multi-operation transactions with rollback
+ * 5. **Error Propagation**: Error handling across multiple layers
+ * 6. **Performance Integration**: Real-world performance characteristics
+ * 7. **Configuration Integration**: Environment-based setup validation
+ * 
+ * **Mock Strategy:**
+ * - Environment configuration mocking for testing scenarios
+ * - Database connection mocking for controlled testing
+ * - Complex operation simulation with realistic data
+ * 
+ * **Quality Standards:**
+ * - Seamless integration between database components
+ * - Consistent error handling patterns across operations
+ * - Acceptable performance for real-world usage patterns
+ * 
  * SPDX-License-Identifier: MIT
  */
 

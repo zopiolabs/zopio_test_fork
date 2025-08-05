@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Webhooks Package Tests - Svix Webhook Management
+ * 
+ * Test suite for webhook functionality including event delivery,
+ * signature validation, and comprehensive management with Svix integration.
+ * 
+ * **Test Scope:**
+ * - Webhook event creation and delivery management
+ * - Signature validation and security verification
+ * - Svix client configuration and integration
+ * - Event processing and retry mechanisms
+ * - Performance optimization for high-volume scenarios
+ * 
+ * **Test Categories:**
+ * 1. **Event Management**: Webhook creation, delivery, and tracking
+ * 2. **Signature Validation**: Security verification and authentication
+ * 3. **Svix Integration**: Client setup and service coordination
+ * 4. **Processing**: Event handling and retry mechanisms
+ * 5. **Performance**: High-volume event processing optimization
+ * 
+ * **Mock Strategy:**
+ * - Complete Svix SDK mocking to prevent actual webhook calls
+ * - Event delivery simulation with various scenarios
+ * - Signature validation testing with security focus
+ * - Error injection for comprehensive failure testing
+ * 
+ * **Quality Standards:**
+ * - Zero actual webhook deliveries to prevent costs
+ * - Sub-50ms event processing time
+ * - 100% signature validation accuracy
+ * - Complete delivery reliability with retry mechanisms
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

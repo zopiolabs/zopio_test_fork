@@ -1,4 +1,44 @@
 /**
+ * @fileoverview Auth-Log Tests - File System Adapter Persistence
+ * 
+ * Comprehensive test suite for the file logging adapter, validating persistent log storage,
+ * file system operations, and data integrity for enterprise logging requirements.
+ * 
+ * **Test Scope:**
+ * - File system write operations and data persistence
+ * - JSON serialization for file storage (compact format)
+ * - File path security and traversal prevention
+ * - Concurrent write safety and data integrity
+ * - Large payload handling and performance
+ * - File system error handling and recovery
+ * 
+ * **Test Categories:**
+ * 1. **File Operations**: Basic file writing and append operations
+ * 2. **Data Serialization**: JSON formatting optimized for file storage
+ * 3. **Concurrency**: Thread-safe concurrent file writes
+ * 4. **Error Handling**: File system permissions, disk space, and I/O errors
+ * 5. **Performance**: Large object serialization and high-volume logging
+ * 6. **Security**: Path traversal prevention and file system security
+ * 
+ * **Mock Strategy:**
+ * - Node.js fs.appendFileSync mocking for file operation interception
+ * - File system error simulation (ENOSPC, EACCES, EISDIR)
+ * - Concurrent operation testing through Promise-based execution
+ * - Large data structure generation for performance testing
+ * 
+ * **Quality Standards:**
+ * - Sub-200ms performance for large object serialization
+ * - Consistent ./logs/access.log file path usage
+ * - Compact JSON formatting (no pretty-printing for files)
+ * - Proper error propagation for file system failures
+ * 
+ * @requires vitest ^1.0.0
+ * @requires node:fs For file system operations
+ * @since 1.0.0
+ * @author Auth-Log Team
+ */
+
+/**
  * SPDX-License-Identifier: MIT
  */
 

@@ -1,8 +1,43 @@
 /**
+ * @fileoverview Auth-RBAC Tests - React Hook for Access Control
+ * 
+ * Comprehensive test suite for the useAccess React hook that provides client-side
+ * authorization checking with SWR-based caching and real-time permission updates.
+ * Tests cover loading states, error handling, parameter encoding, and hook behavior.
+ * 
+ * **Test Scope:**
+ * - Hook loading states and initial behavior
+ * - Access granted/denied scenarios with reason codes
+ * - Error handling and graceful degradation
+ * - SWR key generation and parameter encoding
+ * - Record ID handling and field-specific queries
+ * - Hook re-rendering and memoization behavior
+ * 
+ * **Test Categories:**
+ * 1. **Loading States**: Initial loading, data transitions, error states
+ * 2. **Access Results**: Granted access, denied access with reasons
+ * 3. **Error Handling**: Network errors, API failures, graceful fallbacks
+ * 4. **Key Generation**: URL parameter encoding, record IDs, field queries
+ * 5. **Parameter Handling**: Special characters, complex IDs, null records
+ * 6. **Hook Behavior**: Re-rendering consistency, memoization, prop changes
+ * 
+ * **Mock Strategy:**
+ * - Mock SWR library to control data flow and timing
+ * - createTestWrapper for React Testing Library integration
+ * - Deterministic mock responses for predictable testing
+ * - Various parameter combinations for key generation testing
+ * 
+ * **Quality Standards:**
+ * - Loading states must be handled gracefully
+ * - Error conditions must default to access denied
+ * - SWR keys must be deterministic and correctly encoded
+ * - Hook behavior must be consistent across re-renders
+ * - All parameter combinations must generate valid API calls
+ * 
  * SPDX-License-Identifier: MIT
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useAccess } from '../hooks/use-access.js';
 import { createTestWrapper } from '@repo/testing';
@@ -13,11 +48,22 @@ vi.mock('swr', () => ({
   default: mockUseSWR,
 }));
 
-describe('useAccess', () => {
+/**
+ * @describe useAccess React Hook Tests
+ * 
+ * Comprehensive test suite for the useAccess React hook that provides client-side
+ * authorization checking with SWR integration and real-time updates.
+ */
+describe('useAccess React Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
+  /**
+   * @test Initial Loading State
+   * 
+   * Verifies that the hook returns the correct loading state when data is being fetched.
+   */
   it('should return loading state initially', () => {
     mockUseSWR.mockReturnValue({
       data: undefined,
@@ -39,6 +85,11 @@ describe('useAccess', () => {
     });
   });
 
+  /**
+   * @test Successful Access Grant
+   * 
+   * Verifies that the hook correctly processes positive authorization responses from the API.
+   */
   it('should return access granted when API returns true', () => {
     mockUseSWR.mockReturnValue({
       data: { can: true },
@@ -60,6 +111,11 @@ describe('useAccess', () => {
     });
   });
 
+  /**
+   * @test Access Denial with Reason
+   * 
+   * Verifies that the hook correctly processes negative authorization responses with explanatory reasons.
+   */
   it('should return access denied when API returns false with reason', () => {
     mockUseSWR.mockReturnValue({
       data: { can: false, reason: 'Insufficient permissions' },
@@ -81,6 +137,11 @@ describe('useAccess', () => {
     });
   });
 
+  /**
+   * @test Error Handling
+   * 
+   * Verifies that the hook gracefully handles network and API errors with safe defaults.
+   */
   it('should handle errors gracefully', () => {
     mockUseSWR.mockReturnValue({
       data: undefined,
@@ -346,6 +407,111 @@ describe('useAccess', () => {
       can: true,
       reason: 'Admin access',
       loading: false,
+    });
+  });
+
+  /**
+   * @describe Advanced Hook Behavior Tests
+   * 
+   * Tests advanced scenarios including parameter validation, edge cases,
+   * and integration with various SWR states.
+   */
+  describe('advanced hook behavior', () => {
+    it('should handle SWR loading to error transition', () => {
+      // First render - loading
+      mockUseSWR.mockReturnValueOnce({
+        data: undefined,
+        error: undefined,
+      });
+
+      const { result, rerender } = renderHook(
+        () => useAccess({
+          resource: 'users',
+          action: 'read',
+        }),
+        { wrapper: createTestWrapper() }
+      );
+
+      expect(result.current.loading).toBe(true);
+      expect(result.current.can).toBe(false);
+
+      // Second render - error
+      mockUseSWR.mockReturnValueOnce({
+        data: undefined,
+        error: new Error('API Error'),
+      });
+
+      rerender();
+
+      expect(result.current.loading).toBe(false);
+      expect(result.current.can).toBe(false);
+      expect(result.current.reason).toBe('Unknown error');
+    });
+
+    it('should handle SWR loading to success transition', () => {
+      // First render - loading
+      mockUseSWR.mockReturnValueOnce({
+        data: undefined,
+        error: undefined,
+      });
+
+      const { result, rerender } = renderHook(
+        () => useAccess({
+          resource: 'users',
+          action: 'read',
+        }),
+        { wrapper: createTestWrapper() }
+      );
+
+      expect(result.current.loading).toBe(true);
+
+      // Second render - success
+      mockUseSWR.mockReturnValueOnce({
+        data: { can: true, reason: 'Success' },
+        error: undefined,
+      });
+
+      rerender();
+
+      expect(result.current.loading).toBe(false);
+      expect(result.current.can).toBe(true);
+      expect(result.current.reason).toBe('Success');
+    });
+
+    it('should handle malformed API responses', () => {
+      mockUseSWR.mockReturnValue({
+        data: { invalid: 'response' }, // Missing 'can' property
+        error: undefined,
+      });
+
+      const { result } = renderHook(
+        () => useAccess({
+          resource: 'users',
+          action: 'read',
+        }),
+        { wrapper: createTestWrapper() }
+      );
+
+      // Should handle malformed response gracefully
+      expect(result.current.can).toBe(false);
+      expect(result.current.loading).toBe(false);
+    });
+
+    it('should handle empty string parameters', () => {
+      mockUseSWR.mockReturnValue({
+        data: { can: true },
+        error: undefined,
+      });
+
+      renderHook(
+        () => useAccess({
+          resource: '',
+          action: '',
+        }),
+        { wrapper: createTestWrapper() }
+      );
+
+      expect(mockUseSWR).toHaveBeenCalledWith('/api/access?resource=&action=');
     });
   });
 });

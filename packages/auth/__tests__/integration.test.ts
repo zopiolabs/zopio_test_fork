@@ -1,39 +1,37 @@
 /**
- * @fileoverview Integration Tests for Auth Package
+ * @fileoverview Auth Package Tests - Integration Tests
  * 
- * Comprehensive integration test suite that validates the interaction between different
- * components of the auth package and ensures they work together correctly in realistic
- * scenarios. These tests focus on end-to-end workflows and cross-component integration.
+ * Comprehensive integration test suite validating interaction between different
+ * components of the auth package in realistic end-to-end scenarios. Tests focus
+ * on cross-component workflows, data flow, and authentication state management.
  * 
- * **Integration Test Scope:**
- * - Middleware integration with token verification
- * - Component integration with authentication providers
+ * **Test Scope:**
+ * - Middleware integration with token verification services
+ * - React component integration with authentication providers
  * - Server-client authentication flow coordination
- * - Error handling across component boundaries
- * - Authentication state management across components
+ * - Cross-component error handling and propagation
+ * - Multi-tenant and advanced authentication workflows
  * 
  * **Test Categories:**
- * 1. **Middleware Integration**: Tests middleware chain with authentication
+ * 1. **Middleware Integration**: Authentication middleware chain processing
  * 2. **Component Integration**: React component rendering with auth context
- * 3. **Server-Client Integration**: Authentication flow between server/client
- * 4. **Error Handling Integration**: Error propagation across auth boundaries
- * 5. **Authentication Flow**: Complete sign-in/sign-up workflows
+ * 3. **Server-Client Integration**: Authentication flow coordination
+ * 4. **Performance Integration**: Concurrent requests, rate limiting, caching
+ * 5. **Advanced Workflows**: OAuth2, magic links, 2FA, multi-tenant scenarios
  * 
  * **Mock Strategy:**
- * - Uses controlled mocks to simulate external dependencies (Clerk)
- * - Tests actual integration logic without external service dependencies
- * - Validates data flow between components
- * - Ensures error conditions are handled gracefully
+ * - Mock external dependencies (Clerk) for controlled testing
+ * - Test actual integration logic with realistic data flows
+ * - Simulate network conditions and error scenarios
+ * - Validate cross-component state consistency
  * 
- * **Integration Test Principles:**
- * - Test component interactions, not isolated units
- * - Validate data flow and state management
- * - Ensure error handling works across component boundaries
- * - Test realistic user workflows and scenarios
- * - Verify authentication state consistency
+ * **Quality Standards:**
+ * - End-to-end workflow validation with realistic scenarios
+ * - Cross-component data flow and state management verification
+ * - Performance testing under concurrent load conditions
+ * - Security validation across authentication boundaries
+ * - Error handling consistency across all integration points
  * 
- * @author Zopio Auth Team
- * @since 1.0.0
  * SPDX-License-Identifier: MIT
  */
 
@@ -560,8 +558,11 @@ describe('Auth Package Integration', () => {
       render(React.createElement(TestComponent));
 
       expect(MockSignIn).toHaveBeenCalledWith(
-        expect.objectContaining(testProps),
-        expect.any(Object)
+        expect.objectContaining({
+          ...testProps,
+          children: 'Themed Sign In'
+        }),
+        undefined
       );
     });
   });
@@ -1075,21 +1076,14 @@ describe('Auth Package Integration', () => {
       const environments = ['development', 'staging', 'production'];
       
       environments.forEach(env => {
-        Object.defineProperty(process.env, 'NODE_ENV', {
-          value: env,
-          writable: true,
-        });
+        vi.stubEnv('NODE_ENV', env);
         
         // Mock environment-specific behavior
         mockVerifyClerkToken.mockResolvedValue(`${env}_user`);
         
         expect(process.env.NODE_ENV).toBe(env);
-      });
-
-      // Reset
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'test',
-        writable: true,
+        
+        vi.unstubAllEnvs();
       });
     });
 

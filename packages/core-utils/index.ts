@@ -6,6 +6,46 @@
  * Core utilities for Zopio modules
  */
 
+// Regex patterns for string utilities - hoisted to module level for performance
+/** Matches camelCase identifiers starting with lowercase */
+const CAMEL_CASE_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
+
+/** Matches any uppercase letter */
+const UPPERCASE_PATTERN = /[A-Z]/;
+
+/** Matches whitespace characters (spaces, tabs, newlines) */
+const WHITESPACE_PATTERN = /[\s\t\n]+/g;
+
+/** Matches separators (hyphens and underscores) */
+const SEPARATOR_PATTERN = /[-_]+/g;
+
+/** Matches lowercase followed by uppercase for PascalCase handling */
+const PASCAL_CASE_BOUNDARY_PATTERN = /([a-z])([A-Z])/g;
+
+/** Matches word parts for transformation (prefix, first letter, rest) */
+const WORD_TRANSFORM_PATTERN = /^([^a-zA-Z]*)([a-zA-Z])(.*)$/;
+
+/** Matches strings with all lowercase letters */
+const ALL_LOWERCASE_PATTERN = /^[a-z]+$/;
+
+/** Matches strings with all uppercase letters */
+const ALL_UPPERCASE_PATTERN = /^[A-Z]+$/;
+
+/** Matches strings with single capital letter followed by lowercase */
+const SINGLE_CAPITAL_PATTERN = /^[A-Z][a-z]+$/;
+
+/** Matches uppercase letters for kebab-case conversion */
+const UPPERCASE_FOR_KEBAB_PATTERN = /([A-Z])/g;
+
+/** Matches leading dash */
+const LEADING_DASH_PATTERN = /^-/;
+
+/** Matches duplicate dashes */
+const DUPLICATE_DASH_PATTERN = /-+/g;
+
+/** Matches leading and trailing dashes */
+const LEADING_TRAILING_DASH_PATTERN = /^-+|-+$/g;
+
 /**
  * Logger utility for consistent logging across Zopio modules
  */
@@ -192,25 +232,24 @@ export const stringUtils = {
     }
 
     // Check if string is already in camelCase (starts with lowercase, has uppercase inside)
-    const camelCasePattern = /^[a-z][a-zA-Z0-9]*$/;
-    const hasUpperCase = /[A-Z]/;
-    if (camelCasePattern.test(trimmed) && hasUpperCase.test(trimmed)) {
+    if (CAMEL_CASE_PATTERN.test(trimmed) && UPPERCASE_PATTERN.test(trimmed)) {
       return trimmed;
     }
 
     // Replace whitespace (spaces, tabs, newlines) with a delimiter
-    const normalized = trimmed.replace(/[\s\t\n]+/g, ' ');
+    const normalized = trimmed.replace(WHITESPACE_PATTERN, ' ');
 
     // Replace separators (-, _) with spaces, preserving special characters like @ and .
-    const withSpaces = normalized.replace(/[-_]+/g, ' ');
+    const withSpaces = normalized.replace(SEPARATOR_PATTERN, ' ');
 
     // Also handle PascalCase by inserting spaces before capital letters
-    const withPascalSpaces = withSpaces.replace(/([a-z])([A-Z])/g, '$1 $2');
+    const withPascalSpaces = withSpaces.replace(
+      PASCAL_CASE_BOUNDARY_PATTERN,
+      '$1 $2'
+    );
 
     // Split by spaces and process each word
     const parts = withPascalSpaces.split(' ').filter((part) => part.length > 0);
-
-    const transformPart = /^([^a-zA-Z]*)([a-zA-Z])(.*)$/;
 
     return parts
       .map((part, index) => {
@@ -225,7 +264,7 @@ export const stringUtils = {
 
         // For other parts, capitalize first letter and lowercase the rest
         // Only transform alphabetic characters
-        const match = part.match(transformPart);
+        const match = part.match(WORD_TRANSFORM_PATTERN);
         if (match) {
           const [, prefix, firstLetter, rest] = match;
           return prefix + firstLetter.toUpperCase() + rest.toLowerCase();
@@ -249,14 +288,10 @@ export const stringUtils = {
     }
 
     // Check if it's a single word (all lowercase, all uppercase, or single capital)
-    const allLowerCase = /^[a-z]+$/;
-    const allUpperCase = /^[A-Z]+$/;
-    const singleCapital = /^[A-Z][a-z]+$/;
-
     if (
-      allLowerCase.test(trimmed) ||
-      allUpperCase.test(trimmed) ||
-      singleCapital.test(trimmed)
+      ALL_LOWERCASE_PATTERN.test(trimmed) ||
+      ALL_UPPERCASE_PATTERN.test(trimmed) ||
+      SINGLE_CAPITAL_PATTERN.test(trimmed)
     ) {
       return trimmed.toLowerCase();
     }
@@ -264,17 +299,17 @@ export const stringUtils = {
     return (
       trimmed
         // Insert hyphens before each uppercase letter
-        .replace(/([A-Z])/g, '-$1')
+        .replace(UPPERCASE_FOR_KEBAB_PATTERN, '-$1')
         // Handle the start of string
-        .replace(/^-/, '')
+        .replace(LEADING_DASH_PATTERN, '')
         // Replace whitespace (spaces, tabs, newlines) with dashes
-        .replace(/[\s\t\n]+/g, '-')
+        .replace(WHITESPACE_PATTERN, '-')
         // Remove duplicate hyphens
-        .replace(/-+/g, '-')
+        .replace(DUPLICATE_DASH_PATTERN, '-')
         // Convert to lowercase
         .toLowerCase()
         // Remove leading/trailing hyphens
-        .replace(/^-+|-+$/g, '')
+        .replace(LEADING_TRAILING_DASH_PATTERN, '')
     );
   },
 };

@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Observability Package Tests - Sentry Client Initialization
+ * 
+ * Test suite for Sentry client-side initialization covering configuration validation,
+ * replay integration, error handling, and performance optimization.
+ * 
+ * **Test Scope:**
+ * - Sentry client initialization with comprehensive configuration options
+ * - DSN validation and environment-based setup
+ * - Replay integration configuration for session recording
+ * - Error handling during initialization and service failures
+ * - Performance optimization and memory management
+ * 
+ * **Test Categories:**
+ * 1. **Successful Initialization**: Valid DSN and complete configuration setup
+ * 2. **DSN Validation**: Invalid/missing DSN handling and fallback behavior
+ * 3. **Configuration Options**: Timeout, sampling rates, and performance settings
+ * 4. **Error Handling**: Initialization failures, service errors, and exception handling
+ * 5. **Performance**: Memory management, rapid calls, and resource optimization
+ * 
+ * **Mock Strategy:**
+ * - Complete Sentry Next.js SDK mocking to prevent actual service calls
+ * - Environment configuration simulation for various scenarios
+ * - Error injection for comprehensive failure testing
+ * - Performance monitoring for optimization validation
+ * 
+ * **Quality Standards:**
+ * - Zero actual Sentry calls to prevent quota usage and costs
+ * - Complete error handling for all initialization failure scenarios
+ * - Sub-50ms initialization time for optimal performance
+ * - Comprehensive replay integration with privacy-first configuration
  */
 
 import { init, replayIntegration } from '@sentry/nextjs';

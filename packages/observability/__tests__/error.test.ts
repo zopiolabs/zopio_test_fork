@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Observability Package Tests - Error Parsing & Sentry Integration
+ * 
+ * Comprehensive test suite for error parsing utility covering message extraction,
+ * Sentry integration, performance optimization, and edge case handling.
+ * 
+ * **Test Scope:**
+ * - Error message extraction from various error types and objects
+ * - Sentry exception capturing and logging integration
+ * - Complex error object handling (nested, circular, typed errors)
+ * - Performance optimization for large errors and high-volume scenarios
+ * - Real-world error scenarios (fetch, async, validation, network errors)
+ * 
+ * **Test Categories:**
+ * 1. **Message Extraction**: Error instances, objects, primitives, and edge cases
+ * 2. **Complex Objects**: Nested errors, circular references, and typed errors
+ * 3. **Sentry Integration**: Exception capturing, logging, and failure handling
+ * 4. **Performance**: Large messages, memory management, and rapid processing
+ * 5. **Real-World Scenarios**: Fetch errors, async failures, validation errors
+ * 
+ * **Mock Strategy:**
+ * - Complete Sentry SDK mocking to prevent actual error reporting
+ * - Logging system mocking for integrated error tracking
+ * - Performance simulation for optimization validation
+ * - Error injection for comprehensive failure testing
+ * 
+ * **Quality Standards:**
+ * - Zero actual Sentry reports to prevent quota usage
+ * - Sub-100ms processing time for large error messages
+ * - Complete handling for all JavaScript error types and edge cases
+ * - Graceful degradation when Sentry or logging services fail
  */
 
 import { captureException } from '@sentry/nextjs';

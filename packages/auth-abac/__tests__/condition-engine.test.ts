@@ -2,6 +2,34 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @fileoverview ABAC Engine Tests - Condition Engine Logic
+ * 
+ * Comprehensive test suite for the Attribute-Based Access Control (ABAC) condition engine.
+ * Validates complex conditional logic evaluation, rule composition, and dynamic condition resolution.
+ * 
+ * **Test Scope:**
+ * - Complex conditional logic evaluation with boolean operators
+ * - Dynamic condition compilation and execution from DSL specifications
+ * - Nested condition structures and rule composition patterns
+ * 
+ * **Test Categories:**
+ * 1. **Basic Condition Evaluation**: Simple boolean logic and comparison operators
+ * 2. **Complex Logic Chains**: AND/OR/NOT combinations with nested expressions
+ * 3. **Dynamic Condition Building**: Runtime condition generation from DSL rules
+ * 4. **Context-Aware Evaluation**: Condition evaluation with dynamic context injection
+ * 
+ * **Mock Strategy:**
+ * - Mock condition engine for controlled evaluation scenarios
+ * - Synthetic DSL rule generation for comprehensive condition testing
+ * - Context simulation with various attribute combinations and edge cases
+ * 
+ * **Quality Standards:**
+ * - 100% accuracy in boolean logic evaluation and operator precedence
+ * - Robust error handling for malformed condition expressions
+ * - Performance optimization for deeply nested condition structures
+ */
+
 import { describe, it, expect, vi } from 'vitest';
 import type { PermissionRule } from '@repo/auth-rbac';
 

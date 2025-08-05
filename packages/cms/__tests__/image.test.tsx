@@ -1,41 +1,35 @@
 /**
- * @module image.test
- * @description Comprehensive test suite for CMS Image component security and optimization
+ * @fileoverview CMS Package Tests - Image Component Security & Performance
  * 
- * Test Coverage:
- * - ✅ Image rendering and optimization processing workflows
- * - ✅ Security validation for image URLs and sources (P0 Critical)
- * - ✅ Malicious URL prevention (javascript:, data:, file: protocols)
- * - ✅ Image security validation and metadata processing
- * - ✅ Responsive image optimization and performance
- * - ✅ Accessibility compliance for images (WCAG 2.1 AA)
- * - ✅ Image dimension validation and security constraints
- * - ✅ Blur placeholder security and data validation
- * - ✅ Performance optimization patterns and metrics
- * - ✅ Error handling and recovery mechanisms
+ * Advanced test suite for CMS Image component covering comprehensive security validation,
+ * performance optimization, and accessibility with BaseHub Next.js integration.
  * 
- * Security Priorities (P0 - Critical):
- * Image components represent a critical attack vector for XSS, CSRF, and data exfiltration.
- * This test suite ensures comprehensive protection against:
- * - Malicious image URLs that could execute scripts or access local files
- * - Image metadata exploitation for information disclosure
- * - Resource exhaustion attacks through oversized images
- * - Blur placeholder data corruption and exploitation
- * - Cross-origin attacks through malicious image sources
+ * **Test Scope:**
+ * - Image rendering and Next.js optimization integration
+ * - Multi-protocol URL security validation (javascript:, data:, file:)
+ * - Resource exhaustion prevention and dimension constraints
+ * - Responsive image optimization and Core Web Vitals impact
+ * - Accessibility compliance with WCAG 2.1 AA standards
+ * - Blur placeholder security and data validation
  * 
- * Image Security Architecture:
- * - Multi-layer URL validation: protocol → domain → path → parameters
- * - Content Security Policy (CSP) compliance for image sources
- * - Resource constraint validation for dimensions, file size, and format
- * - Metadata sanitization and security attribute enforcement
- * - Performance-focused loading strategies with security boundaries
+ * **Test Categories:**
+ * 1. **URL Security**: Protocol validation, malicious URL blocking, CSP compliance
+ * 2. **Performance Optimization**: Lazy loading, priority loading, responsive images
+ * 3. **Resource Protection**: Dimension validation, memory efficiency, loading states
+ * 4. **Accessibility**: Alt text validation, screen reader support, loading states
+ * 5. **Real-World Usage**: E-commerce, UGC, blog content scenarios
  * 
- * Performance & Optimization Focus:
- * - Next.js Image component integration for automatic optimization
- * - Responsive image delivery with security-aware srcset generation
- * - Lazy loading implementation with security context preservation
- * - Blur placeholder generation and validation with performance metrics
- * - Core Web Vitals optimization (LCP, CLS) with security boundaries
+ * **Mock Strategy:**
+ * - BaseHub Next.js Image mocked with comprehensive security simulation
+ * - Multi-layered security validation with protocol and dimension checking
+ * - Performance monitoring with Core Web Vitals impact simulation
+ * - Test data factories for various image usage scenarios
+ * 
+ * **Quality Standards:**
+ * - Zero tolerance for malicious URL execution or local file access
+ * - Sub-100ms render time with security validation enabled
+ * - Complete CSP compliance and CSRF protection
+ * - 100% accessibility compliance with meaningful alt text validation
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

@@ -1,4 +1,39 @@
 /**
+ * @fileoverview Auth-RBAC Tests - Performance and Scalability
+ * 
+ * Performance test suite for the RBAC system focusing on scalability, memory usage,
+ * and response times under various load conditions. Tests critical performance characteristics
+ * that impact production authorization systems.
+ * 
+ * **Test Scope:**
+ * - Large permission rule sets (1000+ rules)
+ * - Complex field permission hierarchies
+ * - Deeply nested DSL rule structures
+ * - Concurrent evaluation scenarios
+ * - Memory usage patterns and leak detection
+ * - Worst-case performance scenarios
+ * 
+ * **Test Categories:**
+ * 1. **Large Permission Sets**: 1000+ rules with early/late matching scenarios
+ * 2. **Complex Field Permissions**: Multi-level field hierarchies with 500+ rules
+ * 3. **Concurrent Evaluations**: Parallel permission checks without interference
+ * 4. **Memory Patterns**: Memory stability, large context objects, repeated evaluations
+ * 5. **Worst-Case Scenarios**: No matches, expensive conditions, failing conditions
+ * 6. **Scalability Benchmarks**: Linear performance scaling validation
+ * 
+ * **Mock Strategy:**
+ * - Generated large rule sets with controlled complexity
+ * - Realistic user contexts with varying roles and attributes
+ * - Performance timing with permissionTestUtils integration
+ * - Memory usage monitoring via process.memoryUsage()
+ * 
+ * **Quality Standards:**
+ * - Single permission evaluation: < 50ms
+ * - 1000 rule evaluation: < 100ms
+ * - Memory growth: < 10MB over 10k iterations
+ * - Concurrent evaluations: < 200ms for 100 parallel checks
+ * - Performance scaling must be sub-linear
+ * 
  * SPDX-License-Identifier: MIT
  */
 

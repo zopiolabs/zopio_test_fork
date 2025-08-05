@@ -1,4 +1,44 @@
 /**
+ * @fileoverview Auth-Log Tests - Core Logger Functions
+ * 
+ * Comprehensive test suite for the core logging functions, validating the primary
+ * interface for access attempt logging and adapter delegation mechanisms.
+ * 
+ * **Test Scope:**
+ * - Core logAccessAttempt function behavior
+ * - Adapter delegation and configuration integration
+ * - Input validation and data pass-through
+ * - Error handling and graceful degradation
+ * - Concurrent logging operations
+ * - Integration with various adapter types
+ * 
+ * **Test Categories:**
+ * 1. **Core Functionality**: Basic logging operation validation
+ * 2. **Data Handling**: Various log entry formats and edge cases
+ * 3. **Adapter Integration**: Proper delegation to active logger
+ * 4. **Error Handling**: Configuration failures and adapter errors
+ * 5. **Performance**: Concurrent operations and throughput testing
+ * 6. **Configuration Integration**: Dynamic adapter switching validation
+ * 
+ * **Mock Strategy:**
+ * - Configuration module mocking for adapter control
+ * - Generic logger interface mocking for behavior validation
+ * - Error injection for failure scenario testing
+ * - Async operation simulation for performance testing
+ * 
+ * **Quality Standards:**
+ * - Zero data modification during logging operations
+ * - Proper error propagation from configuration layer
+ * - Support for both synchronous and asynchronous adapters
+ * - Thread-safe concurrent logging operations
+ * 
+ * @requires vitest ^1.0.0
+ * @requires ../config.js For adapter configuration
+ * @since 1.0.0
+ * @author Auth-Log Team
+ */
+
+/**
  * SPDX-License-Identifier: MIT
  */
 

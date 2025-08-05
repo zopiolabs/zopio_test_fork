@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Observability Package Tests - Sentry Instrumentation Setup
+ * 
+ * Test suite for Sentry instrumentation initialization covering Next.js runtime
+ * detection, configuration management, and server-side monitoring setup.
+ * 
+ * **Test Scope:**
+ * - Instrumentation function factory pattern and register function creation
+ * - Next.js runtime environment detection (nodejs, edge, unknown)
+ * - Server-side Sentry configuration with performance optimization
+ * - Error handling during instrumentation setup and service failures
+ * - Multiple initialization patterns and serverless compatibility
+ * 
+ * **Test Categories:**
+ * 1. **Function Structure**: Register function creation and callable patterns
+ * 2. **Runtime Detection**: Next.js environment handling (nodejs, edge, unknown)
+ * 3. **Configuration**: Server-optimized Sentry setup with tracing disabled
+ * 4. **Error Handling**: Initialization failures, environment errors, and graceful degradation
+ * 5. **Performance**: Rapid calls, memory management, and serverless optimization
+ * 
+ * **Mock Strategy:**
+ * - Complete Sentry Next.js SDK mocking to prevent actual service calls
+ * - Environment variable simulation for runtime testing
+ * - Error injection for comprehensive failure scenarios
+ * - Performance monitoring for serverless optimization validation
+ * 
+ * **Quality Standards:**
+ * - Zero actual Sentry calls to prevent quota usage and costs
+ * - Complete runtime environment support with proper fallbacks
+ * - Sub-50ms registration time for serverless optimization
+ * - Consistent behavior across all supported Next.js runtime environments
  */
 
 import { init } from '@sentry/nextjs';

@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Design System Tests - Select Components
+ * 
+ * Comprehensive test suite for the Select component system including Select, SelectContent,
+ * SelectItem, SelectTrigger, SelectValue, and other subcomponents. Validates dropdown behavior,
+ * keyboard navigation, accessibility features, and form integration patterns.
+ * 
+ * **Test Scope:**
+ * - Select dropdown rendering and compound component structure
+ * - Option selection and value management
+ * - Keyboard navigation (arrow keys, Enter, Escape)
+ * - Accessibility features (ARIA attributes, screen reader support)
+ * - Form integration and controlled/uncontrolled behavior
+ * - Trigger, content, and item component interactions
+ * 
+ * **Test Categories:**
+ * 1. **Component Rendering**: DOM structure for all select components
+ * 2. **Dropdown Behavior**: Open/close states, option selection
+ * 3. **Keyboard Navigation**: Arrow keys, Enter, Escape, Tab navigation
+ * 4. **Form Integration**: Value handling, form submission, validation
+ * 5. **Accessibility**: ARIA compliance, screen reader announcements
+ * 6. **User Interactions**: Click, keyboard, focus management
+ * 7. **Edge Cases**: Empty states, disabled options, large datasets
+ * 
+ * **Mock Strategy:**
+ * - Vitest mocking for event handlers and selection callbacks
+ * - React Testing Library user events for realistic interactions
+ * - Async handling for dropdown animations and state transitions
+ * 
+ * **Quality Standards:**
+ * - Complete keyboard navigation coverage
+ * - WCAG accessibility compliance validation
+ * - Dropdown state management verification
+ * 
  * SPDX-License-Identifier: MIT
  */
 

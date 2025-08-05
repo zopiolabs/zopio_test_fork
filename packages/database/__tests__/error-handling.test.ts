@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Database Tests - Error Handling
+ * 
+ * Comprehensive test suite for database error handling including connection failures,
+ * query errors, constraint violations, and recovery mechanisms. Validates error
+ * classification, retry logic, and graceful degradation patterns.
+ * 
+ * **Test Scope:**
+ * - Database connection error handling and recovery
+ * - Query execution error classification and response
+ * - Constraint violation error parsing and user-friendly messages
+ * - Transaction rollback and error cleanup
+ * - Retry mechanisms with exponential backoff
+ * - Circuit breaker patterns for service protection
+ * 
+ * **Test Categories:**
+ * 1. **Connection Errors**: Network failures, authentication, timeouts
+ * 2. **Query Errors**: Syntax errors, invalid operations, schema mismatches
+ * 3. **Constraint Violations**: Unique constraints, foreign keys, check constraints
+ * 4. **Transaction Errors**: Deadlocks, rollback scenarios, isolation failures
+ * 5. **Recovery Mechanisms**: Retry logic, exponential backoff, circuit breakers
+ * 6. **Error Classification**: Error type detection and appropriate responses
+ * 7. **Graceful Degradation**: Fallback strategies, partial functionality
+ * 
+ * **Mock Strategy:**
+ * - Database connection mocking for controlled error simulation
+ * - Prisma error mocking for different error types
+ * - Environment configuration mocking for testing scenarios
+ * 
+ * **Quality Standards:**
+ * - Comprehensive error classification and handling
+ * - No unhandled database errors or resource leaks
+ * - Appropriate retry strategies without infinite loops
+ * 
  * SPDX-License-Identifier: MIT
  */
 

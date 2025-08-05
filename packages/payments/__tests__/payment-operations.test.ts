@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Payments Package Tests - Payment Operations & Processing
+ * 
+ * Test suite for core payment operations including payment intents, methods,
+ * customer management, and transaction processing with Stripe integration.
+ * 
+ * **Test Scope:**
+ * - Payment intent creation, confirmation, and lifecycle management
+ * - Payment method handling and customer association
+ * - Transaction processing and status tracking
+ * - Error handling for payment failures and edge cases
+ * - Performance optimization for high-volume operations
+ * 
+ * **Test Categories:**
+ * 1. **Payment Intents**: Creation, confirmation, and status management
+ * 2. **Payment Methods**: Creation, attachment, and security handling
+ * 3. **Customer Operations**: Customer creation, updates, and association
+ * 4. **Transaction Processing**: Payment flow and state management
+ * 5. **Error Handling**: Payment failures, validation, and recovery
+ * 
+ * **Mock Strategy:**
+ * - Complete Stripe SDK mocking to prevent actual charges
+ * - Payment state simulation for comprehensive testing
+ * - Error injection for failure scenario validation
+ * - Performance monitoring for optimization
+ * 
+ * **Quality Standards:**
+ * - Zero actual payment processing to prevent charges
+ * - Complete error handling for all payment scenarios
+ * - Sub-200ms response time for payment operations
+ * - Comprehensive security validation for sensitive data
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Database Tests - Prisma Operations
+ * 
+ * Comprehensive test suite for Prisma ORM operations including CRUD operations,
+ * query optimization, relationship handling, and advanced Prisma features.
+ * Validates database interactions, query performance, and data integrity.
+ * 
+ * **Test Scope:**
+ * - Basic CRUD operations (Create, Read, Update, Delete)
+ * - Complex queries with joins and relationships
+ * - Query optimization and performance characteristics
+ * - Prisma-specific features (select, include, where conditions)
+ * - Data validation and constraint handling
+ * - Batch operations and transaction support
+ * 
+ * **Test Categories:**
+ * 1. **CRUD Operations**: Basic create, read, update, delete operations
+ * 2. **Complex Queries**: Joins, relationships, nested queries
+ * 3. **Query Optimization**: Performance, indexing, query efficiency
+ * 4. **Prisma Features**: select, include, where, orderBy operations
+ * 5. **Data Validation**: Schema validation, constraint checking
+ * 6. **Batch Operations**: Multiple record operations, bulk updates
+ * 7. **Error Handling**: Query errors, constraint violations
+ * 
+ * **Mock Strategy:**
+ * - Prisma client mocking for controlled database simulation
+ * - Environment configuration mocking for test scenarios
+ * - Data generation for comprehensive operation testing
+ * 
+ * **Quality Standards:**
+ * - Efficient query generation and execution
+ * - Proper error handling for all operation types
+ * - Data integrity maintenance across operations
+ * 
  * SPDX-License-Identifier: MIT
  */
 

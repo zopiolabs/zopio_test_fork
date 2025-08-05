@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Storage Package Tests - Cloud Storage Integration
+ * 
+ * Test suite for cloud storage functionality including file operations,
+ * security validation, and performance optimization.
+ * 
+ * **Test Scope:**
+ * - File upload, download, and management operations
+ * - Storage client configuration and connection management
+ * - Security validation and access control
+ * - Performance optimization for large file operations
+ * - Error handling and retry mechanisms
+ * 
+ * **Test Categories:**
+ * 1. **File Operations**: Upload, download, delete, and metadata management
+ * 2. **Client Configuration**: Storage service setup and authentication
+ * 3. **Security**: Access control, validation, and data protection
+ * 4. **Performance**: Large file handling and optimization
+ * 5. **Error Handling**: Network failures and recovery mechanisms
+ * 
+ * **Mock Strategy:**
+ * - Complete storage SDK mocking to prevent actual uploads
+ * - File operation simulation with various scenarios
+ * - Error injection for comprehensive failure testing
+ * - Performance monitoring for optimization validation
+ * 
+ * **Quality Standards:**
+ * - Zero actual storage operations to prevent costs
+ * - Sub-100ms operation response time for small files
+ * - 100% security validation for file access
+ * - Complete error handling for all failure scenarios
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

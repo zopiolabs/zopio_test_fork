@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Core Utils Tests - Async Utilities
+ * 
+ * Comprehensive test suite for asynchronous utility functions including safeAsync,
+ * retry mechanisms, timeout handling, and promise composition helpers. Validates
+ * error handling patterns, concurrency control, and async operation safety.
+ * 
+ * **Test Scope:**
+ * - Safe async operation wrappers (safeAsync, safePromise)
+ * - Retry mechanisms with exponential backoff
+ * - Timeout handling and operation cancellation
+ * - Promise composition utilities (parallel, sequential, race)
+ * - Error handling and recovery patterns
+ * - Concurrency limiting and rate limiting
+ * 
+ * **Test Categories:**
+ * 1. **Safe Operations**: safeAsync wrapper and error handling
+ * 2. **Retry Logic**: Exponential backoff, max attempts, failure handling
+ * 3. **Timeout Management**: Operation timeouts, cancellation, cleanup
+ * 4. **Promise Composition**: Parallel, sequential, race conditions
+ * 5. **Error Handling**: Error transformation, recovery strategies
+ * 6. **Concurrency Control**: Rate limiting, queue management
+ * 7. **Performance**: Large-scale async operations, memory management
+ * 
+ * **Mock Strategy:**
+ * - Vitest timers for timeout and retry testing
+ * - Promise mocking for controlled async behavior
+ * - Error simulation for failure scenario testing
+ * 
+ * **Quality Standards:**
+ * - Robust error handling without throwing unhandled rejections
+ * - Memory leak prevention in long-running operations
+ * - Proper cleanup and resource management
+ * 
  * SPDX-License-Identifier: MIT
  */
 

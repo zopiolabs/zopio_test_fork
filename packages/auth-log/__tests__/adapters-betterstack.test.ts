@@ -1,4 +1,44 @@
 /**
+ * @fileoverview Auth-Log Tests - BetterStack Adapter Integration
+ * 
+ * Comprehensive test suite for the BetterStack logging adapter, validating HTTP API
+ * integration, error handling, and network resilience in production environments.
+ * 
+ * **Test Scope:**
+ * - BetterStack logger creation and configuration
+ * - HTTP request formation and authentication
+ * - Network error handling and resilience
+ * - Message formatting and serialization
+ * - Performance under concurrent load
+ * - Security and malicious input handling
+ * 
+ * **Test Categories:**
+ * 1. **Logger Creation**: Configuration validation and instantiation
+ * 2. **HTTP Integration**: API request formation and response handling
+ * 3. **Error Handling**: Network failures, API errors, and graceful degradation
+ * 4. **Message Formatting**: Log entry transformation and serialization
+ * 5. **Performance**: Concurrent operations and large payload handling
+ * 6. **Integration Scenarios**: Real-world network conditions and endpoints
+ * 
+ * **Mock Strategy:**
+ * - Global fetch mocking for HTTP request interception
+ * - Process.stderr mocking for error output validation
+ * - Configurable response mocking for various API scenarios
+ * - Network condition simulation through delayed/failed responses
+ * 
+ * **Quality Standards:**
+ * - Sub-1000ms performance for large payloads
+ * - 100% error handling coverage for network failures
+ * - Proper HTTP header formation and authentication
+ * - Memory efficiency under high-volume logging
+ * 
+ * @requires vitest ^1.0.0
+ * @requires node:fs For file system operations
+ * @since 1.0.0
+ * @author Auth-Log Team
+ */
+
+/**
  * SPDX-License-Identifier: MIT
  */
 

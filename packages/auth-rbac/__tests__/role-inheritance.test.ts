@@ -1,4 +1,39 @@
 /**
+ * @fileoverview Auth-RBAC Tests - Role Inheritance Patterns
+ * 
+ * Comprehensive test suite for role-based inheritance patterns within the RBAC system.
+ * Tests various hierarchical role structures, dynamic role resolution, and context-aware
+ * role elevation scenarios commonly used in enterprise authorization systems.
+ * 
+ * **Test Scope:**
+ * - Hierarchical role inheritance (admin > editor > viewer)
+ * - Multi-level inheritance chains with diamond patterns
+ * - Role-based field permission inheritance
+ * - Context-aware role inheritance (tenant-specific, time-based)
+ * - Dynamic role resolution based on ownership and attributes
+ * - Conditional role elevation and attribute-based roles
+ * 
+ * **Test Categories:**
+ * 1. **Hierarchical Inheritance**: Basic chains, multi-level, diamond patterns
+ * 2. **Field Inheritance**: Role-based field permission cascading
+ * 3. **Context-Aware Inheritance**: Tenant-specific, time-based elevation
+ * 4. **Dynamic Resolution**: Ownership-based, attribute-based role determination
+ * 5. **Conditional Elevation**: Time-bound, condition-based role changes
+ * 6. **Complex Scenarios**: Mixed inheritance patterns and edge cases
+ * 
+ * **Mock Strategy:**
+ * - Hierarchical role definition objects with inheritance chains
+ * - Extended user contexts with additional role attributes
+ * - Time-based contexts for elevation testing
+ * - Ownership records for dynamic role resolution
+ * 
+ * **Quality Standards:**
+ * - Role inheritance must be transitive and consistent
+ * - Permission elevation must respect hierarchy rules
+ * - Time-based roles must handle expiration correctly
+ * - Dynamic roles must be deterministic based on context
+ * - All inheritance patterns must prevent privilege escalation
+ * 
  * SPDX-License-Identifier: MIT
  */
 

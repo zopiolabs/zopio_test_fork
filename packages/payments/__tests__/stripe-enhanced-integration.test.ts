@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Payments Package Tests - Enhanced Stripe Integration
+ * 
+ * Advanced test suite for enhanced Stripe features including webhooks,
+ * subscriptions, multi-party payments, and advanced payment flows.
+ * 
+ * **Test Scope:**
+ * - Advanced Stripe features and integration patterns
+ * - Webhook event handling and signature validation
+ * - Subscription management and lifecycle operations
+ * - Multi-party payments and marketplace functionality
+ * - Advanced error scenarios and edge case handling
+ * 
+ * **Test Categories:**
+ * 1. **Enhanced Features**: Advanced Stripe capabilities and integrations
+ * 2. **Webhook Processing**: Event handling and signature validation
+ * 3. **Subscription Management**: Lifecycle operations and billing
+ * 4. **Marketplace Features**: Multi-party payments and platform functionality
+ * 5. **Advanced Scenarios**: Complex workflows and edge cases
+ * 
+ * **Mock Strategy:**
+ * - Complete enhanced Stripe SDK mocking
+ * - Advanced webhook event simulation
+ * - Complex payment scenario testing
+ * - Multi-party transaction simulation
+ * 
+ * **Quality Standards:**
+ * - Zero actual enhanced API calls to prevent costs
+ * - Complete webhook signature validation
+ * - Sub-300ms response time for complex operations
+ * - Comprehensive marketplace feature validation
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

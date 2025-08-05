@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Core Utils Tests - String Utilities
+ * 
+ * Comprehensive test suite for string manipulation utility functions including
+ * case conversion, formatting, validation, and text processing helpers. Validates
+ * string transformation accuracy, Unicode handling, and performance characteristics.
+ * 
+ * **Test Scope:**
+ * - Case conversion utilities (camelCase, kebab-case, snake_case, PascalCase)
+ * - String formatting and templating
+ * - Text validation and sanitization
+ * - Unicode and internationalization support
+ * - Performance optimization for large strings
+ * - Regular expression utilities
+ * 
+ * **Test Categories:**
+ * 1. **Case Conversion**: camelCase, kebabCase, snakeCase, PascalCase transformations
+ * 2. **Formatting**: Template strings, padding, truncation, formatting
+ * 3. **Validation**: Email, URL, phone number, custom pattern validation
+ * 4. **Sanitization**: HTML escaping, XSS prevention, input cleaning
+ * 5. **Unicode Support**: Emoji, accented characters, international text
+ * 6. **Performance**: Large string processing, memory efficiency
+ * 7. **Edge Cases**: Empty strings, special characters, boundary conditions
+ * 
+ * **Mock Strategy:**
+ * - No external dependencies (pure string functions)
+ * - Unicode test data for internationalization validation
+ * - Performance testing with large string datasets
+ * 
+ * **Quality Standards:**
+ * - Accurate case conversion preserving semantic meaning
+ * - Proper Unicode handling for international text
+ * - Security-focused sanitization preventing XSS attacks
+ * 
  * SPDX-License-Identifier: MIT
  */
 

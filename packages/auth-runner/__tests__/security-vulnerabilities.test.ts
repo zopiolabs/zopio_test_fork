@@ -2,6 +2,34 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @fileoverview Auth Runner Tests - Security Vulnerability Prevention
+ * 
+ * Comprehensive security testing suite for the auth-runner orchestration layer that coordinates authorization workflows.
+ * Validates protection against security vulnerabilities at the system integration level where multiple auth packages interact.
+ * 
+ * **Test Scope:**
+ * - Authorization bypass prevention in multi-package rule evaluation scenarios
+ * - Input validation and sanitization across package boundaries
+ * - Resource exhaustion and timing attack protection in orchestrated workflows
+ * 
+ * **Test Categories:**
+ * 1. **Authorization Bypass Prevention**: Protection against rule injection and privilege escalation
+ * 2. **Input Validation**: Sanitization of malicious inputs across all evaluation parameters
+ * 3. **Timing Attack Prevention**: Consistent evaluation times regardless of rule matches
+ * 4. **Resource Protection**: Memory exhaustion and DoS attack prevention
+ * 
+ * **Mock Strategy:**
+ * - Mock auth-log package to verify security event logging
+ * - Malicious input generation targeting cross-package integration points
+ * - Attack simulation with real-world payload patterns and edge cases
+ * 
+ * **Quality Standards:**
+ * - Zero tolerance for successful authorization bypass attempts
+ * - Consistent timing behavior across different evaluation scenarios
+ * - Comprehensive security event logging without sensitive data exposure
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { evaluateAccess } from '../engine/evaluate.js';
 import { combinedRules } from '../rules/combined-rules.js';

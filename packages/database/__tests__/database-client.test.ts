@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Database Tests - Database Client
+ * 
+ * Comprehensive test suite for the database client initialization, connection management,
+ * and Prisma integration with Neon serverless PostgreSQL. Validates singleton pattern,
+ * connection pooling, adapter configuration, and client lifecycle management.
+ * 
+ * **Test Scope:**
+ * - Database client singleton pattern and initialization
+ * - Neon serverless PostgreSQL connection management
+ * - Prisma adapter configuration and integration
+ * - Connection pooling and resource management
+ * - Environment-based configuration handling
+ * - Client lifecycle and cleanup procedures
+ * 
+ * **Test Categories:**
+ * 1. **Client Initialization**: Singleton pattern, configuration, setup
+ * 2. **Connection Management**: Pool creation, connection lifecycle
+ * 3. **Adapter Integration**: PrismaNeon adapter setup and configuration
+ * 4. **Environment Configuration**: Database URL, credentials, settings
+ * 5. **Resource Management**: Connection cleanup, pool management
+ * 6. **Error Handling**: Connection failures, configuration errors
+ * 7. **Performance**: Connection reuse, pooling efficiency
+ * 
+ * **Mock Strategy:**
+ * - Environment variable mocking for configuration testing
+ * - Neon Pool and WebSocket mocking for connection simulation
+ * - Prisma client mocking for database operation testing
+ * 
+ * **Quality Standards:**
+ * - Singleton pattern enforcement (no duplicate clients)
+ * - Proper resource cleanup and connection management
+ * - Robust error handling for connection failures
+ * 
  * SPDX-License-Identifier: MIT
  */
 

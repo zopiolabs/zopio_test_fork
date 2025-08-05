@@ -2,6 +2,34 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @fileoverview ABAC Engine Tests - Rule Definition and Validation
+ * 
+ * Comprehensive test suite for Attribute-Based Access Control (ABAC) rule definitions and validation logic.
+ * Validates rule structure, compilation, and integration with the ABAC evaluation engine.
+ * 
+ * **Test Scope:**
+ * - ABAC rule structure validation and schema compliance
+ * - Rule compilation from DSL to executable conditions
+ * - Rule integration with the broader authentication system
+ * 
+ * **Test Categories:**
+ * 1. **Rule Structure Validation**: Schema compliance and required field validation
+ * 2. **DSL Compilation**: Domain-specific language rule compilation to executable functions
+ * 3. **Rule Integration**: Integration testing with ABAC engine and evaluation context
+ * 4. **Rule Precedence**: Rule ordering, priority handling, and conflict resolution
+ * 
+ * **Mock Strategy:**
+ * - Comprehensive rule definition samples covering all supported ABAC patterns
+ * - Mock evaluation contexts for rule testing scenarios
+ * - Edge case rule definitions for robustness validation
+ * 
+ * **Quality Standards:**
+ * - 100% rule schema compliance validation
+ * - Accurate DSL-to-function compilation with proper error handling
+ * - Consistent rule evaluation behavior across different context scenarios
+ */
+
 import { describe, it, expect } from 'vitest';
 import { abacRules } from '../rules.js';
 

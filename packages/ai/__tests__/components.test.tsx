@@ -1,28 +1,34 @@
 /**
- * @module components.test
- * @description Comprehensive test suite for AI package React components
+ * @fileoverview AI Package Tests - React Components (Message & Thread)
  * 
- * Test Coverage:
- * - ✅ Message rendering, props, and content handling
- * - ✅ Thread component rendering, layout, and accessibility
- * - ✅ User interaction patterns and event handling
- * - ✅ AI content rendering and markdown processing
- * - ✅ Accessibility compliance (ARIA, keyboard navigation)
- * - ✅ Security testing (XSS prevention, content sanitization)
- * - ✅ Error boundaries and edge cases
- * - ✅ Theme integration and styling
+ * Comprehensive test suite for AI package React components including Message
+ * and Thread components with focus on security, accessibility, and user experience.
  * 
- * Security Considerations:
- * - Ensures AI-generated content is safely rendered without XSS vulnerabilities
- * - Validates input sanitization for user messages and AI responses
- * - Tests content filtering and safe markdown rendering
- * - Verifies role-based message handling and user data protection
+ * **Test Scope:**
+ * - Message component rendering, props, and content handling
+ * - Thread component layout, scrolling, and container behavior
+ * - User interaction patterns and event handling
+ * - AI content rendering and markdown processing
+ * - Edge cases and error boundary testing
  * 
- * User Experience Focus:
- * - Tests responsive design and layout adaptability
- * - Validates accessibility compliance with WCAG guidelines
- * - Ensures smooth user interactions and intuitive message display
- * - Tests loading states and error handling for optimal UX
+ * **Test Categories:**
+ * 1. **Component Rendering**: Basic rendering functionality and prop handling
+ * 2. **Content Safety**: XSS prevention, content sanitization, and safe markdown rendering
+ * 3. **Accessibility**: WCAG compliance, ARIA attributes, and keyboard navigation
+ * 4. **User Experience**: Responsive design, visual hierarchy, and interaction patterns
+ * 5. **Performance**: Efficient rendering with large content and real-time updates
+ * 
+ * **Mock Strategy:**
+ * - React-markdown mocked to prevent complexity while testing component logic
+ * - Test data factories for consistent Message object creation
+ * - Helper functions to reduce nesting and improve test readability
+ * - Comprehensive validation helpers for styling and content verification
+ * 
+ * **Quality Standards:**
+ * - Sub-100ms rendering performance for large content
+ * - 100% accessibility compliance with WCAG guidelines
+ * - XSS prevention through safe markdown rendering
+ * - Responsive design across all viewport sizes
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

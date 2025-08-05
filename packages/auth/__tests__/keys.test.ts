@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Auth Package Tests - Environment Configuration Keys
+ * 
+ * Comprehensive test suite for environment variable validation and configuration
+ * management in the auth package. Tests schema validation, required/optional fields,
+ * runtime environment integration, and proper error handling for configuration issues.
+ * 
+ * **Test Scope:**
+ * - Environment variable schema validation with Zod schemas
+ * - Required vs optional field handling and validation
+ * - Server-side and client-side environment variable separation
+ * - Runtime environment integration and value mapping
+ * - Error message quality and validation failure handling
+ * 
+ * **Test Categories:**
+ * 1. **Keys Function**: Core functionality, environment mapping, optional field handling
+ * 2. **Server Environment**: CLERK_SECRET_KEY and CLERK_WEBHOOK_SECRET validation
+ * 3. **Client Environment**: Public key validation, URL format validation, required fields
+ * 4. **Runtime Integration**: Environment variable mapping, undefined value handling
+ * 5. **Edge Cases**: Empty strings, whitespace, complex URLs, key format validation
+ * 
+ * **Mock Strategy:**
+ * - Mock @t3-oss/env-nextjs for controlled environment validation testing
+ * - Test actual schema validation logic with realistic environment scenarios
+ * - Isolate tests with environment cleanup and restoration
+ * - Validate error conditions with controlled invalid inputs
+ * 
+ * **Quality Standards:**
+ * - Complete environment variable coverage (server and client)
+ * - Proper validation for all Clerk key formats (sk_, pk_, whsec_)
+ * - URL format validation with leading slash requirement
+ * - Meaningful error messages for configuration failures
+ * - Optional field handling without compromising required validation
+ * 
  * SPDX-License-Identifier: MIT
  */
 
@@ -17,12 +50,12 @@ vi.mock('@t3-oss/env-nextjs', () => ({
         const value = config.runtimeEnv[key];
         if (value !== undefined) {
           try {
-            schema.parse(value);
-            mockEnv[key] = value;
+            (schema as any).parse(value);
+            (mockEnv as any)[key] = value;
           } catch (error) {
             throw new Error(`Invalid environment variables`);
           }
-        } else if (!schema._def?.typeName || schema._def.typeName !== 'ZodOptional') {
+        } else if (!(schema as any)._def?.typeName || (schema as any)._def.typeName !== 'ZodOptional') {
           throw new Error(`Missing required environment variable: ${key}`);
         }
       });
@@ -34,8 +67,8 @@ vi.mock('@t3-oss/env-nextjs', () => ({
         const value = config.runtimeEnv[key];
         if (value !== undefined) {
           try {
-            schema.parse(value);
-            mockEnv[key] = value;
+            (schema as any).parse(value);
+            (mockEnv as any)[key] = value;
           } catch (error) {
             throw new Error(`Invalid environment variables`);
           }
@@ -49,15 +82,6 @@ vi.mock('@t3-oss/env-nextjs', () => ({
   }),
 }));
 
-/**
- * Test suite for environment configuration validation in the auth package
- * 
- * This suite validates:
- * - Environment variable schema validation
- * - Required vs optional field handling
- * - Proper error messages for invalid configurations
- * - Runtime environment integration
- */
 describe('Keys Configuration', () => {
   let originalEnv: NodeJS.ProcessEnv;
 

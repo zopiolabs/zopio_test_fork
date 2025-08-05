@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Auth Package Tests - Client-Side Exports
+ * 
+ * Comprehensive test suite validating all client-side exports from the auth package
+ * including React hooks, components, and browser compatibility. Ensures proper
+ * separation between client and server code while maintaining full functionality.
+ * 
+ * **Test Scope:**
+ * - Client-side module structure and export validation
+ * - React hooks functionality and interfaces
+ * - React components rendering and prop interfaces
+ * - Browser environment compatibility and graceful degradation
+ * - Integration with custom components and providers
+ * 
+ * **Test Categories:**
+ * 1. **Module Structure**: Export availability, server-only separation, re-export validation
+ * 2. **React Hooks**: useAuth, useUser, useClerk, useSession, and organization hooks
+ * 3. **React Components**: ClerkProvider, authentication components, UI components
+ * 4. **Browser Compatibility**: Environment handling, API availability, graceful degradation
+ * 5. **Performance & TypeScript**: Load performance, type safety, stable references
+ * 
+ * **Mock Strategy:**
+ * - Mock Clerk Next.js library for controlled component and hook testing
+ * - Mock browser environment APIs (window, document, localStorage)
+ * - Mock React for component interface validation
+ * - Test data simulation through controlled mock responses
+ * 
+ * **Quality Standards:**
+ * - All client exports available and properly typed
+ * - No server-only code exposed to client environment
+ * - Proper React component interfaces and hook functionality
+ * - Browser compatibility with graceful degradation
+ * - Performance optimization with efficient loading
+ * 
  * SPDX-License-Identifier: MIT
  */
 
@@ -79,16 +112,6 @@ vi.mock('@clerk/nextjs', () => ({
   SignedOut: vi.fn(({ children }) => React.createElement('div', { 'data-testid': 'signed-out' }, children)),
 }));
 
-/**
- * Test suite for client-side exports from the auth package
- * 
- * This suite validates:
- * - All client-side exports are available and properly typed
- * - React hooks and components function correctly
- * - Proper re-exports from @clerk/nextjs
- * - Browser-specific functionality works as expected
- * - No server-only code is exposed to client
- */
 describe('Client Exports', () => {
   beforeEach(() => {
     vi.clearAllMocks();

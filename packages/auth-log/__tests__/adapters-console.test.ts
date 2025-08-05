@@ -1,4 +1,44 @@
 /**
+ * @fileoverview Auth-Log Tests - Console Adapter Output
+ * 
+ * Comprehensive test suite for the console logging adapter, ensuring proper stdout
+ * formatting, JSON serialization, and terminal output compatibility across environments.
+ * 
+ * **Test Scope:**
+ * - Console output formatting and structure
+ * - JSON serialization of complex objects
+ * - Special character and Unicode handling
+ * - Concurrent logging safety
+ * - Memory efficiency with large objects
+ * - Error propagation and stdout failures
+ * 
+ * **Test Categories:**
+ * 1. **Basic Output**: Standard log entry formatting and stdout writing
+ * 2. **Complex Data**: Nested objects, arrays, and special characters
+ * 3. **Edge Cases**: Null values, circular references, and malformed data
+ * 4. **Performance**: Concurrent writes and large object serialization
+ * 5. **Error Handling**: Stdout failures and JSON serialization errors
+ * 6. **Integration**: TTY vs non-TTY environments and output consistency
+ * 
+ * **Mock Strategy:**
+ * - Process.stdout mocking for output capture and validation
+ * - JSON serialization testing with edge case data structures
+ * - Concurrent operation simulation through Promise.all execution
+ * - Error injection for stdout.write failure scenarios
+ * 
+ * **Quality Standards:**
+ * - Sub-100ms performance for large object serialization
+ * - Proper JSON formatting with 2-space indentation
+ * - Consistent [AUTH-LOG] prefix on all output lines
+ * - Safe handling of circular references and special characters
+ * 
+ * @requires vitest ^1.0.0
+ * @requires process.stdout For console output operations
+ * @since 1.0.0
+ * @author Auth-Log Team
+ */
+
+/**
  * SPDX-License-Identifier: MIT
  */
 

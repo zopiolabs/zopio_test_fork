@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Security Package Tests - Arcjet Security Middleware
+ * 
+ * Test suite for security middleware including bot protection, rate limiting,
+ * attack prevention, and comprehensive security validation.
+ * 
+ * **Test Scope:**
+ * - Arcjet security middleware configuration and integration
+ * - Bot detection and protection mechanisms
+ * - Attack prevention (DDoS, injection, abuse)
+ * - Security rule configuration and validation
+ * - Performance optimization for security checks
+ * 
+ * **Test Categories:**
+ * 1. **Middleware Integration**: Arcjet setup and configuration
+ * 2. **Bot Protection**: Bot detection and filtering mechanisms
+ * 3. **Attack Prevention**: DDoS, injection, and abuse protection
+ * 4. **Security Rules**: Rule configuration and enforcement
+ * 5. **Performance**: Security check optimization and efficiency
+ * 
+ * **Mock Strategy:**
+ * - Complete Arcjet SDK mocking to prevent actual security calls
+ * - Attack simulation for comprehensive protection testing
+ * - Error injection for security failure scenarios
+ * - Performance monitoring for security check optimization
+ * 
+ * **Quality Standards:**
+ * - Zero actual security service calls to prevent costs
+ * - Sub-50ms security check response time
+ * - 100% attack detection accuracy for known patterns
+ * - Complete protection coverage for all security vectors
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

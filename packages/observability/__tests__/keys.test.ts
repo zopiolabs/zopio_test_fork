@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Observability Package Tests - Environment Configuration & Validation
+ * 
+ * Test suite for environment configuration management using t3-env with comprehensive
+ * validation, schema definition, and runtime environment mapping.
+ * 
+ * **Test Scope:**
+ * - Environment schema definition with Zod validation for server and client
+ * - Runtime environment mapping and variable access patterns
+ * - URL validation for service endpoints (BetterStack, Sentry DSN)
+ * - Error handling for validation failures and missing configurations
+ * - Multiple environment scenarios (development, staging, production)
+ * 
+ * **Test Categories:**
+ * 1. **Schema Definition**: Server/client schema validation with proper Zod types
+ * 2. **Environment Mapping**: Runtime variable mapping and access patterns
+ * 3. **Schema Validation**: URL validation, optional fields, and type checking
+ * 4. **Error Handling**: Validation failures, malformed URLs, and missing variables
+ * 5. **Performance**: Rapid calls, memory management, and configuration caching
+ * 
+ * **Mock Strategy:**
+ * - Complete t3-env mocking to prevent actual environment validation
+ * - Process.env simulation for various configuration scenarios
+ * - Schema introspection for validation rule verification
+ * - Error simulation for comprehensive failure testing
+ * 
+ * **Quality Standards:**
+ * - Complete environment variable validation with proper types
+ * - Comprehensive URL validation for all service endpoints
+ * - Sub-50ms configuration resolution for optimal performance
+ * - Graceful handling of all configuration scenarios and edge cases
  */
 
 import { createEnv } from '@t3-oss/env-nextjs';

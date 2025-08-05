@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Auth Package Tests - Main Index Exports
+ * 
+ * Comprehensive test suite validating the complete public API surface of the auth package
+ * through its main index module. Ensures all expected exports are available, properly
+ * typed, and maintain backwards compatibility while preventing internal exposure.
+ * 
+ * **Test Scope:**
+ * - Complete public API surface validation
+ * - Client-side and server-side export availability
+ * - Cross-module integration and compatibility
+ * - Configuration and utility function exports
+ * - Module loading performance and error handling
+ * 
+ * **Test Categories:**
+ * 1. **Module Structure**: Re-export validation, internal hiding, file organization
+ * 2. **Client-Side Exports**: React hooks, components, authentication state management
+ * 3. **Server-Side Exports**: Authentication functions, middleware, route matching
+ * 4. **Configuration**: Environment handling, utility functions, cross-module compatibility
+ * 5. **API Completeness**: Full coverage, performance, backwards compatibility, TypeScript support
+ * 
+ * **Mock Strategy:**
+ * - Mock all external dependencies (Clerk, environment, themes)
+ * - Mock server-only imports for test environment compatibility
+ * - Controlled environment variable simulation
+ * - Test data through structured mock responses
+ * 
+ * **Quality Standards:**
+ * - Complete public API coverage and validation
+ * - No internal implementation details exposed
+ * - Cross-module integration functionality verified
+ * - Performance optimization with efficient module loading
+ * - Backwards compatibility maintained for stable API
+ * 
  * SPDX-License-Identifier: MIT
  */
 
@@ -151,16 +184,6 @@ vi.mock('@clerk/nextjs', () => ({
   SignedOut: vi.fn(({ children }) => children),
 }));
 
-/**
- * Test suite for main index exports from the auth package
- * 
- * This suite validates:
- * - Complete public API surface is available
- * - All expected exports from sub-modules are re-exported
- * - No internal modules are accidentally exposed
- * - Proper module organization and structure
- * - Integration between different auth components
- */
 describe('Index Exports', () => {
   beforeEach(() => {
     vi.clearAllMocks();

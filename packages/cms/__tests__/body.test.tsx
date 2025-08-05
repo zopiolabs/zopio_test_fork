@@ -1,38 +1,34 @@
 /**
- * @module body.test
- * @description Comprehensive test suite for CMS Body component rich text processing
+ * @fileoverview CMS Package Tests - Body Component Rich Text Processing
  * 
- * Test Coverage:
- * - ✅ Rich text content rendering and processing workflows
- * - ✅ Markdown to HTML conversion security and validation
- * - ✅ XSS prevention in rich text content processing
- * - ✅ Content sanitization and HTML filtering systems
- * - ✅ Custom component integration in rich text rendering
- * - ✅ Performance optimization for large content processing
- * - ✅ Content validation and error handling workflows
- * - ✅ Link security and URL validation in rich text
- * - ✅ Image embedding security in rich text contexts
- * - ✅ Script injection prevention across all content types
+ * Comprehensive test suite for the CMS Body component focusing on rich text processing,
+ * security validation, and performance optimization with BaseHub integration.
  * 
- * Security Priorities (P0 - Critical):
- * The Body component serves as the primary rich text processor for all CMS content,
- * making it the most critical security boundary for preventing XSS attacks and
- * content injection vulnerabilities. This test suite ensures comprehensive protection
- * against all known attack vectors while maintaining rich text functionality.
+ * **Test Scope:**
+ * - Rich text content rendering and processing workflows
+ * - XSS prevention and content sanitization systems
+ * - Custom component integration with security boundaries
+ * - Performance optimization for large content volumes
+ * - Content validation and comprehensive error handling
  * 
- * Rich Text Processing Architecture:
- * - BaseHub RichText integration for structured content processing
- * - Type-safe content structure validation and processing
- * - Custom component rendering with security boundaries
- * - Performance-optimized content processing for large documents
- * - Extensible architecture for custom rich text elements
+ * **Test Categories:**
+ * 1. **Core Rendering**: Basic rich text processing and BaseHub integration
+ * 2. **XSS Prevention**: Script injection prevention and content sanitization
+ * 3. **Performance**: Large content handling and memory efficiency
+ * 4. **Component Security**: Custom component validation and isolation
+ * 5. **Media Security**: Image and link security in rich text contexts
  * 
- * Content Security Model:
- * - Multi-layer sanitization: input validation → processing → output filtering
- * - Context-aware security measures for different content types
- * - Script execution prevention at multiple architectural layers
- * - URL validation and protocol filtering for embedded content
- * - Content-type spoofing prevention and validation
+ * **Mock Strategy:**
+ * - BaseHub RichText mocked with comprehensive security simulation
+ * - Test data factories for realistic content structure creation
+ * - Security validation helpers for attack vector testing
+ * - Performance monitoring for optimization validation
+ * 
+ * **Quality Standards:**
+ * - Zero tolerance for XSS vulnerabilities in any content type
+ * - Sub-200ms processing time for large content (200+ paragraphs)
+ * - 100% content fidelity preservation during security processing
+ * - Comprehensive custom component security validation
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

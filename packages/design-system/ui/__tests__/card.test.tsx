@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Design System Tests - Card Components
+ * 
+ * Comprehensive test suite for the Card component system including Card, CardHeader, CardFooter,
+ * CardTitle, CardAction, CardDescription, and CardContent components. Validates compound component
+ * composition, grid layout system, responsive design patterns, and interactive behavior.
+ * 
+ * **Test Scope:**
+ * - Card container and layout system
+ * - Header component with grid-based action positioning
+ * - Content, footer, title, description, and action subcomponents
+ * - Responsive design and container queries
+ * - Interactive behavior and event handling
+ * - Accessibility features and semantic structure
+ * 
+ * **Test Categories:**
+ * 1. **Component Rendering**: DOM structure validation for all card components
+ * 2. **Layout System**: Grid-based layouts, spacing, and responsive behavior
+ * 3. **Component Composition**: Complex card structures with multiple components
+ * 4. **Interactive Elements**: Click handling, focus management, user interactions
+ * 5. **Responsive Design**: Container queries and adaptive layouts
+ * 6. **Accessibility**: ARIA attributes, semantic roles, keyboard navigation
+ * 7. **Edge Cases**: Boundary conditions, nested structures, special content
+ * 
+ * **Mock Strategy:**
+ * - Vitest mocking for event handlers and user interactions
+ * - React Testing Library user events for realistic behavior testing
+ * - No external dependencies (pure UI component system)
+ * 
+ * **Quality Standards:**
+ * - Complete API coverage for all card components
+ * - Grid layout validation and responsive behavior
+ * - Accessibility compliance and keyboard navigation
+ * 
  * SPDX-License-Identifier: MIT
  */
 

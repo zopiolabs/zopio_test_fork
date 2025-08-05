@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Core Utils Tests - Array Utilities
+ * 
+ * Comprehensive test suite for array utility functions including groupBy, chunk, flatten,
+ * unique, partition, and other array manipulation helpers. Validates functional programming
+ * patterns, edge case handling, and performance characteristics.
+ * 
+ * **Test Scope:**
+ * - Array transformation functions (groupBy, chunk, flatten)
+ * - Array filtering and searching utilities (unique, partition, find)
+ * - Performance optimization helpers (memoization, lazy evaluation)
+ * - Type safety validation with TypeScript generics
+ * - Edge cases (empty arrays, null values, large datasets)
+ * - Memory efficiency and immutability patterns
+ * 
+ * **Test Categories:**
+ * 1. **Transformation**: groupBy, chunk, flatten, map variations
+ * 2. **Filtering**: unique, partition, filter enhancements
+ * 3. **Searching**: find, includes, indexOf enhancements
+ * 4. **Performance**: Large dataset handling, memory efficiency
+ * 5. **Type Safety**: Generic type preservation and validation
+ * 6. **Edge Cases**: Empty arrays, null/undefined handling
+ * 7. **Immutability**: Pure function behavior verification
+ * 
+ * **Mock Strategy:**
+ * - No external dependencies (pure functions)
+ * - Performance testing with large synthetic datasets
+ * - Type validation through TypeScript compilation
+ * 
+ * **Quality Standards:**
+ * - O(n) or better time complexity for most operations
+ * - Immutable function behavior (no side effects)
+ * - Complete edge case coverage including null/undefined
+ * 
  * SPDX-License-Identifier: MIT
  */
 

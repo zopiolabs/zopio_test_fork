@@ -1,4 +1,44 @@
 /**
+ * @fileoverview Auth-Log Tests - Configuration Management System
+ * 
+ * Comprehensive test suite for the logging configuration system, validating environment-based
+ * adapter selection, fallback mechanisms, and secure configuration handling.
+ * 
+ * **Test Scope:**
+ * - Environment variable-driven adapter selection
+ * - Fallback mechanisms for invalid configurations
+ * - BetterStack token validation and error handling
+ * - Configuration change detection and runtime adaptation
+ * - Security validation for environment variable manipulation
+ * - Concurrent configuration access and thread safety
+ * 
+ * **Test Categories:**
+ * 1. **Adapter Selection**: Environment-based logger selection logic
+ * 2. **Fallback Handling**: Invalid configuration recovery mechanisms
+ * 3. **Token Validation**: BetterStack authentication token processing
+ * 4. **Runtime Changes**: Dynamic configuration updates and detection
+ * 5. **Error Messaging**: User-friendly warning and error communication
+ * 6. **Integration**: Cross-adapter compatibility and module loading
+ * 
+ * **Mock Strategy:**
+ * - All adapter modules mocked to isolate configuration logic
+ * - Process.env manipulation for environment variable testing
+ * - Process.stderr mocking for warning message validation
+ * - BetterStack logger creation mocking with configurable responses
+ * 
+ * **Quality Standards:**
+ * - 100% fallback to console logger for invalid configurations
+ * - Clear warning messages for configuration issues
+ * - Case-sensitive environment variable matching
+ * - Secure handling of authentication tokens
+ * 
+ * @requires vitest ^1.0.0
+ * @requires process.env For environment variable access
+ * @since 1.0.0
+ * @author Auth-Log Team
+ */
+
+/**
  * SPDX-License-Identifier: MIT
  */
 

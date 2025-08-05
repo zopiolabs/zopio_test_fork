@@ -2,6 +2,34 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @fileoverview Auth Runner Tests - System Integration
+ * 
+ * Comprehensive integration test suite for the auth-runner package that orchestrates authorization workflows.
+ * Validates end-to-end functionality, rule evaluation, logging integration, and performance characteristics.
+ * 
+ * **Test Scope:**
+ * - Combined RBAC/ABAC rule evaluation with proper precedence and orchestration
+ * - Integration with auth-log package for comprehensive access attempt logging
+ * - Real-world authorization scenarios with multi-tenant and field-level permissions
+ * 
+ * **Test Categories:**
+ * 1. **Combined Evaluation**: RBAC and ABAC rule evaluation with proper rule precedence
+ * 2. **Rule Orchestration**: Complex rule combinations and cascading evaluation logic
+ * 3. **Logging Integration**: Comprehensive access attempt logging with contextual information
+ * 4. **Performance Characteristics**: High-frequency evaluations and concurrent processing
+ * 
+ * **Mock Strategy:**
+ * - Mock auth-log package for controlled logging verification
+ * - Real rule evaluation using actual RBAC and ABAC rule sets
+ * - Testing utility integration for consistent mock data generation
+ * 
+ * **Quality Standards:**
+ * - 100% accuracy in rule evaluation and precedence handling
+ * - Comprehensive logging of all access attempts with proper context
+ * - Performance optimization for high-frequency authorization checks
+ */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { evaluateAccess } from '../engine/evaluate.js';
 import { combinedRules } from '../rules/combined-rules.js';

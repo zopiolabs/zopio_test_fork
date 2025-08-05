@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Observability Package Tests - Logging System & BetterStack Integration
+ * 
+ * Test suite for environment-aware logging system with BetterStack integration,
+ * covering production logging, development silence, and performance optimization.
+ * 
+ * **Test Scope:**
+ * - Environment-based logging behavior (production vs development/test)
+ * - BetterStack Logtail integration for structured logging
+ * - Message formatting and special character handling
+ * - Performance optimization for high-volume logging scenarios
+ * - Real-world logging patterns (authentication, API, database, lifecycle)
+ * 
+ * **Test Categories:**
+ * 1. **Environment Behavior**: Production logging vs development/test silence
+ * 2. **Message Formatting**: Special characters, JSON, long messages, newlines
+ * 3. **Performance**: Rapid calls, concurrent logging, and memory efficiency
+ * 4. **Error Propagation**: Logtail service failures and graceful handling
+ * 5. **Real-World Scenarios**: Authentication, API, database, and lifecycle logging
+ * 
+ * **Mock Strategy:**
+ * - Complete BetterStack Logtail mocking to prevent actual log transmission
+ * - Environment variable simulation for behavior testing
+ * - Performance monitoring for high-volume scenarios
+ * - Error injection for service failure testing
+ * 
+ * **Quality Standards:**
+ * - Zero actual log transmission to prevent costs and quota usage
+ * - Sub-100ms performance for high-volume logging (100+ messages)
+ * - Complete environment-based behavior control
+ * - Proper error propagation for debugging and monitoring
  */
 
 import { log as logtail } from '@logtail/next';

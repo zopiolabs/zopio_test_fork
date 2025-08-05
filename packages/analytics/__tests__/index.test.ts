@@ -1,11 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
- * @fileoverview Comprehensive unit tests for Analytics package
+ * @fileoverview Analytics Package Tests - User Tracking & Privacy Compliance
  * 
- * This test suite validates user tracking implementation with privacy compliance,
- * focusing on GDPR requirements, consent management, and tracking accuracy.
+ * Comprehensive test suite validating analytics tracking implementation with strict
+ * privacy compliance, GDPR requirements, and performance optimization.
  * 
- * Critical P0 Priority: Privacy regulations compliance and user experience protection
+ * **Test Scope:**
+ * - Environment configuration and analytics provider initialization
+ * - Privacy compliance (GDPR Article 6, 7, 17) and consent management
+ * - User tracking implementation with data minimization principles
+ * - Performance monitoring and Core Web Vitals tracking
+ * - Cookie management and user preference handling
+ * 
+ * **Test Categories:**
+ * 1. **Environment Setup**: Configuration validation and provider initialization
+ * 2. **Privacy Compliance**: GDPR compliance, consent management, opt-out mechanisms
+ * 3. **User Tracking**: Event tracking, identification, pageview monitoring
+ * 4. **Performance**: Core Web Vitals, custom metrics, resource management
+ * 5. **Data Protection**: PII prevention, anonymization, retention policies
+ * 
+ * **Mock Strategy:**
+ * - Complete PostHog and Google Analytics mocking to prevent actual tracking
+ * - Environment variable mocking for configuration testing
+ * - Performance API mocking for metrics validation
+ * - Browser API compatibility testing with fallbacks
+ * 
+ * **Quality Standards:**
+ * - 100% GDPR compliance with consent-based tracking
+ * - Zero PII capture with data minimization enforcement
+ * - Sub-50ms initialization performance target
+ * - Graceful degradation for legacy browser support
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

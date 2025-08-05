@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Payments Package Tests - Stripe Client Configuration
+ * 
+ * Test suite for Stripe client initialization, configuration validation,
+ * and service setup with comprehensive security and error handling.
+ * 
+ * **Test Scope:**
+ * - Stripe client initialization with API key validation
+ * - Configuration validation and environment setup
+ * - Error handling during client creation and service failures
+ * - API key security and exposure prevention
+ * - Client instance management and singleton behavior
+ * 
+ * **Test Categories:**
+ * 1. **Client Initialization**: Successful client creation and configuration
+ * 2. **API Key Validation**: Format validation and security checks
+ * 3. **Error Handling**: Initialization failures and invalid configurations
+ * 4. **Security**: API key protection and exposure prevention
+ * 5. **Performance**: Client creation speed and memory management
+ * 
+ * **Mock Strategy:**
+ * - Complete Stripe SDK mocking to prevent actual API calls
+ * - Environment configuration simulation
+ * - Error injection for comprehensive failure testing
+ * - Security validation for API key handling
+ * 
+ * **Quality Standards:**
+ * - Zero actual API calls to prevent costs and rate limits
+ * - Complete API key security with zero exposure risk
+ * - Sub-50ms client initialization time
+ * - Proper error handling for all configuration scenarios
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

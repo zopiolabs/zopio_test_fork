@@ -2,6 +2,34 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @fileoverview Auth Runner Tests - Cross-Package Integration
+ * 
+ * Comprehensive integration test suite validating seamless interaction between authentication packages.
+ * Tests the orchestration of RBAC, ABAC, logging, and hooks packages through the auth-runner coordinator.
+ * 
+ * **Test Scope:**
+ * - Integration between auth-rbac, auth-abac, auth-log, and auth-hooks packages
+ * - Rule combination and precedence handling across different authorization paradigms
+ * - Performance characteristics of cross-package evaluation workflows
+ * 
+ * **Test Categories:**
+ * 1. **Rule Integration**: Combining RBAC and ABAC rules with proper precedence handling
+ * 2. **Access Evaluation**: End-to-end access evaluation with comprehensive logging
+ * 3. **Error Handling**: Cross-package error propagation and graceful degradation
+ * 4. **Performance Integration**: High-frequency evaluations and concurrent processing
+ * 
+ * **Mock Strategy:**
+ * - Mock individual package components for controlled integration testing
+ * - Synthetic rule generation from multiple authorization paradigms
+ * - Real-world scenario simulation with multi-tenant and multi-domain contexts
+ * 
+ * **Quality Standards:**
+ * - Seamless integration without package boundary issues
+ * - Consistent behavior across different authorization rule types
+ * - Comprehensive audit trail through integrated logging system
+ */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock dependencies before importing

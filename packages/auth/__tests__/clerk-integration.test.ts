@@ -1,10 +1,44 @@
 /**
+ * @fileoverview Auth Package Tests - Clerk Integration Tests
+ * 
+ * Comprehensive integration test suite for Clerk authentication services including
+ * webhook processing, JWT token verification, middleware integration, and complete
+ * authentication workflows. Tests end-to-end scenarios with realistic data flows.
+ * 
+ * **Test Scope:**
+ * - Webhook signature verification and event processing
+ * - JWT token verification with various algorithms and edge cases
+ * - Authentication middleware integration flows
+ * - Complete user registration and organization workflows
+ * - Error handling, security, and performance scenarios
+ * 
+ * **Test Categories:**
+ * 1. **Webhook Integration**: Signature verification, event processing, lifecycle webhooks
+ * 2. **JWT Token Verification**: Valid/invalid tokens, algorithm support, claims validation
+ * 3. **Middleware Integration**: Request authentication, error handling, request preservation
+ * 4. **Complete Workflows**: User registration, organization management, session handling
+ * 5. **Security & Performance**: Rate limiting, timing attacks, concurrent requests, payload validation
+ * 
+ * **Mock Strategy:**
+ * - Mock Clerk server and client functions for controlled testing
+ * - Mock JWT verification library (jose) for token scenarios
+ * - Mock environment variables for configuration testing
+ * - Simulate realistic webhook payloads and authentication flows
+ * 
+ * **Quality Standards:**
+ * - End-to-end workflow validation with realistic scenarios
+ * - Security vulnerability testing (timing attacks, payload injection)
+ * - Performance testing with high-volume and concurrent operations
+ * - Comprehensive error handling for all failure modes
+ * 
  * SPDX-License-Identifier: MIT
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import * as crypto from 'crypto';
 import { jwtVerify } from 'jose';
+
+const mockJwtVerify = vi.mocked(jwtVerify);
 
 // Mock server-only to avoid issues in test environment  
 vi.mock('server-only', () => ({}));
@@ -313,7 +347,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
         azp: 'test-azp',
       };
 
-      vi.mocked(jwtVerify).mockResolvedValue({
+      mockJwtVerify.mockResolvedValue({
         payload: mockJwtPayload,
         protectedHeader: { alg: 'HS256', typ: 'JWT' },
       } as any);
@@ -322,8 +356,8 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
       const userId = await verifyClerkToken(validToken);
 
       expect(userId).toBe('user_jwt_integration_123');
-      expect(jwtVerify).toHaveBeenCalled();
-      const [tokenArg, keyArg] = jwtVerify.mock.calls[0];
+      expect(mockJwtVerify).toHaveBeenCalled();
+      const [tokenArg, keyArg] = mockJwtVerify.mock.calls[0];
       expect(tokenArg).toBe(validToken);
       // Just verify it's defined and has expected properties
       expect(keyArg).toBeDefined();
@@ -334,7 +368,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
       const expiredTokenError = new Error('Token has expired');
       expiredTokenError.name = 'JWTExpired';
       
-      vi.mocked(jwtVerify).mockRejectedValue(expiredTokenError);
+      mockJwtVerify.mockRejectedValue(expiredTokenError);
 
       const expiredToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.expired.token';
       
@@ -345,7 +379,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
       const malformedTokenError = new Error('Invalid JWT format');
       malformedTokenError.name = 'JWTMalformed';
       
-      vi.mocked(jwtVerify).mockRejectedValue(malformedTokenError);
+      mockJwtVerify.mockRejectedValue(malformedTokenError);
 
       const malformedToken = 'invalid.jwt.token.format';
       
@@ -356,7 +390,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
       const invalidSignatureError = new Error('JWT signature verification failed');
       invalidSignatureError.name = 'JWTSignatureVerificationFailed';
       
-      vi.mocked(jwtVerify).mockRejectedValue(invalidSignatureError);
+      mockJwtVerify.mockRejectedValue(invalidSignatureError);
 
       const tamperedToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.tampered.signature';
       
@@ -371,7 +405,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
         // Missing 'sub' claim
       };
 
-      vi.mocked(jwtVerify).mockResolvedValue({
+      mockJwtVerify.mockResolvedValue({
         payload: mockJwtPayloadWithoutSub,
         protectedHeader: { alg: 'HS256', typ: 'JWT' },
       } as any);
@@ -389,7 +423,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
         const algorithm = algorithms[i];
         const userId = userIds[i];
         
-        vi.mocked(jwtVerify).mockResolvedValueOnce({
+        mockJwtVerify.mockResolvedValueOnce({
           payload: { sub: userId },
           protectedHeader: { alg: algorithm, typ: 'JWT' },
         } as any);
@@ -406,7 +440,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
     it('should handle complete authentication middleware flow', async () => {
       const mockUserId = 'user_middleware_integration_123';
       
-      vi.mocked(jwtVerify).mockResolvedValue({
+      mockJwtVerify.mockResolvedValue({
         payload: { sub: mockUserId },
         protectedHeader: { alg: 'HS256', typ: 'JWT' },
       } as any);
@@ -461,7 +495,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
     });
 
     it('should handle authentication failures gracefully', async () => {
-      vi.mocked(jwtVerify).mockRejectedValue(new Error('Authentication failed'));
+      mockJwtVerify.mockRejectedValue(new Error('Authentication failed'));
 
       const mockRequest = new Request('http://localhost/api/protected', {
         method: 'POST',
@@ -485,7 +519,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
     it('should preserve request method and body through middleware', async () => {
       const mockUserId = 'user_preservation_test_123';
       
-      vi.mocked(jwtVerify).mockResolvedValue({
+      mockJwtVerify.mockResolvedValue({
         payload: { sub: mockUserId },
         protectedHeader: { alg: 'HS256', typ: 'JWT' },
       } as any);
@@ -702,7 +736,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
       expect(sessionState.session.status).toBe('active');
 
       // Step 2: JWT token for API access
-      vi.mocked(jwtVerify).mockResolvedValue({
+      mockJwtVerify.mockResolvedValue({
         payload: { 
           sub: userId, 
           session_id: sessionId,
@@ -764,7 +798,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
 
       // Mock JWT verification for concurrent requests
       userIds.forEach((userId, index) => {
-        vi.mocked(jwtVerify).mockResolvedValueOnce({
+        mockJwtVerify.mockResolvedValueOnce({
           payload: { sub: userId },
           protectedHeader: { alg: 'HS256', typ: 'JWT' },
         } as any);
@@ -851,7 +885,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
 
       // Mock rate limiting on JWT verification
       let attemptCount = 0;
-      vi.mocked(jwtVerify).mockImplementation(() => {
+      mockJwtVerify.mockImplementation(() => {
         attemptCount++;
         if (attemptCount <= 3) {
           throw rateLimitError;
@@ -943,7 +977,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
       
       // Mock burst JWT verification
       tokens.forEach((_, i) => {
-        vi.mocked(jwtVerify).mockResolvedValueOnce({
+        mockJwtVerify.mockResolvedValueOnce({
           payload: { sub: `user_burst_${i}` },
           protectedHeader: { alg: 'HS256', typ: 'JWT' },
         } as any);
@@ -1000,7 +1034,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
       const invalidToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.token';
 
       // Mock timing for valid token
-      vi.mocked(jwtVerify).mockImplementationOnce(() => {
+      mockJwtVerify.mockImplementationOnce(() => {
         return new Promise(resolve => {
           setTimeout(() => resolve({
             payload: { sub: 'valid_user' },
@@ -1010,7 +1044,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
       });
 
       // Mock timing for invalid token (should take similar time)
-      vi.mocked(jwtVerify).mockImplementationOnce(() => {
+      mockJwtVerify.mockImplementationOnce(() => {
         return new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Invalid token')), 95);
         });
@@ -1040,7 +1074,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
       
       algorithmsToTest.forEach((algorithm) => {
         const algorithmError = new Error(`Unsupported algorithm: ${algorithm}`);
-        vi.mocked(jwtVerify).mockRejectedValueOnce(algorithmError);
+        mockJwtVerify.mockRejectedValueOnce(algorithmError);
 
         expect(async () => {
           await verifyClerkToken(algorithm === 'none' ? 'none.token' : `${algorithm}.token`);
@@ -1108,7 +1142,7 @@ describe('Comprehensive Clerk Authentication Integration Tests', () => {
 
       // Mock hijacked session (should fail due to IP mismatch or other checks)
       const hijackError = new Error('Session validation failed');
-      vi.mocked(jwtVerify).mockRejectedValueOnce(hijackError);
+      mockJwtVerify.mockRejectedValueOnce(hijackError);
 
       await expect(verifyClerkToken(hijackedSessionToken)).rejects.toThrow('Invalid or expired token');
     });

@@ -1,4 +1,48 @@
 /**
+ * @fileoverview Auth-Log Tests - Security Vulnerability Assessment
+ * 
+ * Comprehensive security test suite validating the auth-log package against common
+ * attack vectors, injection attempts, and security vulnerabilities in logging systems.
+ * 
+ * **Test Scope:**
+ * - Injection attack prevention (log, command, XSS, SQL)
+ * - Data sanitization and validation mechanisms
+ * - File system security and path traversal prevention
+ * - Network security for HTTP adapter communications
+ * - Information disclosure prevention
+ * - Denial of service attack resilience
+ * - Configuration security and environment variable handling
+ * 
+ * **Test Categories:**
+ * 1. **Injection Prevention**: Log injection, CRLF, command injection, XSS
+ * 2. **Data Validation**: Malformed JSON, circular references, edge cases
+ * 3. **File System Security**: Path traversal, permission attacks
+ * 4. **Network Security**: HTTP header injection, SSRF, malicious responses
+ * 5. **Information Disclosure**: Sensitive data leakage prevention
+ * 6. **DoS Prevention**: High-frequency logging, memory exhaustion, concurrent attacks
+ * 7. **Configuration Security**: Environment manipulation, credential exposure
+ * 
+ * **Mock Strategy:**
+ * - All external dependencies mocked for security isolation
+ * - Malicious payload injection through context data
+ * - File system attack simulation with error conditions
+ * - Network attack simulation with malicious endpoints
+ * - Memory and performance attack simulation
+ * 
+ * **Quality Standards:**
+ * - Zero code execution from log data
+ * - No sensitive information leakage in error messages
+ * - Resilience against 10,000+ concurrent log entries
+ * - File system security with hardcoded safe paths
+ * - Network request validation and sanitization
+ * 
+ * @requires vitest ^1.0.0
+ * @requires node:fs For file system security testing
+ * @since 1.0.0
+ * @author Auth-Log Security Team
+ */
+
+/**
  * SPDX-License-Identifier: MIT
  */
 

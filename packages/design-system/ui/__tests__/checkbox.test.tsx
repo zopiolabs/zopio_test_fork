@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Design System Tests - Checkbox Component
+ * 
+ * Comprehensive test suite for the Checkbox component including visual states, user interactions,
+ * accessibility features, and integration with forms. Validates checkbox behavior, styling,
+ * and proper accessibility compliance for screen readers and keyboard navigation.
+ * 
+ * **Test Scope:**
+ * - Checkbox rendering and DOM structure
+ * - Checked, unchecked, and indeterminate states
+ * - User interaction patterns (click, keyboard, focus)
+ * - Form integration and controlled/uncontrolled behavior
+ * - Accessibility features (ARIA attributes, keyboard navigation)
+ * - Visual styling and indicator animations
+ * 
+ * **Test Categories:**
+ * 1. **Rendering**: DOM structure and component composition
+ * 2. **Styling**: CSS classes, visual states, and styling variations
+ * 3. **States**: Checked, unchecked, indeterminate, and disabled states
+ * 4. **User Interactions**: Click handling, keyboard events, focus management
+ * 5. **Form Integration**: Controlled/uncontrolled usage, form submission
+ * 6. **Accessibility**: ARIA compliance, screen reader support, keyboard navigation
+ * 7. **Edge Cases**: Boundary conditions and error handling
+ * 
+ * **Mock Strategy:**
+ * - Vitest mocking for event handlers and form callbacks
+ * - React Testing Library user events for realistic interactions
+ * - No external dependencies (pure UI component)
+ * 
+ * **Quality Standards:**
+ * - Complete state coverage (checked, unchecked, indeterminate, disabled)
+ * - WCAG accessibility compliance validation
+ * - Form integration behavior verification
+ * 
  * SPDX-License-Identifier: MIT
  */
 

@@ -2,6 +2,34 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @fileoverview Auth Hooks Tests - useAccess Hook Functionality
+ * 
+ * Comprehensive test suite for the useAccess React hook that provides client-side authorization capabilities.
+ * Validates hook behavior, performance, error handling, and integration with authentication providers.
+ * 
+ * **Test Scope:**
+ * - Hook functionality with various parameter combinations and contexts
+ * - Integration with Clerk authentication and auth-runner evaluation engine
+ * - Performance characteristics and memoization behavior under different scenarios
+ * 
+ * **Test Categories:**
+ * 1. **Basic Functionality**: Core hook behavior with standard parameter validation
+ * 2. **Error Handling**: Graceful handling of evaluation failures and malformed inputs
+ * 3. **Parameter Validation**: Input sanitization and edge case handling
+ * 4. **Performance Testing**: Memoization, rapid re-renders, and concurrent usage
+ * 
+ * **Mock Strategy:**
+ * - Mock auth-runner evaluation engine for controlled testing scenarios
+ * - Mock Clerk authentication provider with various user states
+ * - React Testing Library with custom test wrappers for hook testing
+ * 
+ * **Quality Standards:**
+ * - 100% accuracy in access evaluation result propagation
+ * - Robust memoization behavior to prevent unnecessary re-evaluations
+ * - Comprehensive error handling with user-friendly error messages
+ */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor, render } from '@testing-library/react';
 import React from 'react';

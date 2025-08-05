@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Payments Package Tests - Subscription Management
+ * 
+ * Test suite for subscription lifecycle management including creation,
+ * billing, upgrades, cancellations, and webhook event handling.
+ * 
+ * **Test Scope:**
+ * - Subscription creation, updates, and cancellation workflows
+ * - Billing cycle management and invoice handling
+ * - Plan changes, upgrades, and downgrades
+ * - Subscription webhook event processing
+ * - Dunning management and failed payment recovery
+ * 
+ * **Test Categories:**
+ * 1. **Subscription Lifecycle**: Creation, updates, and cancellation
+ * 2. **Billing Management**: Invoice handling and payment processing
+ * 3. **Plan Changes**: Upgrades, downgrades, and proration handling
+ * 4. **Webhook Events**: Subscription-related event processing
+ * 5. **Failed Payments**: Dunning management and recovery workflows
+ * 
+ * **Mock Strategy:**
+ * - Complete subscription API mocking
+ * - Billing cycle simulation
+ * - Webhook event generation for subscription events
+ * - Failed payment scenario testing
+ * 
+ * **Quality Standards:**
+ * - Zero actual subscription charges
+ * - Complete billing accuracy validation
+ * - Sub-250ms response time for subscription operations
+ * - Comprehensive dunning workflow testing
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

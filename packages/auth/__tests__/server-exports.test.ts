@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Auth Package Tests - Server-Side Exports
+ * 
+ * Test suite validating server-side exports from the auth package including
+ * authentication functions, middleware, and server-only functionality.
+ * Ensures proper separation from client-side code and validates server APIs.
+ * 
+ * **Test Scope:**
+ * - Server-side module structure and export validation
+ * - Server-only directive enforcement and client separation
+ * - Authentication functions and middleware exports
+ * - Server API compatibility and interface validation
+ * - Integration with Clerk server-side functionality
+ * 
+ * **Test Categories:**
+ * 1. **Module Structure**: Server-only enforcement, re-export validation
+ * 2. **Authentication Functions**: auth(), currentUser(), server API methods
+ * 3. **Middleware Exports**: clerkMiddleware, createRouteMatcher, Webhook
+ * 4. **Client Separation**: No client code exposure, server-only compliance
+ * 5. **Error Handling**: Server-side error scenarios, authentication failures
+ * 
+ * **Mock Strategy:**
+ * - Mock @clerk/nextjs/server for controlled server function testing
+ * - Mock server-only directive for test environment compatibility
+ * - Test server functionality without external Clerk dependencies
+ * - Validate server API interfaces through controlled mock responses
+ * 
+ * **Quality Standards:**
+ * - Complete server-side API coverage and validation
+ * - Proper server-only directive enforcement
+ * - No client-side code exposed in server module
+ * - Authentication functions return correct data structures
+ * - Middleware functions properly configured and exported
+ * 
  * SPDX-License-Identifier: MIT
  */
 

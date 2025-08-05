@@ -1,4 +1,38 @@
 /**
+ * @fileoverview Design System Tests - Button Component
+ * 
+ * Comprehensive test suite for the Button component and buttonVariants utility function.
+ * Covers all button variants, sizes, states, accessibility features, and user interactions
+ * including keyboard navigation and screen reader compatibility.
+ * 
+ * **Test Scope:**
+ * - Button component variants (default, destructive, outline, secondary, ghost, link)
+ * - Size variations (default, small, large, icon)
+ * - State management (disabled, focus, aria-invalid)
+ * - User interaction patterns (click, keyboard events)
+ * - Accessibility compliance (ARIA attributes, keyboard navigation)
+ * - Icon integration and SVG handling
+ * 
+ * **Test Categories:**
+ * 1. **Rendering**: DOM structure validation and component composition
+ * 2. **Variants**: Visual styling and CSS class application for different button types
+ * 3. **Sizes**: Dimensional styling and layout adjustments
+ * 4. **Props Handling**: HTML attribute forwarding and custom prop management
+ * 5. **States**: Interactive states and accessibility indicators
+ * 6. **User Interactions**: Click handling, keyboard events, and disabled state behavior
+ * 7. **Accessibility**: ARIA compliance, screen reader support, keyboard navigation
+ * 8. **Edge Cases**: Boundary conditions and error handling
+ * 
+ * **Mock Strategy:**
+ * - Vitest mocking for event handlers
+ * - React Testing Library user events for realistic interactions
+ * - No external service dependencies (pure UI component)
+ * 
+ * **Quality Standards:**
+ * - Complete variant and size coverage
+ * - WCAG accessibility compliance validation
+ * - Interactive behavior verification
+ * 
  * SPDX-License-Identifier: MIT
  */
 

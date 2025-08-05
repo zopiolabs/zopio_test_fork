@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Design System Tests - Table Components
+ * 
+ * Comprehensive test suite for the Table component system including Table, TableHeader,
+ * TableBody, TableFooter, TableRow, TableHead, TableCell, and TableCaption components.
+ * Validates table structure, accessibility features, responsive design, and data presentation.
+ * 
+ * **Test Scope:**
+ * - Table structure and semantic HTML validation
+ * - Header, body, footer, and caption component composition
+ * - Row and cell rendering with proper relationships
+ * - Accessibility features (scope attributes, ARIA labels)
+ * - Responsive design and overflow handling
+ * - Interactive table features (sorting, selection)
+ * 
+ * **Test Categories:**
+ * 1. **Component Rendering**: DOM structure for all table components
+ * 2. **Table Structure**: Proper HTML table semantics and relationships
+ * 3. **Data Presentation**: Cell content, headers, and data organization
+ * 4. **Accessibility**: Screen reader support, keyboard navigation
+ * 5. **Responsive Design**: Overflow handling, mobile adaptations
+ * 6. **Interactive Features**: Sorting, selection, hover states
+ * 7. **Edge Cases**: Empty tables, large datasets, complex headers
+ * 
+ * **Mock Strategy:**
+ * - Static data structures for table content testing
+ * - Event handler mocking for interactive features
+ * - No external dependencies (pure HTML table components)
+ * 
+ * **Quality Standards:**
+ * - Complete semantic HTML table structure
+ * - WCAG accessibility compliance for data tables
+ * - Responsive design behavior validation
+ * 
  * SPDX-License-Identifier: MIT
  */
 

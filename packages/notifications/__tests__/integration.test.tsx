@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Notifications Package Tests - End-to-End Integration
+ * 
+ * Comprehensive integration test suite covering complete notification workflows from
+ * server-side triggering through client-side display with Knock service integration.
+ * 
+ * **Test Scope:**
+ * - Provider and Trigger component integration workflows
+ * - Complete notification flow (server → client → UI display)
+ * - User preference management and workflow coordination
+ * - Error handling and configuration fallbacks
+ * - Performance optimization and rapid interaction handling
+ * 
+ * **Test Categories:**
+ * 1. **Component Integration**: Provider and Trigger coordination in complex layouts
+ * 2. **Full Workflow**: Server-side workflow triggering and client-side display
+ * 3. **User Management**: Preference handling and user workflow simulation
+ * 4. **Error Handling**: Configuration failures and server error recovery
+ * 5. **Performance**: Multiple instances, rapid interactions, and edge cases
+ * 
+ * **Mock Strategy:**
+ * - Complete Knock service mocking for server and client operations
+ * - Environment configuration simulation for various scenarios
+ * - User interaction simulation with realistic timing patterns
+ * - Error injection for comprehensive failure testing
+ * 
+ * **Quality Standards:**
+ * - 100% workflow completion success rate under normal conditions
+ * - Graceful degradation when configuration is incomplete
+ * - Sub-100ms UI response time for user interactions
+ * - Complete accessibility compliance for all interactive elements
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

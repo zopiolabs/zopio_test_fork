@@ -1,34 +1,34 @@
 /**
- * @module integration.test
- * @description Comprehensive integration test suite for AI package end-to-end workflows
+ * @fileoverview AI Package Tests - End-to-End Integration Workflows
  * 
- * Test Coverage:
- * - ✅ Complete AI conversation workflows (request → processing → response → display)
- * - ✅ AI model integration with React components in real-world scenarios
- * - ✅ Multi-step AI operations and state management across components
- * - ✅ External OpenAI service integration patterns and error handling
- * - ✅ Error recovery and retry mechanisms for AI operations
- * - ✅ Concurrent AI operation handling and resource management
- * - ✅ Real-time AI streaming and conversation context management
- * - ✅ Cross-component data consistency in AI workflows
+ * Comprehensive integration test suite covering complete AI workflows from user input
+ * through AI processing to response delivery, including error recovery and concurrency.
  * 
- * Integration Scope:
- * - Tests complete workflows from user input through AI processing to response display
- * - Validates integration between models, React hooks, and UI components
- * - Ensures proper error propagation and recovery across the entire AI system
- * - Tests real-world usage patterns with concurrent operations and state management
+ * **Test Scope:**
+ * - Complete conversation workflows (request → processing → response → display)
+ * - AI model integration with React components and hooks
+ * - Multi-step operations and state management across components
+ * - External OpenAI service integration and error handling
+ * - Real-time streaming and conversation context management
  * 
- * Security Considerations:
- * - Validates that AI responses are safely rendered and sanitized
- * - Tests proper API key handling throughout the integration chain
- * - Ensures rate limiting and quota management work across components
- * - Validates input sanitization in end-to-end AI workflows
+ * **Test Categories:**
+ * 1. **Service Integration**: OpenAI client configuration and model initialization
+ * 2. **Conversation Workflows**: Multi-turn conversations with context preservation
+ * 3. **Error Recovery**: Comprehensive error handling and recovery mechanisms
+ * 4. **Concurrent Operations**: Resource management and parallel processing
+ * 5. **Streaming Responses**: Real-time AI response streaming and state updates
  * 
- * Performance Considerations:
- * - Tests streaming AI responses with proper state updates
- * - Validates memory management during long conversations
- * - Ensures efficient re-rendering during AI response streaming
- * - Tests concurrent operation handling without resource conflicts
+ * **Mock Strategy:**
+ * - OpenAI SDK completely mocked to prevent API calls and costs
+ * - AI SDK core functions mocked for controlled response simulation
+ * - Helper functions for complex workflow testing and validation
+ * - Realistic delay simulation for authentic testing conditions
+ * 
+ * **Quality Standards:**
+ * - 95%+ success rate for error recovery scenarios
+ * - Sub-500ms average response time under concurrent load
+ * - Complete conversation state preservation during failures
+ * - Resource utilization monitoring and optimization validation
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

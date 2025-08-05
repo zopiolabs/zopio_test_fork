@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Core Utils Tests - Integration Tests
+ * 
+ * Cross-functional integration tests for core utility modules working together.
+ * Validates inter-module dependencies, complex workflows, and real-world usage
+ * patterns combining multiple utility functions in realistic scenarios.
+ * 
+ * **Test Scope:**
+ * - Cross-module utility combinations (logger + async + object utils)
+ * - Complex data processing workflows
+ * - Error handling across multiple utility layers
+ * - Performance characteristics of combined operations
+ * - Real-world usage patterns and edge cases
+ * - Memory management in complex workflows
+ * 
+ * **Test Categories:**
+ * 1. **Cross-Module Integration**: Multiple utilities working together
+ * 2. **Complex Workflows**: Real-world data processing scenarios
+ * 3. **Error Propagation**: Error handling across utility boundaries
+ * 4. **Performance Integration**: Combined operation efficiency
+ * 5. **Memory Management**: Resource usage in complex operations
+ * 6. **Real-World Scenarios**: Practical usage pattern validation
+ * 7. **Compatibility Testing**: Module interoperability verification
+ * 
+ * **Mock Strategy:**
+ * - Temporary console and environment mocking (until testing package fixed)
+ * - Complex data structure simulation
+ * - Error injection for cross-module error handling
+ * 
+ * **Quality Standards:**
+ * - Seamless inter-module operation without conflicts
+ * - Consistent error handling patterns across modules
+ * - Acceptable performance characteristics for combined operations
+ * 
  * SPDX-License-Identifier: MIT
  */
 

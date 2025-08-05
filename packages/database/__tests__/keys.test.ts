@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Database Tests - Environment Keys Configuration
+ * 
+ * Test suite for database environment configuration keys including validation,
+ * export functionality, and environment variable integration. Validates proper
+ * configuration structure and environment-based database setup.
+ * 
+ * **Test Scope:**
+ * - Environment key configuration export and structure
+ * - Database connection string validation
+ * - Environment variable parsing and validation
+ * - Configuration schema compliance
+ * - Type safety for configuration objects
+ * - Default value handling and fallbacks
+ * 
+ * **Test Categories:**
+ * 1. **Configuration Export**: Keys function export and availability
+ * 2. **Environment Validation**: Required environment variables
+ * 3. **Schema Compliance**: Configuration structure validation
+ * 4. **Type Safety**: TypeScript type checking for config objects
+ * 5. **Default Handling**: Fallback values and error cases
+ * 6. **Integration**: t3-env integration and validation patterns
+ * 7. **Security**: Sensitive data handling and validation
+ * 
+ * **Mock Strategy:**
+ * - No external dependencies (configuration validation only)
+ * - Environment variable simulation for testing different scenarios
+ * - Schema validation testing with various input combinations
+ * 
+ * **Quality Standards:**
+ * - Complete environment variable validation
+ * - Type-safe configuration objects
+ * - Proper error handling for missing or invalid configuration
+ * 
  * SPDX-License-Identifier: MIT
  */
 

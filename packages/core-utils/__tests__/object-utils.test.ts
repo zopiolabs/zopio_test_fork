@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Core Utils Tests - Object Utilities
+ * 
+ * Comprehensive test suite for object manipulation utility functions including
+ * deepMerge, clone, pick, omit, and path-based operations. Validates deep object
+ * manipulation, immutability patterns, and type safety with complex nested structures.
+ * 
+ * **Test Scope:**
+ * - Deep object merging with conflict resolution
+ * - Object cloning (shallow and deep)
+ * - Property selection and omission (pick, omit)
+ * - Path-based object operations (get, set, has)
+ * - Object transformation and mapping utilities
+ * - Type preservation and generic handling
+ * 
+ * **Test Categories:**
+ * 1. **Deep Operations**: deepMerge, deepClone, nested structure handling
+ * 2. **Property Manipulation**: pick, omit, select, filter operations
+ * 3. **Path Operations**: get, set, has, delete by path
+ * 4. **Transformation**: map, transform, restructure utilities
+ * 5. **Type Safety**: Generic type preservation, TypeScript compatibility
+ * 6. **Performance**: Large object handling, memory efficiency
+ * 7. **Edge Cases**: Circular references, null/undefined handling
+ * 
+ * **Mock Strategy:**
+ * - No external dependencies (pure functions)
+ * - Complex nested object structures for testing
+ * - Circular reference simulation for edge case testing
+ * 
+ * **Quality Standards:**
+ * - Immutable operations (no mutation of input objects)
+ * - Proper handling of circular references and special values
+ * - Type-safe generic implementations
+ * 
  * SPDX-License-Identifier: MIT
  */
 

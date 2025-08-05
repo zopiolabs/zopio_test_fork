@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview SEO Package Tests - Metadata & Search Optimization
+ * 
+ * Test suite for SEO functionality including metadata generation,
+ * search optimization, and comprehensive validation.
+ * 
+ * **Test Scope:**
+ * - SEO metadata generation and validation
+ * - Search engine optimization utilities
+ * - Meta tag management and configuration
+ * - Performance optimization for SEO operations
+ * - Error handling and fallback mechanisms
+ * 
+ * **Test Categories:**
+ * 1. **Metadata Generation**: Meta tag creation and validation
+ * 2. **Search Optimization**: SEO utility functions and helpers
+ * 3. **Configuration**: SEO settings and environment handling
+ * 4. **Performance**: Optimization and efficiency validation
+ * 5. **Error Handling**: Fallback mechanisms and error recovery
+ * 
+ * **Mock Strategy:**
+ * - Environment configuration simulation
+ * - Metadata generation testing with various inputs
+ * - Error injection for comprehensive failure testing
+ * - Performance monitoring for optimization validation
+ * 
+ * **Quality Standards:**
+ * - Complete metadata accuracy and validation
+ * - Sub-10ms metadata generation time
+ * - 100% compliance with SEO best practices
+ * - Comprehensive error handling for all scenarios
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

@@ -1,42 +1,36 @@
 /**
- * @module security.test
- * @description Comprehensive security test suite for AI package operations
+ * @fileoverview AI Package Tests - Comprehensive Security & Attack Vector Prevention
  * 
- * Test Coverage:
- * - ✅ API key security and protection mechanisms
- * - ✅ Input validation and sanitization for AI operations
- * - ✅ Output content filtering and safety measures
- * - ✅ Injection attack prevention (prompt injection, XSS)
- * - ✅ Data privacy and PII handling compliance
- * - ✅ Rate limiting and abuse prevention mechanisms
- * - ✅ Cost abuse and DoS attack prevention
- * - ✅ AI-specific attack vector mitigation
+ * Advanced security test suite addressing AI-specific vulnerabilities including prompt injection,
+ * API key protection, content safety, cost abuse prevention, and DoS attack mitigation.
  * 
- * Security Considerations:
- * This test suite addresses AI-specific security vulnerabilities that are critical
- * for LLM-based applications. It covers both traditional web security threats
- * and emerging AI attack vectors including:
+ * **Test Scope:**
+ * - API key security and credential protection mechanisms
+ * - Input validation and sanitization for all AI operations
+ * - Output content filtering and safety compliance measures
+ * - Injection attack prevention (prompt injection, XSS, code injection)
+ * - Data privacy, PII handling, and regulatory compliance
+ * - Rate limiting, abuse prevention, and DoS attack mitigation
  * 
- * 1. Prompt Injection Attacks - Malicious prompts designed to manipulate AI behavior
- * 2. API Key Protection - Preventing exposure of expensive AI service credentials
- * 3. Content Safety - Ensuring AI outputs don't contain harmful or inappropriate content
- * 4. Cost Abuse Prevention - Protecting against expensive API call abuse
- * 5. Data Privacy - Ensuring user data and PII are handled securely
+ * **Test Categories:**
+ * 1. **API Key Security**: Credential protection, exposure prevention, rotation handling
+ * 2. **Input Validation**: Prompt injection detection, sanitization, adversarial prompt prevention
+ * 3. **Content Safety**: Output filtering, XSS prevention, harmful content detection
+ * 4. **Rate Limiting**: Abuse prevention, DoS protection, exponential backoff
+ * 5. **AI Attack Vectors**: Training data extraction, model manipulation, cost abuse
  * 
- * Attack Vectors Covered:
- * - Direct prompt injection attempts
- * - Indirect prompt injection through data
- * - API key leakage and exposure
- * - Content manipulation and XSS through AI responses
- * - Data extraction and PII exposure
- * - Rate limiting bypass and DoS attacks
- * - Cost explosion attacks
+ * **Mock Strategy:**
+ * - Complete external service mocking to prevent actual API calls during security testing
+ * - Comprehensive helper functions for attack simulation and validation
+ * - Advanced pattern matching for sophisticated attack vector detection
+ * - Rate limiting and resource management simulation for abuse testing
  * 
- * References:
- * - OWASP Top 10 for LLM Applications
- * - NIST AI Risk Management Framework
- * - OpenAI Safety Guidelines
- * - Common AI Security Vulnerabilities and Mitigations
+ * **Quality Standards:**
+ * - Zero tolerance for API key exposure in any scenario
+ * - 100% detection rate for known prompt injection patterns
+ * - Complete XSS prevention through content sanitization
+ * - Robust rate limiting with sub-second response times
+ * - OWASP LLM Top 10 compliance validation
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

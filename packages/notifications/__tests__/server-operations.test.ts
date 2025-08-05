@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Notifications Package Tests - Server-Side Operations
+ * 
+ * Comprehensive test suite for server-side notification operations including workflow
+ * triggering, user management, and direct notifications with Knock API integration.
+ * 
+ * **Test Scope:**
+ * - Workflow triggering with recipients, actors, and custom data
+ * - User identification, preference management, and profile updates
+ * - Direct notification sending and channel configuration
+ * - Error handling for network, authentication, and validation failures
+ * - Rate limiting, malformed data, and edge case scenarios
+ * 
+ * **Test Categories:**
+ * 1. **Workflow Management**: Trigger workflows with various configurations and data
+ * 2. **User Operations**: Identity management, preferences, and profile handling
+ * 3. **Direct Notifications**: Immediate notification sending and channel routing
+ * 4. **Error Handling**: Network failures, authentication, rate limits, validation
+ * 5. **Security & Configuration**: API key validation, environment setup, data protection
+ * 
+ * **Mock Strategy:**
+ * - Complete Knock server SDK mocking to prevent actual API calls
+ * - Realistic error simulation for various failure scenarios
+ * - Configuration validation with different environment setups
+ * - User data and preference simulation for management testing
+ * 
+ * **Quality Standards:**
+ * - Zero actual API calls to prevent costs and rate limiting
+ * - Comprehensive error handling for all operation failure scenarios
+ * - Proper data validation and malformed input rejection
+ * - Complete security validation for API key handling and exposure prevention
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

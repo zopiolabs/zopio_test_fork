@@ -1,4 +1,44 @@
 /**
+ * @fileoverview Auth-Log Tests - End-to-End Integration Scenarios
+ * 
+ * Comprehensive integration test suite validating complete logging workflows from
+ * entry point to adapter output, ensuring seamless operation across all components.
+ * 
+ * **Test Scope:**
+ * - Complete logging pipeline from logger.js to adapters
+ * - Environment-based adapter switching and configuration
+ * - Cross-adapter compatibility and data consistency
+ * - Real-world authentication workflow patterns
+ * - High-volume production-like logging scenarios
+ * - Multi-tenant isolation and logging patterns
+ * 
+ * **Test Categories:**
+ * 1. **End-to-End Flows**: Complete logging pipeline validation
+ * 2. **Adapter Switching**: Dynamic configuration-based adapter changes
+ * 3. **Cross-Adapter Compatibility**: Consistent behavior across all adapters
+ * 4. **Error Handling Integration**: System-wide error propagation and recovery
+ * 5. **Real-World Scenarios**: Authentication workflows and production patterns
+ * 6. **Performance Integration**: High-volume and concurrent logging validation
+ * 
+ * **Mock Strategy:**
+ * - All external dependencies mocked (fs, fetch, process streams)
+ * - Configurable adapter behavior simulation
+ * - Network condition simulation for resilience testing
+ * - Large-scale data generation for performance validation
+ * 
+ * **Quality Standards:**
+ * - Sub-5-second processing for 1000+ log entries
+ * - Consistent data format across all adapters
+ * - Memory usage <200MB for high-volume scenarios
+ * - 100% adapter compatibility for standard log entries
+ * 
+ * @requires vitest ^1.0.0
+ * @requires node:fs For file system operations
+ * @since 1.0.0
+ * @author Auth-Log Team
+ */
+
+/**
  * SPDX-License-Identifier: MIT
  */
 

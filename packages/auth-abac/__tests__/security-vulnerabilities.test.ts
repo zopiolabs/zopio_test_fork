@@ -1,9 +1,33 @@
 /**
- * @fileoverview Security Vulnerability Tests for Auth-ABAC Package
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
+ * @fileoverview ABAC Engine Tests - Security Vulnerability Prevention
  * 
- * This comprehensive test suite validates the security measures implemented in the ABAC
- * (Attribute-Based Access Control) system to protect against various attack vectors that
- * specifically target fine-grained authorization and attribute-based access control.
+ * Comprehensive security testing suite for the Attribute-Based Access Control (ABAC) engine.
+ * Validates protection against common security vulnerabilities and attack vectors in attribute-based systems.
+ * 
+ * **Test Scope:**
+ * - Injection attack prevention in attribute values and conditions
+ * - Authorization bypass attempts through attribute manipulation
+ * - Resource exhaustion and timing attack protection mechanisms
+ * 
+ * **Test Categories:**
+ * 1. **Injection Prevention**: Protection against code, SQL, NoSQL, and XSS injection attempts
+ * 2. **Authorization Bypass**: Prevention of privilege escalation through attribute manipulation
+ * 3. **Resource Protection**: DoS protection and memory exhaustion prevention
+ * 4. **Information Disclosure**: Prevention of sensitive data leakage through error messages
+ * 
+ * **Mock Strategy:**
+ * - Malicious input generation covering common attack vectors
+ * - Security-focused mock contexts with edge cases and boundary conditions
+ * - Attack simulation with real-world payload patterns
+ * 
+ * **Quality Standards:**
+ * - Zero tolerance for successful injection attacks
+ * - Consistent timing responses to prevent information disclosure
+ * - Robust error handling without sensitive information leakage
  * 
  * **ABAC Security Challenges:**
  * ABAC systems are more complex than RBAC as they evaluate multiple attributes from:

@@ -65,6 +65,6 @@ if (!global.fetch) {
 
 // Mock environment variables commonly used in tests
 if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = 'test';
+  vi.stubEnv('NODE_ENV', 'test');
 }
-process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
+vi.stubEnv('NEXT_PUBLIC_APP_URL', 'http://localhost:3000');

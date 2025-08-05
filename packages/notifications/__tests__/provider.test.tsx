@@ -1,5 +1,34 @@
 /**
- * SPDX-License-Identifier: MIT
+ * @fileoverview Notifications Package Tests - NotificationsProvider Component
+ * 
+ * Test suite for the NotificationsProvider component covering Knock provider integration,
+ * configuration handling, and children rendering with various setup scenarios.
+ * 
+ * **Test Scope:**
+ * - NotificationsProvider rendering with complete and incomplete configurations
+ * - Knock provider nesting (KnockProvider → KnockFeedProvider → children)
+ * - Configuration validation and fallback behavior
+ * - User ID handling and prop forwarding to Knock providers
+ * - Complex component nesting and multiple children support
+ * 
+ * **Test Categories:**
+ * 1. **Basic Rendering**: Children rendering with valid and invalid configurations
+ * 2. **Provider Integration**: Proper Knock provider nesting and prop forwarding
+ * 3. **Configuration Handling**: Missing API keys and feed channel scenarios
+ * 4. **User Management**: Different user ID formats and validation
+ * 5. **Component Composition**: Complex nesting and multiple children support
+ * 
+ * **Mock Strategy:**
+ * - Complete Knock React SDK mocking (KnockProvider, KnockFeedProvider)
+ * - Environment configuration simulation for various scenarios
+ * - Mock validation for provider prop forwarding and nesting
+ * - React 19 compatibility testing with modern patterns
+ * 
+ * **Quality Standards:**
+ * - 100% children rendering success regardless of configuration state
+ * - Proper provider nesting order and prop forwarding accuracy
+ * - Graceful fallback when Knock services are unavailable
+ * - Complete React 19 compatibility and modern component patterns
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

@@ -2,6 +2,34 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @fileoverview Auth Hooks Tests - Security Vulnerability Prevention
+ * 
+ * Comprehensive security testing suite for React authentication hooks and components.
+ * Validates protection against client-side security vulnerabilities and authorization bypass attempts.
+ * 
+ * **Test Scope:**
+ * - Client-side authorization bypass prevention mechanisms
+ * - Input sanitization and validation in React hook contexts
+ * - Protection against timing attacks and information disclosure
+ * 
+ * **Test Categories:**
+ * 1. **User Context Injection**: Protection against prototype pollution and metadata manipulation
+ * 2. **Parameter Injection**: Sanitization of malicious resource, action, and field parameters
+ * 3. **Timing Attack Prevention**: Consistent response times to prevent enumeration
+ * 4. **Resource Exhaustion**: DoS protection and memory leak prevention
+ * 
+ * **Mock Strategy:**
+ * - Mock Clerk authentication provider for controlled security testing
+ * - Malicious input generation for comprehensive attack vector coverage
+ * - React Testing Library for realistic component security validation
+ * 
+ * **Quality Standards:**
+ * - Zero tolerance for successful authorization bypass attempts
+ * - Consistent timing behavior across different user privilege levels
+ * - Robust error handling without sensitive information leakage
+ */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, act, waitFor } from '@testing-library/react';
 import React from 'react';

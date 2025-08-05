@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Core Utils Tests - Logger Utilities
+ * 
+ * Comprehensive test suite for logging utility functions including log levels,
+ * formatted output, environment-based configuration, and structured logging.
+ * Validates logging behavior across different environments and output formats.
+ * 
+ * **Test Scope:**
+ * - Log level management (debug, info, warn, error)
+ * - Environment-based logging configuration
+ * - Structured logging with metadata
+ * - Output formatting and colorization
+ * - Performance logging and timing utilities
+ * - Error logging with stack traces
+ * 
+ * **Test Categories:**
+ * 1. **Log Levels**: Debug, info, warn, error level handling
+ * 2. **Environment Configuration**: Development vs production logging
+ * 3. **Structured Logging**: Metadata, context, and object logging
+ * 4. **Output Formatting**: Colorization, timestamps, formatting
+ * 5. **Performance Logging**: Timing, profiling, performance metrics
+ * 6. **Error Handling**: Stack traces, error serialization
+ * 7. **Console Integration**: Console method mocking and verification
+ * 
+ * **Mock Strategy:**
+ * - Temporary console mocking (until testing package fixed)
+ * - Environment variable mocking for configuration testing
+ * - Time mocking for timestamp and performance testing
+ * 
+ * **Quality Standards:**
+ * - Consistent logging behavior across environments
+ * - Proper error serialization without information loss
+ * - Performance impact minimal for production builds
+ * 
  * SPDX-License-Identifier: MIT
  */
 

@@ -1,4 +1,37 @@
 /**
+ * @fileoverview Database Tests - Transaction Management
+ * 
+ * Comprehensive test suite for database transaction management including ACID
+ * compliance, rollback scenarios, deadlock handling, and transaction isolation.
+ * Validates transaction safety, atomicity, and proper error recovery.
+ * 
+ * **Test Scope:**
+ * - Transaction creation and lifecycle management
+ * - ACID properties validation (Atomicity, Consistency, Isolation, Durability)
+ * - Rollback scenarios and error recovery
+ * - Deadlock detection and resolution
+ * - Transaction isolation levels and behavior
+ * - Nested transactions and savepoint management
+ * 
+ * **Test Categories:**
+ * 1. **Transaction Lifecycle**: Begin, commit, rollback operations
+ * 2. **ACID Compliance**: Atomicity, consistency, isolation, durability
+ * 3. **Error Scenarios**: Rollback triggers, constraint violations
+ * 4. **Deadlock Handling**: Detection, resolution, retry strategies
+ * 5. **Isolation Levels**: Read committed, serializable, isolation behavior
+ * 6. **Nested Transactions**: Savepoints, partial rollbacks
+ * 7. **Performance**: Transaction overhead, optimization strategies
+ * 
+ * **Mock Strategy:**
+ * - Database transaction mocking for controlled testing
+ * - Error injection for rollback scenario testing
+ * - Concurrent operation simulation for deadlock testing
+ * 
+ * **Quality Standards:**
+ * - Complete ACID compliance in all transaction scenarios
+ * - Proper cleanup and resource management on failures
+ * - Deadlock detection and recovery without data corruption
+ * 
  * SPDX-License-Identifier: MIT
  */
 
